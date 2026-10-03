@@ -1,0 +1,14 @@
+name: txn_parser
+description: Pure-Dart parser for Indian bank transaction SMS/email alerts.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  meta: ^1.16.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

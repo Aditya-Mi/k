@@ -1,0 +1,41 @@
+name: k
+description: "Personal payment logger: bank SMS/email → transactions & subscriptions."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  txn_parser:
+    path: packages/txn_parser
+  bloc: ^9.2.1
+  flutter_bloc: ^9.1.1
+  equatable: ^3.0.0
+  get_it: ^9.3.0
+  drift: ^2.35.1
+  sqlite3: ^3.7.0
+  flutter_secure_storage: ^11.2.0
+  path_provider: ^2.1.6
+  path: ^1.9.1
+  intl: ^0.20.3
+  uuid: ^4.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.35.1
+  build_runner: ^2.16.1
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.5
+
+flutter:
+  uses-material-design: true
+
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3mc   # bundle SQLite3MultipleCiphers → encrypted DB

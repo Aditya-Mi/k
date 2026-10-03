@@ -1,0 +1,76 @@
+[
+  {
+    "name": "UPI P2M debit",
+    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-05T14:32:15",
+    "body": "INR 250.00 debited\nA/c no. XX1234\n05-10-26, 14:32:10\nUPI/P2M/427812345678/SWIGGY\nNot you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank",
+    "expected": {"status": "parsed", "templateId": "axis_sms_upi", "amountMinor": 25000, "direction": "debit", "txnType": "upi", "last4": "1234", "payee": "SWIGGY", "ref": "427812345678", "occurredAt": "2026-10-05T14:32:10"}
+  },
+  {
+    "name": "UPI P2A credit with IST suffix",
+    "channel": "sms", "sender": "VM-AXISBK-S", "receivedAt": "2026-10-05T09:15:30",
+    "body": "INR 1,500.00 credited\nA/c no. XX1234\n05-10-26, 09:15:02 IST\nUPI/P2A/427898765432/RAHUL SHARMA\nNot you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank",
+    "expected": {"status": "parsed", "amountMinor": 150000, "direction": "credit", "txnType": "upi", "payee": "RAHUL SHARMA", "ref": "427898765432", "occurredAt": "2026-10-05T09:15:02"}
+  },
+  {
+    "name": "Credit card spend",
+    "channel": "sms", "sender": "AX-AXISBK-T", "receivedAt": "2026-10-04T20:12:00",
+    "body": "Spent INR 1,299\nAxis Bank Card no. XX5678\n04-10-26 20:11:45 IST\nAMAZON PAY IN E\nAvl Limit: INR 85,420.50\nNot you? SMS BLOCK 5678 to 919951860002",
+    "expected": {"status": "parsed", "templateId": "axis_sms_card_spend", "amountMinor": 129900, "direction": "debit", "txnType": "card", "last4": "5678", "payee": "AMAZON PAY IN E", "balanceMinor": 8542050, "occurredAt": "2026-10-04T20:11:45"}
+  },
+  {
+    "name": "NEFT salary credit",
+    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-01T10:06:00",
+    "body": "INR 45,000.00 credited to A/c no. XX1234 on 01-10-26 at 10:05:33 IST. Info- NEFT/CITIN26123456789/ACME TECHNOLOGIES PVT LTD. Avl Bal- INR 78,912.40 - Axis Bank",
+    "expected": {"status": "parsed", "amountMinor": 4500000, "direction": "credit", "txnType": "neft", "ref": "CITIN26123456789", "payee": "ACME TECHNOLOGIES PVT LTD", "balanceMinor": 7891240, "occurredAt": "2026-10-01T10:05:33"}
+  },
+  {
+    "name": "ATM withdrawal",
+    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-02T18:45:00",
+    "body": "INR 2,000.00 withdrawn at ATM S1ANDL123 from A/c no. XX1234 on 02-10-26 18:44:12. Avl Bal INR 10,345.67 - Axis Bank",
+    "expected": {"status": "parsed", "amountMinor": 200000, "direction": "debit", "txnType": "atm", "balanceMinor": 1034567, "occurredAt": "2026-10-02T18:44:12"}
+  },
+  {
+    "name": "e-mandate upcoming debit",
+    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-06T08:00:00",
+    "body": "Your e-mandate for NETFLIX of INR 649.00 will be debited from A/c no. XX1234 on 08-10-26. UMRN: AXIS7000123456789012. To cancel visit axisbank.com - Axis Bank",
+    "expected": {"status": "parsed", "kind": "mandate", "amountMinor": 64900, "direction": "debit", "txnType": "autopay", "payee": "NETFLIX", "dueDate": "2026-10-08T00:00:00", "mandateRef": "AXIS7000123456789012"}
+  },
+  {
+    "name": "OTP is not a transaction",
+    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-04T20:10:00",
+    "body": "123456 is the OTP for transaction of INR 1,299.00 at AMAZON on Axis Bank card XX5678. Valid for 10 mins. Do not share OTP for security reasons.",
+    "expected": {"status": "nonTransaction", "note": "otp"}
+  },
+  {
+    "name": "Pre-approved loan promo",
+    "channel": "sms", "sender": "AX-AXISBK-P", "receivedAt": "2026-10-03T11:00:00",
+    "body": "Congratulations! You are pre-approved for a Personal Loan of up to INR 5,00,000 from Axis Bank. Apply now: https://axbk.io/x",
+    "expected": {"status": "nonTransaction", "note": "promotional"}
+  },
+  {
+    "name": "Declined card txn",
+    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-03T12:00:00",
+    "body": "Transaction of INR 2,500.00 on Axis Bank Card XX5678 at FLIPKART has been declined due to insufficient limit.",
+    "expected": {"status": "nonTransaction", "note": "declined"}
+  },
+  {
+    "name": "Unknown format falls back to review with guesses",
+    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-03T13:00:00",
+    "body": "Your a/c XX1234 has been debited for Rs 99 towards SOMETHING NEW ref no 88776655. Axis Bank",
+    "expected": {"status": "needsReview", "amountMinor": 9900, "direction": "debit", "last4": "1234", "ref": "88776655"}
+  },
+  {
+    "name": "Card spend email (HTML)",
+    "channel": "email", "sender": "Axis Bank Alerts <alerts@axisbank.com>", "receivedAt": "2026-10-04T20:13:00",
+    "subject": "Transaction alert on Axis Bank Credit Card",
+    "body": "<html><body><p>Dear Customer,</p><p>Thank you for using your Axis Bank Credit Card no. XX5678 for INR 1,299.00 at AMAZON PAY IN E on 04-10-2026 20:11:45 IST.</p><p>Available limit: INR 85,420.50.</p><p>Regards,<br>Axis Bank</p></body></html>",
+    "expected": {"status": "parsed", "templateId": "axis_email_card_spend", "amountMinor": 129900, "direction": "debit", "txnType": "card", "last4": "5678", "payee": "AMAZON PAY IN E", "occurredAt": "2026-10-04T20:11:45"}
+  },
+  {
+    "name": "UPI debit email",
+    "channel": "email", "sender": "alerts@axisbank.com", "receivedAt": "2026-10-05T14:33:00",
+    "subject": "Debit transaction alert",
+    "body": "Dear Customer,\n\nINR 250.00 has been debited from your A/c no. XX1234 on 05-10-2026 14:32:10 IST towards UPI/P2M/427812345678/SWIGGY.\n\nIf not done by you, call 18604195555.",
+    "expected": {"status": "parsed", "templateId": "axis_email_upi", "amountMinor": 25000, "direction": "debit", "ref": "427812345678", "payee": "SWIGGY", "occurredAt": "2026-10-05T14:32:10"}
+  }
+]

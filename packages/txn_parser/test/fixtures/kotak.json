@@ -1,0 +1,64 @@
+[
+  {
+    "name": "UPI sent (date only, borrows received time)",
+    "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-05T14:32:20",
+    "body": "Sent Rs.250.00 from Kotak Bank AC X1234 to swiggy@axisbank on 05-10-26.UPI Ref 427812345678. Not you, https://kotak.com/KBANKT/Fraud",
+    "expected": {"status": "parsed", "templateId": "kotak_sms_upi_sent", "amountMinor": 25000, "direction": "debit", "txnType": "upi", "last4": "1234", "payee": "swiggy@axisbank", "ref": "427812345678", "occurredAt": "2026-10-05T14:32:20"}
+  },
+  {
+    "name": "UPI received",
+    "channel": "sms", "sender": "AD-KOTAKB-S", "receivedAt": "2026-10-05T09:16:00",
+    "body": "Received Rs.1500.00 in your Kotak Bank AC X1234 from rahul.sharma@okhdfcbank on 05-10-26.UPI Ref:427898765432.",
+    "expected": {"status": "parsed", "amountMinor": 150000, "direction": "credit", "txnType": "upi", "payee": "rahul.sharma@okhdfcbank", "ref": "427898765432"}
+  },
+  {
+    "name": "Credit card spend",
+    "channel": "sms", "sender": "VM-KOTAKB-T", "receivedAt": "2026-10-04T20:12:00",
+    "body": "INR 1,299.00 spent on Kotak Credit Card x5678 on 04-Oct-2026 at AMAZON PAY INDIA. Avl Lmt: INR 85,420.50. Not you? Call 18602662666",
+    "expected": {"status": "parsed", "amountMinor": 129900, "direction": "debit", "txnType": "card", "last4": "5678", "payee": "AMAZON PAY INDIA", "balanceMinor": 8542050, "occurredAt": "2026-10-04T20:12:00"}
+  },
+  {
+    "name": "IMPS debit",
+    "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-03T11:21:00",
+    "body": "Your Kotak Bank A/c X1234 debited by Rs.5000.00 on 03-10-26 via IMPS to RAHUL SHARMA. IMPS Ref No 627612345678. Avl Bal Rs.12345.67",
+    "expected": {"status": "parsed", "amountMinor": 500000, "direction": "debit", "txnType": "imps", "payee": "RAHUL SHARMA", "ref": "627612345678", "balanceMinor": 1234567}
+  },
+  {
+    "name": "NEFT credit",
+    "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-01T10:07:00",
+    "body": "Your A/c X1234 is credited by Rs.45000.00 on 01-10-26 via NEFT from ACME TECHNOLOGIES PVT LTD, Ref CITIN26123456789. Avl Bal Rs.78912.40 -Kotak Bank",
+    "expected": {"status": "parsed", "amountMinor": 4500000, "direction": "credit", "txnType": "neft", "payee": "ACME TECHNOLOGIES PVT LTD", "ref": "CITIN26123456789", "balanceMinor": 7891240}
+  },
+  {
+    "name": "UPI AutoPay upcoming",
+    "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-06T09:00:00",
+    "body": "Upcoming debit: Rs.649.00 will be debited from your Kotak Bank AC X1234 on 08-10-26 towards NETFLIX for UPI-Mandate. UMN: KKBK0001234567890",
+    "expected": {"status": "parsed", "kind": "mandate", "amountMinor": 64900, "direction": "debit", "txnType": "autopay", "payee": "NETFLIX", "dueDate": "2026-10-08T00:00:00", "mandateRef": "KKBK0001234567890"}
+  },
+  {
+    "name": "OTP delivery",
+    "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-04T20:10:00",
+    "body": "OTP is 482913 for txn of Rs.1299.00 at AMAZON on Kotak Card x5678. Valid for 5 mins. Do not share.",
+    "expected": {"status": "nonTransaction", "note": "otp"}
+  },
+  {
+    "name": "Real alert with never-share-OTP footer is still parsed",
+    "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-05T14:40:00",
+    "body": "Sent Rs.80.00 from Kotak Bank AC X1234 to chaipoint@ybl on 05-10-26.UPI Ref 427811112222. Never share your OTP with anyone.",
+    "expected": {"status": "parsed", "amountMinor": 8000, "payee": "chaipoint@ybl"}
+  },
+  {
+    "name": "UPI debit email",
+    "channel": "email", "sender": "Kotak Bank <BankAlerts@kotak.com>", "receivedAt": "2026-10-05T14:35:00",
+    "subject": "Kotak Bank: UPI transaction alert",
+    "body": "Dear Customer, We wish to inform you that your account xx1234 is debited for Rs. 250.00 on 05-10-2026 towards UPI transaction to swiggy@axisbank. UPI reference number: 427812345678. Regards, Kotak Mahindra Bank",
+    "expected": {"status": "parsed", "templateId": "kotak_email_upi", "amountMinor": 25000, "direction": "debit", "payee": "swiggy@axisbank", "ref": "427812345678", "occurredAt": "2026-10-05T14:35:00"}
+  },
+  {
+    "name": "Card spend email",
+    "channel": "email", "sender": "creditcardalerts@kotak.com", "receivedAt": "2026-10-04T20:15:00",
+    "subject": "Transaction on your Kotak Credit Card",
+    "body": "<div>Dear Customer,</div><div>A transaction of INR 1,299.00 has been made on your Kotak Credit Card xx5678 at AMAZON PAY INDIA on 04-Oct-2026 at 20:11:45.</div>",
+    "expected": {"status": "parsed", "templateId": "kotak_email_card_spend", "amountMinor": 129900, "direction": "debit", "txnType": "card", "last4": "5678", "payee": "AMAZON PAY INDIA", "occurredAt": "2026-10-04T20:11:45"}
+  }
+]
