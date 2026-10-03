@@ -2,13 +2,13 @@ import '../bank_definition.dart';
 import '../enums.dart';
 import '../template.dart';
 
-// Synthetic formats modelled on Axis alerts — replace/extend with real
-// samples (see test/fixtures/axis.json).
+// SMS UPI and the email transaction summary are verified against real
+// samples; other formats are still synthetic (see test/fixtures/axis.json).
 final axisBank = BankDefinition(
   code: 'AXIS',
   name: 'Axis Bank',
   smsSenders: const ['AXISBK'],
-  emailSenders: const ['axisbank.com'],
+  emailSenders: const ['axis.bank.in', 'axisbank.com'],
   templates: [
     ParserTemplate(
       id: 'axis_sms_upi',
@@ -78,16 +78,17 @@ final axisBank = BankDefinition(
       defaults: const {'direction': 'debit', 'txnType': 'card'},
     ),
     ParserTemplate(
-      id: 'axis_email_upi',
+      id: 'axis_email_txn_summary',
       bankCode: 'AXIS',
       channel: Channel.email,
-      name: 'UPI debit/credit (email)',
+      name: 'Account debit/credit summary (email)',
+      // Subject carries amount + direction; body lists the fields.
       pattern: rx(
-        r'INR (?<amount>{amt}) has been (?<direction>debited|credited) (?:from|to) your '
-        r'A/c no\. XX(?<last4>\d{4}) on (?<date>[\d\-]+ [\d:]+)(?: IST)? towards '
-        r'UPI/P2[AM]/(?<ref>\d+)/(?<payee>.+?)\.',
+        r'INR (?<amount>{amt}) was (?<direction>debited|credited) (?:from|to) your '
+        r'A/c no\. XX(?<last4>\d{4}) .*?Date & Time: (?<date>[\d\-]+,? [\d:]+)(?: IST)? '
+        r'Transaction Info: (?:UPI/P2[AM]/(?<ref>\d+)/)?(?<payee>.+?)'
+        r'(?= (?:If|Please|Regards|Thank|Always|Warm|Note|Disclaimer|In case|Never)\b|$)',
       ),
-      defaults: const {'txnType': 'upi'},
     ),
   ],
 );

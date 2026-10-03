@@ -1,9 +1,15 @@
 [
   {
-    "name": "UPI P2M debit",
-    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-05T14:32:15",
-    "body": "INR 250.00 debited\nA/c no. XX1234\n05-10-26, 14:32:10\nUPI/P2M/427812345678/SWIGGY\nNot you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank",
-    "expected": {"status": "parsed", "templateId": "axis_sms_upi", "amountMinor": 25000, "direction": "debit", "txnType": "upi", "last4": "1234", "payee": "SWIGGY", "ref": "427812345678", "occurredAt": "2026-10-05T14:32:10"}
+    "name": "Real: UPI P2M debit",
+    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-03T17:05:02",
+    "body": "     INR 75.00 debited\nA/c no. XX0640\n03-10-26, 17:04:51\nUPI/P2M/298833881599/RAMESH KUMAR\nNot you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank",
+    "expected": {"status": "parsed", "templateId": "axis_sms_upi", "amountMinor": 7500, "direction": "debit", "txnType": "upi", "last4": "0640", "payee": "RAMESH KUMAR", "ref": "298833881599", "occurredAt": "2026-10-03T17:04:51"}
+  },
+  {
+    "name": "Real: UPI P2A debit, amount without comma",
+    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-01T20:52:40",
+    "body": "INR 15000.00 debited\nA/c no. XX0640\n01-10-26, 20:52:29\nUPI/P2A/166179587428/RAHUL SHARMA\nNot you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank",
+    "expected": {"status": "parsed", "templateId": "axis_sms_upi", "amountMinor": 1500000, "direction": "debit", "txnType": "upi", "last4": "0640", "payee": "RAHUL SHARMA", "ref": "166179587428", "occurredAt": "2026-10-01T20:52:29"}
   },
   {
     "name": "UPI P2A credit with IST suffix",
@@ -67,10 +73,10 @@
     "expected": {"status": "parsed", "templateId": "axis_email_card_spend", "amountMinor": 129900, "direction": "debit", "txnType": "card", "last4": "5678", "payee": "AMAZON PAY IN E", "occurredAt": "2026-10-04T20:11:45"}
   },
   {
-    "name": "UPI debit email",
-    "channel": "email", "sender": "alerts@axisbank.com", "receivedAt": "2026-10-05T14:33:00",
-    "subject": "Debit transaction alert",
-    "body": "Dear Customer,\n\nINR 250.00 has been debited from your A/c no. XX1234 on 05-10-2026 14:32:10 IST towards UPI/P2M/427812345678/SWIGGY.\n\nIf not done by you, call 18604195555.",
-    "expected": {"status": "parsed", "templateId": "axis_email_upi", "amountMinor": 25000, "direction": "debit", "ref": "427812345678", "payee": "SWIGGY", "occurredAt": "2026-10-05T14:32:10"}
+    "name": "Real: UPI debit email (transaction summary)",
+    "channel": "email", "sender": "Axis Bank <alerts@axis.bank.in>", "receivedAt": "2026-10-02T21:36:30",
+    "subject": "INR 25.00 was debited from your A/c no. XX0640",
+    "body": "02-10-2026\nDear Rahul Sharma,\n\nHere's the summary of your transaction:\n\n\nAccount Number:\nXX0640\n\nDate & Time:\n02-10-26, 21:36:02 IST\n\nTransaction Info:\nUPI/P2M/441151550312/RAMESH KUMAR\n",
+    "expected": {"status": "parsed", "templateId": "axis_email_txn_summary", "amountMinor": 2500, "direction": "debit", "txnType": "upi", "last4": "0640", "ref": "441151550312", "payee": "RAMESH KUMAR", "occurredAt": "2026-10-02T21:36:02"}
   }
 ]

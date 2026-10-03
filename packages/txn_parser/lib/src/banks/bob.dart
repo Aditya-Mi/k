@@ -2,8 +2,8 @@ import '../bank_definition.dart';
 import '../enums.dart';
 import '../template.dart';
 
-// Synthetic formats modelled on Bank of Baroda / BOBCARD alerts — replace or
-// extend with real samples (see test/fixtures/bob.json).
+// SMS UPI debit (Dr/Cr) is verified against real samples; other formats are
+// still synthetic (see test/fixtures/bob.json).
 final bobBank = BankDefinition(
   code: 'BOB',
   name: 'Bank of Baroda',

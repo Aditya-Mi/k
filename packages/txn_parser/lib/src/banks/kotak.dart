@@ -2,8 +2,8 @@ import '../bank_definition.dart';
 import '../enums.dart';
 import '../template.dart';
 
-// Synthetic formats modelled on Kotak alerts — replace/extend with real
-// samples (see test/fixtures/kotak.json).
+// SMS UPI sent and the Kotak811 payment email are verified against real
+// samples; other formats are still synthetic (see test/fixtures/kotak.json).
 final kotakBank = BankDefinition(
   code: 'KOTAK',
   name: 'Kotak Mahindra Bank',
@@ -16,7 +16,7 @@ final kotakBank = BankDefinition(
       channel: Channel.sms,
       name: 'UPI sent',
       pattern: rx(
-        r'Sent Rs\.?(?<amount>{amt}) from Kotak Bank AC X(?<last4>\d{4}) to (?<payee>\S+) '
+        r'Sent Rs\.?(?<amount>{amt}) from Kotak Bank A/?C X(?<last4>\d{4}) to (?<payee>.+?) '
         r'on (?<date>[\d\-]+)\.? ?UPI Ref:? ?(?<ref>\d+)',
       ),
       defaults: const {'direction': 'debit', 'txnType': 'upi'},
@@ -27,8 +27,8 @@ final kotakBank = BankDefinition(
       channel: Channel.sms,
       name: 'UPI received',
       pattern: rx(
-        r'Received Rs\.?(?<amount>{amt}) in your Kotak Bank AC X(?<last4>\d{4}) from '
-        r'(?<payee>\S+) on (?<date>[\d\-]+)\.? ?UPI Ref:? ?(?<ref>\d+)',
+        r'Received Rs\.?(?<amount>{amt}) in your Kotak Bank A/?C X(?<last4>\d{4}) from '
+        r'(?<payee>.+?) on (?<date>[\d\-]+)\.? ?UPI Ref:? ?(?<ref>\d+)',
       ),
       defaults: const {'direction': 'credit', 'txnType': 'upi'},
     ),
@@ -79,16 +79,16 @@ final kotakBank = BankDefinition(
       ),
     ),
     ParserTemplate(
-      id: 'kotak_email_upi',
+      id: 'kotak_email_upi_payment',
       bankCode: 'KOTAK',
       channel: Channel.email,
-      name: 'UPI debit/credit (email)',
+      name: 'UPI payment (Kotak811 email)',
+      // No account number in this format.
       pattern: rx(
-        r'your account xx(?<last4>\d{4}) is (?<direction>debited|credited) (?:for|with) '
-        r'Rs\.? ?(?<amount>{amt}) on (?<date>[\d\-]+) towards UPI transaction (?:to|from) '
-        r'(?<payee>\S+?)\.? UPI reference number:? (?<ref>\d+)',
+        r'made a UPI payment of {rs}(?<amount>{amt}) towards (?<payee>.+?) through '
+        r'.*?Date: (?<date>\d{1,2}-[A-Za-z]{3}-\d{2,4}) UPI Reference Number:? (?<ref>\d+)',
       ),
-      defaults: const {'txnType': 'upi'},
+      defaults: const {'direction': 'debit', 'txnType': 'upi'},
     ),
     ParserTemplate(
       id: 'kotak_email_card_spend',
