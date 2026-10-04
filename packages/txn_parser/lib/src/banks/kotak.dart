@@ -2,8 +2,8 @@ import '../bank_definition.dart';
 import '../enums.dart';
 import '../template.dart';
 
-// SMS UPI sent and the Kotak811 payment email are verified against real
-// samples; other formats are still synthetic (see test/fixtures/kotak.json).
+// SMS UPI sent, debit card, AutoPay executed and the Kotak811 payment email
+// are verified against real samples; other formats are still synthetic (see test/fixtures/kotak.json).
 final kotakBank = BankDefinition(
   code: 'KOTAK',
   name: 'Kotak Mahindra Bank',
@@ -42,6 +42,29 @@ final kotakBank = BankDefinition(
         r'(?<date>\d{2}-[A-Za-z]{3}-\d{4}) at (?<payee>.+?)\. Avl Lmt:? INR (?<balance>{amt})',
       ),
       defaults: const {'direction': 'debit', 'txnType': 'card'},
+    ),
+    ParserTemplate(
+      id: 'kotak_sms_debit_card',
+      bankCode: 'KOTAK',
+      channel: Channel.sms,
+      name: 'Debit card spend',
+      pattern: rx(
+        r'Rs\.?(?<amount>{amt}) spent via Kotak Debit Card XX(?<last4>\d{4}) at '
+        r'(?<payee>.+?) on (?<date>[\d/\-]+)\.? Avl bal:? Rs\.?(?<balance>{amt})',
+      ),
+      defaults: const {'direction': 'debit', 'txnType': 'card'},
+    ),
+    ParserTemplate(
+      id: 'kotak_sms_autopay_done',
+      bankCode: 'KOTAK',
+      channel: Channel.sms,
+      name: 'UPI AutoPay executed',
+      // Completed debit, not an upcoming-mandate notice. No account number.
+      pattern: rx(
+        r'AUTOPAY of Rs\.?(?<amount>{amt}) to (?<payee>.+?) on '
+        r'(?<date>\d{1,2}-[A-Za-z]{3}-\d{2,4}) was successful',
+      ),
+      defaults: const {'direction': 'debit', 'txnType': 'autopay'},
     ),
     ParserTemplate(
       id: 'kotak_sms_transfer_debit',

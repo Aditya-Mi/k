@@ -7,7 +7,8 @@ import '../template.dart';
 final bobBank = BankDefinition(
   code: 'BOB',
   name: 'Bank of Baroda',
-  smsSenders: const ['BOBTXN', 'BOBSMS', 'BOBCRD'],
+  // BOBSMS seen on real alerts; BOBTXN/BOBCRD unverified.
+  smsSenders: const ['BOBSMS', 'BOBTXN', 'BOBCRD'],
   emailSenders: const ['bankofbaroda.com', 'bobfinancial.com'],
   templates: [
     ParserTemplate(

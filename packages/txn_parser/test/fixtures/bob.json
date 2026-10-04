@@ -1,13 +1,13 @@
 [
   {
     "name": "Real: UPI debit Dr/Cr to personal VPA",
-    "channel": "sms", "sender": "BZ-BOBTXN-S", "receivedAt": "2026-10-01T10:23:05",
+    "channel": "sms", "sender": "JD-BOBSMS-S", "receivedAt": "2026-10-01T10:23:05",
     "body": " Rs.25.00 Dr. from A/C XXXXXX5359 and Cr. to rameshk01@ybl. Ref:315894910199. AvlBal:Rs18361.03(2026:10:01 10:22:47). Not you? Call 18005700/5000-BOB",
     "expected": {"status": "parsed", "templateId": "bob_sms_upi_debit", "amountMinor": 2500, "direction": "debit", "txnType": "upi", "last4": "5359", "payee": "rameshk01@ybl", "ref": "315894910199", "balanceMinor": 1836103, "occurredAt": "2026-10-01T10:22:47"}
   },
   {
     "name": "Real: UPI debit Dr/Cr to merchant VPA",
-    "channel": "sms", "sender": "BZ-BOBTXN-S", "receivedAt": "2026-09-29T10:18:50",
+    "channel": "sms", "sender": "JK-BOBSMS-S", "receivedAt": "2026-09-29T10:18:50",
     "body": "Rs.199.00 Dr. from A/C XXXXXX5359 and Cr. to zeptonowcashfree@hdfcbank. Ref:665138182518. AvlBal:Rs18746.03(2026:09:29 10:18:34). Not you? Call 18005700/5000-BOB",
     "expected": {"status": "parsed", "templateId": "bob_sms_upi_debit", "amountMinor": 19900, "direction": "debit", "txnType": "upi", "last4": "5359", "payee": "zeptonowcashfree@hdfcbank", "ref": "665138182518", "balanceMinor": 1874603, "occurredAt": "2026-09-29T10:18:34"}
   },

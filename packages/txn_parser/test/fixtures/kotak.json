@@ -7,7 +7,7 @@
   },
   {
     "name": "Real: UPI sent, multi-word payee, received next day",
-    "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-03T00:02:00",
+    "channel": "sms", "sender": "AD-KOTAKB-S", "receivedAt": "2026-10-03T00:02:00",
     "body": " Sent Rs.208.00 from Kotak Bank A/c X5543 to ZEPTO MARKETPLACE PR on 02-10-26. UPI Ref 801397544523. Not done by you? Tap https://kotak.bank.in/KBANKT/Fraud",
     "expected": {"status": "parsed", "templateId": "kotak_sms_upi_sent", "amountMinor": 20800, "direction": "debit", "txnType": "upi", "last4": "5543", "payee": "ZEPTO MARKETPLACE PR", "ref": "801397544523", "occurredAt": "2026-10-02T00:00:00"}
   },
@@ -66,5 +66,17 @@
     "subject": "Transaction on your Kotak Credit Card",
     "body": "<div>Dear Customer,</div><div>A transaction of INR 1,299.00 has been made on your Kotak Credit Card xx5678 at AMAZON PAY INDIA on 04-Oct-2026 at 20:11:45.</div>",
     "expected": {"status": "parsed", "templateId": "kotak_email_card_spend", "amountMinor": 129900, "direction": "debit", "txnType": "card", "last4": "5678", "payee": "AMAZON PAY INDIA", "occurredAt": "2026-10-04T20:11:45"}
+  },
+  {
+    "name": "Real: debit card spend",
+    "channel": "sms", "sender": "AX-KOTAKB-T", "receivedAt": "2026-10-01T19:45:12",
+    "body": "Rs.1504.00 spent via Kotak Debit Card XX4192 at WWW AMAZON IN on 01/10/2026. Avl bal Rs.18751.33 Not you?Tap https://kotak.bank.in/KBANKT/Fraud",
+    "expected": {"status": "parsed", "kind": "transaction", "templateId": "kotak_sms_debit_card", "amountMinor": 150400, "direction": "debit", "txnType": "card", "last4": "4192", "payee": "WWW AMAZON IN", "balanceMinor": 1875133, "occurredAt": "2026-10-01T19:45:12"}
+  },
+  {
+    "name": "Real: UPI AutoPay executed",
+    "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-09-29T06:10:40",
+    "body": "AUTOPAY of Rs.195.00 to APPLE MEDIA SERVICES on 29-Sep-26 was successful. View details: https://kotk.in/KOTAKD/XXXXXX -Kotak",
+    "expected": {"status": "parsed", "kind": "transaction", "templateId": "kotak_sms_autopay_done", "amountMinor": 19500, "direction": "debit", "txnType": "autopay", "payee": "APPLE MEDIA SERVICES", "occurredAt": "2026-09-29T06:10:40"}
   }
 ]

@@ -7,7 +7,7 @@
   },
   {
     "name": "Real: UPI P2A debit, amount without comma",
-    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-01T20:52:40",
+    "channel": "sms", "sender": "VM-AXISBK-S", "receivedAt": "2026-10-01T20:52:40",
     "body": "INR 15000.00 debited\nA/c no. XX0640\n01-10-26, 20:52:29\nUPI/P2A/166179587428/RAHUL SHARMA\nNot you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank",
     "expected": {"status": "parsed", "templateId": "axis_sms_upi", "amountMinor": 1500000, "direction": "debit", "txnType": "upi", "last4": "0640", "payee": "RAHUL SHARMA", "ref": "166179587428", "occurredAt": "2026-10-01T20:52:29"}
   },
@@ -76,7 +76,7 @@
     "name": "Real: UPI debit email (transaction summary)",
     "channel": "email", "sender": "Axis Bank <alerts@axis.bank.in>", "receivedAt": "2026-10-02T21:36:30",
     "subject": "INR 25.00 was debited from your A/c no. XX0640",
-    "body": "02-10-2026\nDear Rahul Sharma,\n\nHere's the summary of your transaction:\n\n\nAccount Number:\nXX0640\n\nDate & Time:\n02-10-26, 21:36:02 IST\n\nTransaction Info:\nUPI/P2M/441151550312/RAMESH KUMAR\n",
+    "body": "02-10-2026\nDear Rahul Sharma,\n\nHere's the summary of your transaction:\n\n\nAccount Number:\nXX0640\n\nDate & Time:\n02-10-26, 21:36:02 IST\n\nTransaction Info:\nUPI/P2M/441151550312/RAMESH KUMAR\n\nIf this transaction was not initiated by you:\nTo block UPI:\n\nSMS BLOCKUPI <Customer ID> to +919951860002 from your registered mobile number.\n\nCall us at:\n18001035577 (Toll Free)\n18604195555 (Charges Applicable)\nAlways open to help you.\n\nRegards,\nAxis Bank Ltd.\n",
     "expected": {"status": "parsed", "templateId": "axis_email_txn_summary", "amountMinor": 2500, "direction": "debit", "txnType": "upi", "last4": "0640", "ref": "441151550312", "payee": "RAMESH KUMAR", "occurredAt": "2026-10-02T21:36:02"}
   }
 ]
