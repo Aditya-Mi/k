@@ -7,6 +7,7 @@ import 'package:txn_parser/txn_parser.dart';
 import '../../../data/db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../../../data/db/enums.dart';
 import '../../../data/repositories/ledger_models.dart';
+import '../../../data/ingest/transfer_linker.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../di.dart';
 import '../../format.dart';
@@ -29,7 +30,8 @@ class TxnDetailState {
 }
 
 class TxnDetailCubit extends Cubit<TxnDetailState> {
-  TxnDetailCubit(this._ledger, this.txnId) : super(const TxnDetailState()) {
+  TxnDetailCubit(this._ledger, this._transfers, this.txnId)
+    : super(const TxnDetailState()) {
     _subs
       ..add(
         _ledger
@@ -58,6 +60,7 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
   }
 
   final LedgerRepository _ledger;
+  final TransferLinker _transfers;
   final String txnId;
   final _subs = <StreamSubscription<Object?>>[];
 
@@ -66,6 +69,12 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
   }
 
   Future<void> setCategory(String id) => _ledger.setCategory(txnId, id);
+  Future<void> unlinkTransfer() => _transfers.unlink(txnId);
+  Future<void> markTransfer({String? partnerId}) =>
+      _transfers.markManual(txnId, partnerId: partnerId);
+  Future<List<Transaction>> transferCandidates() =>
+      _transfers.candidatesFor(txnId);
+  Future<List<AccountView>> accounts() => _ledger.watchAccounts().first;
   Future<void> setNote(String? note) => _ledger.setNote(txnId, note);
   Future<void> remove({required bool notATransaction}) =>
       _ledger.removeTransaction(txnId, notATransaction: notATransaction);
@@ -86,7 +95,11 @@ class TxnDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (_) => TxnDetailCubit(getIt<LedgerRepository>(), txnId),
+    create: (_) => TxnDetailCubit(
+      getIt<LedgerRepository>(),
+      getIt<TransferLinker>(),
+      txnId,
+    ),
     child: const _DetailView(),
   );
 }
@@ -185,7 +198,8 @@ class _Loaded extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       '${txn.isDebit ? 'Debit' : 'Credit'} · '
-                      '${fullStamp(txn.occurredAt)} · ${Bands.ranges[band]} range',
+                      '${fullStamp(txn.occurredAt)} · '
+                      '${txn.isTransfer ? 'not counted as spent' : '${Bands.ranges[band]} range'}',
                       style: t.body.copyWith(color: c.text2),
                     ),
                     const SizedBox(height: 24),
@@ -226,6 +240,15 @@ class _Loaded extends StatelessWidget {
                         label: 'Reference',
                         value: SelectableText(txn.refNo!, style: t.body),
                       ),
+                    if (txn.isTransfer)
+                      FieldRow(
+                        label: 'Self transfer',
+                        value: Text(
+                          txn.transferRoute,
+                          style: t.body,
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
                     FieldRow(
                       label: 'Note',
                       onTap: () => _editNote(context, cubit, txn.notes),
@@ -261,6 +284,21 @@ class _Loaded extends StatelessWidget {
                       spacing: 12,
                       runSpacing: 12,
                       children: [
+                        if (txn.isTransfer)
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.link_off_rounded, size: 20),
+                            label: const Text('Not a self transfer'),
+                            onPressed: cubit.unlinkTransfer,
+                          )
+                        else
+                          OutlinedButton.icon(
+                            icon: const Icon(
+                              Icons.swap_horiz_rounded,
+                              size: 20,
+                            ),
+                            label: const Text('Mark as self transfer'),
+                            onPressed: () => _markTransfer(context, cubit, txn),
+                          ),
                         OutlinedButton.icon(
                           icon: const Icon(Icons.block_rounded, size: 20),
                           label: const Text('Not a transaction'),
@@ -334,6 +372,82 @@ class _Loaded extends StatelessWidget {
     if (picked != null && picked != txn.category?.id) {
       await cubit.setCategory(picked);
     }
+  }
+
+  /// Other side of the transfer: a same-amount row on another account, or
+  /// "not in k" when that account is not tracked.
+  Future<void> _markTransfer(
+    BuildContext context,
+    TxnDetailCubit cubit,
+    TxnView txn,
+  ) async {
+    final candidates = await cubit.transferCandidates();
+    final accounts = {for (final a in await cubit.accounts()) a.id: a};
+    if (!context.mounted) return;
+    final t = context.kt;
+    final picked = await showModalBottomSheet<(String?,)>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+          ),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                child: Text(
+                  txn.isDebit ? 'Where did it go?' : 'Where did it come from?',
+                  style: t.title,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  candidates.isEmpty
+                      ? 'No ${inrRow(txn.amountMinor)} '
+                            '${txn.isDebit ? 'credit' : 'debit'} on another '
+                            'account within 3 days.'
+                      : 'Same amount on your other accounts, within 3 days.',
+                  style: t.meta,
+                ),
+              ),
+              for (final o in candidates)
+                ListTile(
+                  leading: NoteChip(
+                    amountMinor: o.amountMinor,
+                    style: o.direction == Direction.debit
+                        ? NoteChipStyle.filled
+                        : NoteChipStyle.outlined,
+                  ),
+                  title: Text(
+                    accounts[o.accountId]?.short ?? 'Unknown account',
+                  ),
+                  subtitle: Text(
+                    [
+                      ?o.payeeRaw,
+                      '${dayMonth(o.occurredAt)}, ${hhmm(o.occurredAt)}',
+                    ].join(' · '),
+                  ),
+                  onTap: () => Navigator.pop(context, (o.id,)),
+                ),
+              ListTile(
+                leading: const Icon(Icons.account_balance_outlined),
+                title: Text(
+                  txn.isDebit
+                      ? 'To an account not in k'
+                      : 'From an account not in k',
+                ),
+                onTap: () => Navigator.pop(context, (null,)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked != null) await cubit.markTransfer(partnerId: picked.$1);
   }
 
   Future<void> _editNote(

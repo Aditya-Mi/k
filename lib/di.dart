@@ -6,6 +6,7 @@ import 'data/db/app_database.dart';
 import 'data/db/connection.dart';
 import 'data/ingest/ingestion_service.dart';
 import 'data/ingest/sms_sync.dart';
+import 'data/ingest/transfer_linker.dart';
 import 'data/repositories/ledger_repository.dart';
 import 'data/repositories/settings_repository.dart';
 import 'platform/sms_bridge.dart';
@@ -26,6 +27,7 @@ Future<void> configureDependencies() async {
     ..registerSingleton<SettingsRepository>(settings)
     ..registerSingleton<LedgerRepository>(LedgerRepository(db))
     ..registerSingleton<IngestionService>(ingestion)
+    ..registerSingleton<TransferLinker>(TransferLinker(db))
     ..registerSingleton<SmsBridge>(bridge)
     ..registerSingleton<SmsSync>(SmsSync(bridge, ingestion, settings));
 }

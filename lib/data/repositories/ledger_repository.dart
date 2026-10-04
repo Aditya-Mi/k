@@ -205,18 +205,33 @@ class LedgerRepository {
         leftOuterJoin(m, m.id.equalsExp(t.merchantId)),
         leftOuterJoin(c, c.id.equalsExp(t.categoryId)),
         leftOuterJoin(s, s.transactionId.equalsExp(t.id)),
+        // Other side of a self transfer, with its account.
+        leftOuterJoin(
+          _pt,
+          _pt.transferId.equalsExp(t.transferId) &
+              _pt.id.equalsExp(t.id).not() &
+              _pt.deletedAt.isNull(),
+        ),
+        leftOuterJoin(_pa, _pa.id.equalsExp(_pt.accountId)),
+        leftOuterJoin(_pb, _pb.id.equalsExp(_pa.bankId)),
       ])
       ..addColumns([_sourceCount])
       ..groupBy([t.id]);
   }
 
-  late final _sourceCount = _db.transactionSources.id.count();
+  late final _sourceCount = _db.transactionSources.id.count(distinct: true);
+  late final _pt = _db.alias(_db.transactions, 'pt');
+  late final _pa = _db.alias(_db.accounts, 'pa');
+  late final _pb = _db.alias(_db.banks, 'pb');
 
   TxnView _toView(TypedResult r) {
     final t = r.readTable(_db.transactions);
     final account = r.readTableOrNull(_db.accounts);
     final bank = r.readTableOrNull(_db.banks);
     final merchant = r.readTableOrNull(_db.merchants);
+    final partner = r.readTableOrNull(_pt);
+    final partnerAccount = r.readTableOrNull(_pa);
+    final partnerBank = r.readTableOrNull(_pb);
     return TxnView(
       id: t.id,
       amountMinor: t.amountMinor,
@@ -231,6 +246,11 @@ class LedgerRepository {
       balanceMinor: t.balanceMinor,
       notes: t.notes,
       refNo: t.refNo,
+      transferId: t.transferId,
+      transferPartnerId: partner?.id,
+      partnerAccount: partnerAccount == null || partnerBank == null
+          ? null
+          : _account(partnerAccount, partnerBank),
     );
   }
 

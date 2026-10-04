@@ -4,15 +4,17 @@ import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../data/ingest/sms_sync.dart';
+import '../data/ingest/transfer_linker.dart';
 import '../data/repositories/settings_repository.dart';
 import '../platform/sms_bridge.dart';
 
 /// Keeps the ledger fed while the UI runs: drains the live queue on every
 /// receiver event, and on start/resume also catches up from the inbox.
 class SmsController with WidgetsBindingObserver {
-  SmsController(this._sync, this._bridge, this._settings);
+  SmsController(this._sync, this._bridge, this._settings, this._transfers);
 
   final SmsSync _sync;
+  final TransferLinker _transfers;
   final SmsBridge _bridge;
   final SettingsRepository _settings;
 
@@ -26,7 +28,8 @@ class SmsController with WidgetsBindingObserver {
     _started = true;
     WidgetsBinding.instance.addObserver(this);
     _events = _bridge.onPending.listen((_) => _guard(_sync.drainPending));
-    unawaited(refresh());
+    // Pairs transfers logged before linking existed (and any missed pairs).
+    unawaited(_guard(_transfers.autoLinkAll).then((_) => refresh()));
   }
 
   Future<void> refresh() async {

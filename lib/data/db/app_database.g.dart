@@ -7174,6 +7174,32 @@ class $TransactionsTable extends Transactions
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _transferIdMeta = const VerificationMeta(
+    'transferId',
+  );
+  @override
+  late final GeneratedColumn<String> transferId = GeneratedColumn<String>(
+    'transfer_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _autoTransferOffMeta = const VerificationMeta(
+    'autoTransferOff',
+  );
+  @override
+  late final GeneratedColumn<bool> autoTransferOff = GeneratedColumn<bool>(
+    'auto_transfer_off',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("auto_transfer_off" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -7194,6 +7220,8 @@ class $TransactionsTable extends Transactions
     subscriptionId,
     notes,
     userEdited,
+    transferId,
+    autoTransferOff,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7313,6 +7341,21 @@ class $TransactionsTable extends Transactions
         userEdited.isAcceptableOrUnknown(data['user_edited']!, _userEditedMeta),
       );
     }
+    if (data.containsKey('transfer_id')) {
+      context.handle(
+        _transferIdMeta,
+        transferId.isAcceptableOrUnknown(data['transfer_id']!, _transferIdMeta),
+      );
+    }
+    if (data.containsKey('auto_transfer_off')) {
+      context.handle(
+        _autoTransferOffMeta,
+        autoTransferOff.isAcceptableOrUnknown(
+          data['auto_transfer_off']!,
+          _autoTransferOffMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -7398,6 +7441,14 @@ class $TransactionsTable extends Transactions
         DriftSqlType.bool,
         data['${effectivePrefix}user_edited'],
       )!,
+      transferId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transfer_id'],
+      ),
+      autoTransferOff: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}auto_transfer_off'],
+      )!,
     );
   }
 
@@ -7437,6 +7488,13 @@ class Transaction extends DataClass implements Insertable<Transaction> {
 
   /// Set once the user edits — re-parsing/dedup must not overwrite it.
   final bool userEdited;
+
+  /// Self transfer between own accounts: both sides share this id (one side
+  /// alone when the other account is not tracked). Excluded from spent/in.
+  final String? transferId;
+
+  /// User said "not a self transfer" — auto-linking must skip this row.
+  final bool autoTransferOff;
   const Transaction({
     required this.id,
     required this.createdAt,
@@ -7456,6 +7514,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     this.subscriptionId,
     this.notes,
     required this.userEdited,
+    this.transferId,
+    required this.autoTransferOff,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7504,6 +7564,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       map['notes'] = Variable<String>(notes);
     }
     map['user_edited'] = Variable<bool>(userEdited);
+    if (!nullToAbsent || transferId != null) {
+      map['transfer_id'] = Variable<String>(transferId);
+    }
+    map['auto_transfer_off'] = Variable<bool>(autoTransferOff);
     return map;
   }
 
@@ -7545,6 +7609,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ? const Value.absent()
           : Value(notes),
       userEdited: Value(userEdited),
+      transferId: transferId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transferId),
+      autoTransferOff: Value(autoTransferOff),
     );
   }
 
@@ -7576,6 +7644,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       subscriptionId: serializer.fromJson<String?>(json['subscriptionId']),
       notes: serializer.fromJson<String?>(json['notes']),
       userEdited: serializer.fromJson<bool>(json['userEdited']),
+      transferId: serializer.fromJson<String?>(json['transferId']),
+      autoTransferOff: serializer.fromJson<bool>(json['autoTransferOff']),
     );
   }
   @override
@@ -7604,6 +7674,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'subscriptionId': serializer.toJson<String?>(subscriptionId),
       'notes': serializer.toJson<String?>(notes),
       'userEdited': serializer.toJson<bool>(userEdited),
+      'transferId': serializer.toJson<String?>(transferId),
+      'autoTransferOff': serializer.toJson<bool>(autoTransferOff),
     };
   }
 
@@ -7626,6 +7698,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     Value<String?> subscriptionId = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     bool? userEdited,
+    Value<String?> transferId = const Value.absent(),
+    bool? autoTransferOff,
   }) => Transaction(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -7647,6 +7721,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
         : this.subscriptionId,
     notes: notes.present ? notes.value : this.notes,
     userEdited: userEdited ?? this.userEdited,
+    transferId: transferId.present ? transferId.value : this.transferId,
+    autoTransferOff: autoTransferOff ?? this.autoTransferOff,
   );
   Transaction copyWithCompanion(TransactionsCompanion data) {
     return Transaction(
@@ -7682,6 +7758,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       userEdited: data.userEdited.present
           ? data.userEdited.value
           : this.userEdited,
+      transferId: data.transferId.present
+          ? data.transferId.value
+          : this.transferId,
+      autoTransferOff: data.autoTransferOff.present
+          ? data.autoTransferOff.value
+          : this.autoTransferOff,
     );
   }
 
@@ -7705,7 +7787,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('categoryId: $categoryId, ')
           ..write('subscriptionId: $subscriptionId, ')
           ..write('notes: $notes, ')
-          ..write('userEdited: $userEdited')
+          ..write('userEdited: $userEdited, ')
+          ..write('transferId: $transferId, ')
+          ..write('autoTransferOff: $autoTransferOff')
           ..write(')'))
         .toString();
   }
@@ -7730,6 +7814,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     subscriptionId,
     notes,
     userEdited,
+    transferId,
+    autoTransferOff,
   );
   @override
   bool operator ==(Object other) =>
@@ -7752,7 +7838,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.categoryId == this.categoryId &&
           other.subscriptionId == this.subscriptionId &&
           other.notes == this.notes &&
-          other.userEdited == this.userEdited);
+          other.userEdited == this.userEdited &&
+          other.transferId == this.transferId &&
+          other.autoTransferOff == this.autoTransferOff);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
@@ -7774,6 +7862,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String?> subscriptionId;
   final Value<String?> notes;
   final Value<bool> userEdited;
+  final Value<String?> transferId;
+  final Value<bool> autoTransferOff;
   final Value<int> rowid;
   const TransactionsCompanion({
     this.id = const Value.absent(),
@@ -7794,6 +7884,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.subscriptionId = const Value.absent(),
     this.notes = const Value.absent(),
     this.userEdited = const Value.absent(),
+    this.transferId = const Value.absent(),
+    this.autoTransferOff = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TransactionsCompanion.insert({
@@ -7815,6 +7907,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.subscriptionId = const Value.absent(),
     this.notes = const Value.absent(),
     this.userEdited = const Value.absent(),
+    this.transferId = const Value.absent(),
+    this.autoTransferOff = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : amountMinor = Value(amountMinor),
        direction = Value(direction),
@@ -7839,6 +7933,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? subscriptionId,
     Expression<String>? notes,
     Expression<bool>? userEdited,
+    Expression<String>? transferId,
+    Expression<bool>? autoTransferOff,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -7860,6 +7956,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (subscriptionId != null) 'subscription_id': subscriptionId,
       if (notes != null) 'notes': notes,
       if (userEdited != null) 'user_edited': userEdited,
+      if (transferId != null) 'transfer_id': transferId,
+      if (autoTransferOff != null) 'auto_transfer_off': autoTransferOff,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -7883,6 +7981,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String?>? subscriptionId,
     Value<String?>? notes,
     Value<bool>? userEdited,
+    Value<String?>? transferId,
+    Value<bool>? autoTransferOff,
     Value<int>? rowid,
   }) {
     return TransactionsCompanion(
@@ -7904,6 +8004,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       subscriptionId: subscriptionId ?? this.subscriptionId,
       notes: notes ?? this.notes,
       userEdited: userEdited ?? this.userEdited,
+      transferId: transferId ?? this.transferId,
+      autoTransferOff: autoTransferOff ?? this.autoTransferOff,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -7969,6 +8071,12 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (userEdited.present) {
       map['user_edited'] = Variable<bool>(userEdited.value);
     }
+    if (transferId.present) {
+      map['transfer_id'] = Variable<String>(transferId.value);
+    }
+    if (autoTransferOff.present) {
+      map['auto_transfer_off'] = Variable<bool>(autoTransferOff.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -7996,6 +8104,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('subscriptionId: $subscriptionId, ')
           ..write('notes: $notes, ')
           ..write('userEdited: $userEdited, ')
+          ..write('transferId: $transferId, ')
+          ..write('autoTransferOff: $autoTransferOff, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -9539,6 +9649,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'txn_occurred',
     'CREATE INDEX txn_occurred ON transactions (occurred_at)',
   );
+  late final Index txnTransfer = Index(
+    'txn_transfer',
+    'CREATE INDEX txn_transfer ON transactions (transfer_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9563,6 +9677,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     txnRef,
     txnDedup,
     txnOccurred,
+    txnTransfer,
   ];
 }
 
@@ -15593,6 +15708,8 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<String?> subscriptionId,
       Value<String?> notes,
       Value<bool> userEdited,
+      Value<String?> transferId,
+      Value<bool> autoTransferOff,
       Value<int> rowid,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
@@ -15615,6 +15732,8 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String?> subscriptionId,
       Value<String?> notes,
       Value<bool> userEdited,
+      Value<String?> transferId,
+      Value<bool> autoTransferOff,
       Value<int> rowid,
     });
 
@@ -15812,6 +15931,16 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<bool> get userEdited => $composableBuilder(
     column: $table.userEdited,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transferId => $composableBuilder(
+    column: $table.transferId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get autoTransferOff => $composableBuilder(
+    column: $table.autoTransferOff,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16037,6 +16166,16 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get transferId => $composableBuilder(
+    column: $table.transferId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get autoTransferOff => $composableBuilder(
+    column: $table.autoTransferOff,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$AccountsTableOrderingComposer get accountId {
     final $$AccountsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -16186,6 +16325,16 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<bool> get userEdited => $composableBuilder(
     column: $table.userEdited,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get transferId => $composableBuilder(
+    column: $table.transferId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get autoTransferOff => $composableBuilder(
+    column: $table.autoTransferOff,
     builder: (column) => column,
   );
 
@@ -16386,6 +16535,8 @@ class $$TransactionsTableTableManager
                 Value<String?> subscriptionId = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<bool> userEdited = const Value.absent(),
+                Value<String?> transferId = const Value.absent(),
+                Value<bool> autoTransferOff = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
                 id: id,
@@ -16406,6 +16557,8 @@ class $$TransactionsTableTableManager
                 subscriptionId: subscriptionId,
                 notes: notes,
                 userEdited: userEdited,
+                transferId: transferId,
+                autoTransferOff: autoTransferOff,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -16428,6 +16581,8 @@ class $$TransactionsTableTableManager
                 Value<String?> subscriptionId = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<bool> userEdited = const Value.absent(),
+                Value<String?> transferId = const Value.absent(),
+                Value<bool> autoTransferOff = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 id: id,
@@ -16448,6 +16603,8 @@ class $$TransactionsTableTableManager
                 subscriptionId: subscriptionId,
                 notes: notes,
                 userEdited: userEdited,
+                transferId: transferId,
+                autoTransferOff: autoTransferOff,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

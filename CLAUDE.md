@@ -49,4 +49,5 @@ flutter build apk --debug
 - Phase 1 done (setup, encrypted DB, parser + tests). Bank templates are synthetic until real samples replace them.
 - Design done ("Note Inks" direction: amounts tinted by RBI banknote band; see DESIGN.md). Flutter must use Archivo wdth≈112 + tabular figures for amounts/headings.
 - Phase 2 code done (native SMS capture + headless worker, ingestion pipeline, Transactions/detail/onboarding UI); awaiting on-device test. Next: Phase 3 (review queue + learned templates + category rules).
-- Later ideas: self-account transfer linking, encrypted multi-device sync (schema already sync-ready), other currencies.
+- Phase 2b done: self-transfer linking (`TransferLinker`, schema v2).
+- Later ideas: encrypted multi-device sync (schema already sync-ready), other currencies.

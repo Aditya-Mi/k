@@ -82,6 +82,8 @@ MonthSummary summarize(DateTime month, List<TxnView> txns) {
   var spends = 0;
   final bands = List.filled(Bands.count, 0);
   for (final t in txns) {
+    // Money moved between own accounts is neither spent nor came in.
+    if (t.isTransfer) continue;
     if (t.isDebit) {
       spent += t.amountMinor;
       spends++;

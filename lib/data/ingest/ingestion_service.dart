@@ -7,6 +7,7 @@ import 'package:txn_parser/txn_parser.dart';
 import '../db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../db/enums.dart';
 import 'category_resolver.dart';
+import 'transfer_linker.dart';
 
 /// A bank message as it enters the app, from any channel.
 class IncomingMessage {
@@ -64,9 +65,10 @@ enum IngestOutcome {
 /// raw_messages → ParserEngine → account / merchant / category → transaction.
 /// Idempotent: re-ingesting a message is a no-op.
 class IngestionService {
-  IngestionService(this._db);
+  IngestionService(this._db) : _transfers = TransferLinker(_db);
 
   final AppDatabase _db;
+  final TransferLinker _transfers;
   ParserEngine? _engine;
   CategoryResolver? _categories;
 
@@ -222,6 +224,7 @@ class IngestionService {
               rawMessageId: raw.id,
             ),
           );
+      await _transfers.autoLink(txn.id);
       return IngestOutcome.transaction;
     });
   }

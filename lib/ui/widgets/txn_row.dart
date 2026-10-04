@@ -14,20 +14,35 @@ class TxnRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final meta = [
-      txn.category?.name ?? 'Uncategorized',
-      if (txn.account != null) txn.account!.short,
-      hhmm(txn.occurredAt),
-    ].join(' · ');
+    final meta = txn.isTransfer
+        ? '${txn.transferRoute} · ${hhmm(txn.occurredAt)}'
+        : [
+            txn.category?.name ?? 'Uncategorized',
+            if (txn.account != null) txn.account!.short,
+            hhmm(txn.occurredAt),
+          ].join(' · ');
+    final title = txn.isTransfer ? 'Self transfer' : txn.payee;
     return _RowShell(
       onTap: onTap,
       chip: NoteChip(
         amountMinor: txn.amountMinor,
         style: txn.isDebit ? NoteChipStyle.filled : NoteChipStyle.outlined,
       ),
-      title: txn.payee,
+      title: title,
       meta: meta,
       trailing: [
+        if (txn.isTransfer)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Tooltip(
+              message: 'Between your own accounts, not counted as spent',
+              child: Icon(
+                Icons.swap_horiz_rounded,
+                size: 16,
+                color: context.k.text2,
+              ),
+            ),
+          ),
         if (txn.merged)
           Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -46,7 +61,11 @@ class TxnRow extends StatelessWidget {
         ),
       ],
       semantics:
-          '${txn.payee}, ${txn.isDebit ? 'paid' : 'received'} '
+          '$title, ${txn.isTransfer
+              ? 'moved'
+              : txn.isDebit
+              ? 'paid'
+              : 'received'} '
           '${inrRow(txn.amountMinor)}, $meta',
     );
   }

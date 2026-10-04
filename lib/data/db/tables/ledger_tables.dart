@@ -46,6 +46,7 @@ class RawMessages extends Table with SyncColumns {
 @TableIndex(name: 'txn_ref', columns: {#refNo})
 @TableIndex(name: 'txn_dedup', columns: {#accountId, #amountMinor, #occurredAt})
 @TableIndex(name: 'txn_occurred', columns: {#occurredAt})
+@TableIndex(name: 'txn_transfer', columns: {#transferId})
 class Transactions extends Table with SyncColumns {
   TextColumn get accountId => text().nullable().references(Accounts, #id)();
 
@@ -66,6 +67,14 @@ class Transactions extends Table with SyncColumns {
 
   /// Set once the user edits — re-parsing/dedup must not overwrite it.
   BoolColumn get userEdited => boolean().withDefault(const Constant(false))();
+
+  /// Self transfer between own accounts: both sides share this id (one side
+  /// alone when the other account is not tracked). Excluded from spent/in.
+  TextColumn get transferId => text().nullable()();
+
+  /// User said "not a self transfer" — auto-linking must skip this row.
+  BoolColumn get autoTransferOff =>
+      boolean().withDefault(const Constant(false))();
 }
 
 /// Dedup link: one transaction ← many raw messages (SMS + email).

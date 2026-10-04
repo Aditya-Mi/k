@@ -21,6 +21,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Parser real samples (parser session) | In progress. Real formats for Axis/Kotak/BOB UPI, Axis NEFT, Kotak debit card + AutoPay |
 | Design | Done. `design/k.pen`, exports in `design/screens/`, `DESIGN.md` |
 | Phase 2: native SMS ingestion + Transactions list | **Code done, awaiting on-device test.** `flutter test` 21 pass, analyze clean, debug APK builds |
+| Phase 2b: self-transfer linking | **Done.** `flutter test` 28 pass. Owner tested Phase 2 on device: SMS capture works |
 | Phases 3–6 | Not started: 3 review queue + categorization rules, 4 subscriptions + reminders, 5 Gmail + dedup, 6 summary + backup/export + app lock |
 
 ## Phase 2: what was built
@@ -38,7 +39,12 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - `lib/app/` — `KApp` (onboarding gate, light/dark themes), `SmsController` (drain on events; drain + catch-up on start/resume; exposes SMS permission).
 - `lib/ui/` — theme tokens (`KColors` ThemeExtension, `KText` Archivo wdth 112 + tnum via bundled variable font `assets/fonts/Archivo.ttf`), `Bands`, formatters (en_IN grouping). Widgets: NoteChip/LargeNoteChip, Rosette (house + per-name seal generator, `progress` ready for the drawn moment), MonthNotePanel + SpendRibbon, TxnRow/UpcomingRow, KFilterChip, NoticeBanner, DayHeader, FieldRow, RawMessageCard (MERGED stamp), EmptyState. Screens: Onboarding (SMS incl. restricted-settings help, battery, history: None / This month (default, from the 1st) / 90 days / Pick date), HomeShell (M3 nav, neutral review badge; Review/Subscriptions/Summary are placeholders), Transactions (month panel, filters month/accounts/category/direction, search, SMS-off banner, review banner, pinned section head, upcoming, day groups), Txn detail (watermark rosette, category picker, note, not-a-transaction/delete with confirm), Settings (SMS/battery status, last checked, check inbox now, import older messages from a picked date — dedup makes re-import safe).
 
-## Next step: on-device test of Phase 2, then Phase 3
+## Phase 2b: self transfers
+- Schema v2: `transactions.transfer_id` (shared by both sides; alone when the other account isn't tracked) + `auto_transfer_off` (user unlinked → never auto-link again). Migration in `app_database.dart` `onUpgrade`.
+- `lib/data/ingest/transfer_linker.dart`: auto rule = debit + credit, same amount/currency, different own accounts, within 30 min (owner-approved), closest wins. Runs per ingested txn and as `autoLinkAll()` backfill on app start. Linked rows get category `cat_transfers` unless user-edited; unlink re-resolves category.
+- UI: row title "Self transfer", meta "Axis ··0640 → Kotak ··4410 · time", swap icon; excluded from month spent/in/spend count and day "out" totals. Detail: "Self transfer" field, "Not a self transfer" (unlink) or "Mark as self transfer" (pick same-amount opposite row on another account within ±3 days, or "account not in k").
+
+## Next step: on-device check of 2b, then Phase 3
 Owner to run `flutter run` (or `adb install`) on the Nothing Phone 2 and check:
 1. Onboarding: SMS Allow. If sideloaded via file manager/browser, Android 13+ blocks it → App info → ⋮ → Allow restricted settings. `flutter run`/`adb install` installs are not restricted.
 2. Battery Allow, plus Nothing OS App info → Battery → Unrestricted.

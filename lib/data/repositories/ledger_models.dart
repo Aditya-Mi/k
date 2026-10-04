@@ -74,6 +74,9 @@ class TxnView extends Equatable {
     this.balanceMinor,
     this.notes,
     this.refNo,
+    this.transferId,
+    this.transferPartnerId,
+    this.partnerAccount,
   });
 
   final String id;
@@ -92,13 +95,31 @@ class TxnView extends Equatable {
   final String? notes;
   final String? refNo;
 
+  /// Set when this is one side of a self transfer.
+  final String? transferId;
+
+  /// The other side, when that account is tracked.
+  final String? transferPartnerId;
+  final AccountView? partnerAccount;
+
+  bool get isTransfer => transferId != null;
+
+  /// "Axis ··0640 → Kotak ··4410"; an untracked side reads "own account".
+  String get transferRoute {
+    const other = 'own account';
+    final mine = account?.short ?? 'this account';
+    final theirs = partnerAccount?.short ?? other;
+    return isDebit ? '$mine → $theirs' : '$theirs → $mine';
+  }
+
   bool get isDebit => direction == Direction.debit;
   bool get merged => sourceCount > 1;
 
   @override
   List<Object?> get props => [
     id, amountMinor, currency, direction, txnType, occurredAt, payee, //
-    sourceCount, account, category, balanceMinor, notes, refNo,
+    sourceCount, account, category, balanceMinor, notes, refNo, transferId,
+    transferPartnerId, partnerAccount,
   ];
 }
 
