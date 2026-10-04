@@ -37,14 +37,14 @@ final _ref = RegExp(
   caseSensitive: false,
 );
 // "to DMRC on 25-09-26", "at WWW AMAZON IN on 01/10", "towards SWIGGY
-// through", "Cr. to x@ybl. Ref". A payee never contains an account word,
-// so "from Kotak Bank AC X1234 to …" can't swallow the account; "towards
-// reversal of failed txn" is a reason, not a payee.
+// through", "Cr. to x@ybl. Ref", "to APPLE will be debited". A payee never
+// contains an account word, so "from Kotak Bank AC X1234 to …" can't swallow
+// the account; "towards reversal of failed txn" is a reason, not a payee.
 final _payee = RegExp(
   r"\b(?:to|at|from|towards)\s+"
   r"(?!reversal|refund)"
   r"([A-Za-z](?:(?!\b(?:a/?c|acct|account|card)\b)[\w .&'@\-]){1,40}?)"
-  r'(?:\s+on\s+\d|\s+through\b|\.?\s*(?:UPI\s+|IMPS\s+|NEFT\s+|RTGS\s+)?Ref\b)',
+  r'(?:\s+on\s+\d|\s+through\b|\s+will\s+be\b|\.?\s*(?:UPI\s+|IMPS\s+|NEFT\s+|RTGS\s+)?Ref\b)',
   caseSensitive: false,
 );
 

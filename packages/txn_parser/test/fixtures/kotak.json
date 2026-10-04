@@ -42,6 +42,12 @@
     "expected": {"status": "parsed", "kind": "mandate", "amountMinor": 64900, "direction": "debit", "txnType": "autopay", "payee": "NETFLIX", "dueDate": "2026-10-08T00:00:00", "mandateRef": "KKBK0001234567890"}
   },
   {
+    "name": "Real: UPI AutoPay upcoming (no account number)",
+    "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-09-27T10:15:00",
+    "body": "AUTOPAY of Rs.195.00 to APPLE MEDIA SERVICES will be debited on 29 Sep 2026. Please ensure sufficient balance in account -Kotak",
+    "expected": {"status": "parsed", "kind": "mandate", "templateId": "kotak_sms_autopay_upcoming", "amountMinor": 19500, "direction": "debit", "txnType": "autopay", "payee": "APPLE MEDIA SERVICES", "dueDate": "2026-09-29T00:00:00", "last4": null}
+  },
+  {
     "name": "OTP delivery",
     "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-04T20:10:00",
     "body": "OTP is 482913 for txn of Rs.1299.00 at AMAZON on Kotak Card x5678. Valid for 5 mins. Do not share.",

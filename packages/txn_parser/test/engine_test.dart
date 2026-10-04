@@ -51,6 +51,17 @@ void main() {
   });
 
   group('templates', () {
+    test('every built-in mandate template captures payee and dueDate', () {
+      // The app's subscriptions match upcoming charges on these two fields.
+      for (final bank in builtInBanks) {
+        for (final t in bank.templates) {
+          if (t.kind != TemplateKind.mandate) continue;
+          expect(t.pattern, contains('(?<payee>'), reason: t.id);
+          expect(t.pattern, contains('(?<dueDate>'), reason: t.id);
+        }
+      }
+    });
+
     test('user templates beat built-ins by priority', () {
       final engine = ParserEngine(
         banks: builtInBanks,

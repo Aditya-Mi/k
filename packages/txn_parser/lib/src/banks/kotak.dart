@@ -2,7 +2,7 @@ import '../bank_definition.dart';
 import '../enums.dart';
 import '../template.dart';
 
-// SMS UPI sent, UPI received, debit card, AutoPay executed and the Kotak811 payment email
+// SMS UPI sent, UPI received, debit card, AutoPay executed/upcoming and the Kotak811 payment email
 // are verified against real samples; other formats are still synthetic (see test/fixtures/kotak.json).
 final kotakBank = BankDefinition(
   code: 'KOTAK',
@@ -100,6 +100,19 @@ final kotakBank = BankDefinition(
         r'Rs\.?(?<amount>{amt}) will be debited from your Kotak Bank AC X(?<last4>\d{4}) '
         r'on (?<dueDate>[\d\-]+) towards (?<payee>.+?) for UPI-Mandate\. UMN:? (?<mandateRef>\w+)',
       ),
+    ),
+    ParserTemplate(
+      id: 'kotak_sms_autopay_upcoming',
+      bankCode: 'KOTAK',
+      channel: Channel.sms,
+      kind: TemplateKind.mandate,
+      name: 'UPI AutoPay upcoming (pre-debit notice)',
+      // No account number in this format.
+      pattern: rx(
+        r'AUTOPAY of Rs\.?(?<amount>{amt}) to (?<payee>.+?) will be debited on '
+        r'(?<dueDate>\d{1,2} [A-Za-z]{3,9} \d{4})',
+      ),
+      defaults: const {'direction': 'debit', 'txnType': 'autopay'},
     ),
     ParserTemplate(
       id: 'kotak_email_upi_payment',
