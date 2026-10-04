@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'app/app.dart';
+import 'app/app_lock.dart';
 import 'app/notifications.dart';
 import 'data/db/app_database.dart';
 import 'data/email/email_sync.dart';
@@ -23,10 +24,14 @@ Future<void> main() async {
   final onboarded = await getIt<SettingsRepository>().getBool(
     SettingsRepository.onboardingDone,
   );
-  final theme = await getIt<SettingsRepository>().get(
-    SettingsRepository.themeMode,
+  final settings = getIt<SettingsRepository>();
+  final theme = await settings.get(SettingsRepository.themeMode);
+  final lock = AppLock(
+    settings,
+    enabled: await settings.getBool(SettingsRepository.appLock),
   );
-  runApp(KApp(onboarded: onboarded, theme: theme));
+  getIt.registerSingleton<AppLock>(lock);
+  runApp(KApp(onboarded: onboarded, lock: lock, theme: theme));
 }
 
 /// Headless entrypoint run by the native `SmsProcessWorker` when an SMS

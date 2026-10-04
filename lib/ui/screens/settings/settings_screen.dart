@@ -16,10 +16,11 @@ import 'appearance_settings.dart';
 import 'bank_settings.dart';
 import 'email_settings.dart';
 import 'notification_settings.dart';
+import 'privacy_settings.dart';
 import 'settings_parts.dart';
 
 /// Settings (design 06): accounts, banks, email, sync, notifications,
-/// appearance, message formats. Backup and app lock arrive with Phase 6.
+/// appearance, privacy, message formats. Backup arrives with Phase 6.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -45,6 +46,7 @@ class SettingsScreen extends StatelessWidget {
           const _SyncSection(),
           const NotificationSettings(),
           const AppearanceSettings(),
+          const PrivacySettings(),
           const SettingsHead('Message formats'),
           StreamBuilder<List<LearnedFormat>>(
             stream: getIt<LearnedFormats>().watch(),

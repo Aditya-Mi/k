@@ -16,6 +16,9 @@ class SettingsRepository {
   /// `system` (default), `light` or `dark`.
   static const themeMode = 'device.theme';
 
+  /// App lock on (`true`) — fingerprint or screen lock when k opens.
+  static const appLock = 'device.appLock';
+
   Future<String?> get(String key) async => (await (_db.select(
     _db.appSettings,
   )..where((s) => s.key.equals(key))).getSingleOrNull())?.value;

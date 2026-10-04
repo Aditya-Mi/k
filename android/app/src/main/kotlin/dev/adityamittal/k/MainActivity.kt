@@ -2,11 +2,12 @@ package dev.adityamittal.k
 
 import dev.adityamittal.k.sms.SmsChannel
 import dev.adityamittal.k.sms.SmsEventHub
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 
-class MainActivity : FlutterActivity() {
+// FragmentActivity: local_auth hosts BiometricPrompt (app lock).
+class MainActivity : FlutterFragmentActivity() {
     private var smsChannel: SmsChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
