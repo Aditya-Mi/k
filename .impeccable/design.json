@@ -1,0 +1,835 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-04T00:31:00.171166+00:00",
+  "title": "Design System: k",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Ink Black",
+        "canonical": "#101114",
+        "tonalRamp": [
+          "#0A0B0E",
+          "#242528",
+          "#414245",
+          "#606165",
+          "#818286",
+          "#A3A5A9",
+          "#C7C9CD",
+          "#EDEEF3"
+        ],
+        "theme": "dark"
+      },
+      "surface-1": {
+        "role": "neutral",
+        "displayName": "Surface 1",
+        "canonical": "#17181C",
+        "tonalRamp": [
+          "#0A0B0F",
+          "#242529",
+          "#414246",
+          "#606166",
+          "#818287",
+          "#A3A5AA",
+          "#C7C9CE",
+          "#EDEEF4"
+        ],
+        "theme": "dark"
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Surface 2",
+        "canonical": "#1F2126",
+        "tonalRamp": [
+          "#090B0F",
+          "#23252A",
+          "#404247",
+          "#5F6167",
+          "#808288",
+          "#A2A5AB",
+          "#C6C9D0",
+          "#EBEEF5"
+        ],
+        "theme": "dark"
+      },
+      "surface-3": {
+        "role": "neutral",
+        "displayName": "Surface 3",
+        "canonical": "#2A2C33",
+        "tonalRamp": [
+          "#090B11",
+          "#23252C",
+          "#404249",
+          "#5F6169",
+          "#7F828A",
+          "#A2A5AD",
+          "#C6C9D2",
+          "#EBEEF8"
+        ],
+        "theme": "dark"
+      },
+      "outline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#34363E",
+        "tonalRamp": [
+          "#090B11",
+          "#23252C",
+          "#3F424A",
+          "#5F616A",
+          "#7F828B",
+          "#A2A5AE",
+          "#C6C9D3",
+          "#EBEEF8"
+        ],
+        "theme": "dark"
+      },
+      "text": {
+        "role": "primary",
+        "displayName": "Paper White",
+        "canonical": "#ECEAE4",
+        "tonalRamp": [
+          "#0C0B07",
+          "#262521",
+          "#43423D",
+          "#63615C",
+          "#84827D",
+          "#A7A59F",
+          "#CBC9C3",
+          "#F0EEE8"
+        ],
+        "theme": "dark"
+      },
+      "text-2": {
+        "role": "neutral",
+        "displayName": "Worn Grey",
+        "canonical": "#A9A79F",
+        "tonalRamp": [
+          "#0D0B06",
+          "#27251F",
+          "#44423B",
+          "#63615A",
+          "#84827B",
+          "#A7A59D",
+          "#CBC9C1",
+          "#F1EFE6"
+        ],
+        "theme": "dark"
+      },
+      "text-3": {
+        "role": "neutral",
+        "displayName": "Faded Grey",
+        "canonical": "#8C8A82",
+        "tonalRamp": [
+          "#0D0B06",
+          "#27251F",
+          "#44423C",
+          "#63615A",
+          "#84827B",
+          "#A7A59E",
+          "#CBC9C1",
+          "#F1EEE7"
+        ],
+        "theme": "dark"
+      },
+      "on-ink": {
+        "role": "primary",
+        "displayName": "On-Ink Label",
+        "canonical": "#101114",
+        "tonalRamp": [
+          "#0A0B0E",
+          "#242528",
+          "#414245",
+          "#606165",
+          "#818286",
+          "#A3A5A9",
+          "#C7C9CD",
+          "#EDEEF3"
+        ],
+        "theme": "dark"
+      },
+      "alert": {
+        "role": "tertiary",
+        "displayName": "Coral Alert",
+        "canonical": "#FF8A65",
+        "tonalRamp": [
+          "#1B0300",
+          "#461000",
+          "#752100",
+          "#A5380F",
+          "#CC5C38",
+          "#F37F5B",
+          "#FFAD90",
+          "#FFDCC7"
+        ],
+        "theme": "dark"
+      },
+      "alert-bg": {
+        "role": "tertiary",
+        "displayName": "Coral Alert Ground",
+        "canonical": "#3A2019",
+        "tonalRamp": [
+          "#100907",
+          "#30211D",
+          "#533C35",
+          "#775951",
+          "#9A7A71",
+          "#BE9C93",
+          "#DEC2BA",
+          "#FDE9E4"
+        ],
+        "theme": "dark"
+      },
+      "ink-10": {
+        "role": "secondary",
+        "displayName": "Ten Brown",
+        "canonical": "#B07A52",
+        "tonalRamp": [
+          "#140802",
+          "#371E0A",
+          "#5E3718",
+          "#86532C",
+          "#AA754D",
+          "#CF976E",
+          "#EDBE9E",
+          "#FFE7D0"
+        ],
+        "theme": "dark",
+        "amountBand": "under ₹20",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-20": {
+        "role": "secondary",
+        "displayName": "Twenty Lime",
+        "canonical": "#B9C46A",
+        "tonalRamp": [
+          "#0B0D00",
+          "#252800",
+          "#414700",
+          "#606800",
+          "#818A2E",
+          "#A3AD54",
+          "#C7D18B",
+          "#EDF4C4"
+        ],
+        "theme": "dark",
+        "amountBand": "₹20–49",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-50": {
+        "role": "secondary",
+        "displayName": "Fifty Fluoro Blue",
+        "canonical": "#4CC3D9",
+        "tonalRamp": [
+          "#000F14",
+          "#002C36",
+          "#004D5D",
+          "#007085",
+          "#0093A8",
+          "#3DB7CD",
+          "#83D8EA",
+          "#C1FAFF"
+        ],
+        "theme": "dark",
+        "amountBand": "₹50–99",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-100": {
+        "role": "secondary",
+        "displayName": "Hundred Lavender",
+        "canonical": "#A79BE0",
+        "tonalRamp": [
+          "#0B0818",
+          "#261F3E",
+          "#43396A",
+          "#635695",
+          "#8377B9",
+          "#A69ADF",
+          "#C9C1F9",
+          "#EEE9FF"
+        ],
+        "theme": "dark",
+        "amountBand": "₹100–199",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-200": {
+        "role": "secondary",
+        "displayName": "Two Hundred Yellow",
+        "canonical": "#F2B705",
+        "tonalRamp": [
+          "#150800",
+          "#3A1E00",
+          "#623800",
+          "#8B5400",
+          "#AF7700",
+          "#D49A00",
+          "#F0C25C",
+          "#FFEBA9"
+        ],
+        "theme": "dark",
+        "amountBand": "₹200–499",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-500": {
+        "role": "secondary",
+        "displayName": "Five Hundred Stone",
+        "canonical": "#A8A59B",
+        "tonalRamp": [
+          "#0D0B05",
+          "#27251D",
+          "#454239",
+          "#646158",
+          "#858279",
+          "#A8A59B",
+          "#CCC9BF",
+          "#F2EEE4"
+        ],
+        "theme": "dark",
+        "amountBand": "₹500–1,999",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-2000": {
+        "role": "secondary",
+        "displayName": "Two Thousand Magenta",
+        "canonical": "#E0609A",
+        "tonalRamp": [
+          "#1B010D",
+          "#460728",
+          "#751246",
+          "#A52767",
+          "#CC4E88",
+          "#F472AB",
+          "#FFA3CE",
+          "#FFD5F2"
+        ],
+        "theme": "dark",
+        "amountBand": "₹2,000 and up",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "bg-light": {
+        "role": "neutral",
+        "displayName": "Ink Black (light)",
+        "canonical": "#F6F4EE",
+        "tonalRamp": [
+          "#0C0B07",
+          "#262521",
+          "#43423D",
+          "#63615C",
+          "#84827D",
+          "#A7A59F",
+          "#CBC9C3",
+          "#F0EEE8"
+        ],
+        "theme": "light"
+      },
+      "surface-1-light": {
+        "role": "neutral",
+        "displayName": "Surface 1 (light)",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ],
+        "theme": "light"
+      },
+      "surface-2-light": {
+        "role": "neutral",
+        "displayName": "Surface 2 (light)",
+        "canonical": "#EEEBE3",
+        "tonalRamp": [
+          "#0D0B06",
+          "#27251F",
+          "#44423B",
+          "#64615A",
+          "#85827B",
+          "#A8A59D",
+          "#CCC9C1",
+          "#F1EEE6"
+        ],
+        "theme": "light"
+      },
+      "surface-3-light": {
+        "role": "neutral",
+        "displayName": "Surface 3 (light)",
+        "canonical": "#E3DFD5",
+        "tonalRamp": [
+          "#0E0B05",
+          "#28251D",
+          "#45423A",
+          "#646158",
+          "#868279",
+          "#A9A59B",
+          "#CDC9BF",
+          "#F2EEE4"
+        ],
+        "theme": "light"
+      },
+      "outline-light": {
+        "role": "neutral",
+        "displayName": "Hairline (light)",
+        "canonical": "#D3CEC2",
+        "tonalRamp": [
+          "#0E0B04",
+          "#29251C",
+          "#464238",
+          "#656156",
+          "#878277",
+          "#A9A599",
+          "#CEC9BD",
+          "#F3EEE2"
+        ],
+        "theme": "light"
+      },
+      "text-light": {
+        "role": "primary",
+        "displayName": "Paper White (light)",
+        "canonical": "#17181C",
+        "tonalRamp": [
+          "#0A0B0F",
+          "#242529",
+          "#414246",
+          "#606166",
+          "#818287",
+          "#A3A5AA",
+          "#C7C9CE",
+          "#EDEEF4"
+        ],
+        "theme": "light"
+      },
+      "text-2-light": {
+        "role": "neutral",
+        "displayName": "Worn Grey (light)",
+        "canonical": "#55534C",
+        "tonalRamp": [
+          "#0D0B06",
+          "#27251F",
+          "#44423B",
+          "#63615A",
+          "#84827B",
+          "#A7A59D",
+          "#CBC9C1",
+          "#F1EEE6"
+        ],
+        "theme": "light"
+      },
+      "text-3-light": {
+        "role": "neutral",
+        "displayName": "Faded Grey (light)",
+        "canonical": "#69665D",
+        "tonalRamp": [
+          "#0D0B05",
+          "#27251D",
+          "#45423A",
+          "#646158",
+          "#858279",
+          "#A8A59B",
+          "#CCC9BF",
+          "#F2EEE4"
+        ],
+        "theme": "light"
+      },
+      "on-ink-light": {
+        "role": "primary",
+        "displayName": "On-Ink Label (light)",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ],
+        "theme": "light"
+      },
+      "alert-light": {
+        "role": "tertiary",
+        "displayName": "Coral Alert (light)",
+        "canonical": "#B23A1B",
+        "tonalRamp": [
+          "#1C0200",
+          "#480C00",
+          "#791B00",
+          "#A93110",
+          "#D05638",
+          "#F97B5B",
+          "#FFAA90",
+          "#FFDAC7"
+        ],
+        "theme": "light"
+      },
+      "alert-bg-light": {
+        "role": "tertiary",
+        "displayName": "Coral Alert Ground (light)",
+        "canonical": "#FBE3DA",
+        "tonalRamp": [
+          "#0F0A08",
+          "#2C221F",
+          "#4E3E38",
+          "#705C54",
+          "#927D75",
+          "#B6A097",
+          "#D7C5BE",
+          "#F8EBE6"
+        ],
+        "theme": "light"
+      },
+      "ink-10-light": {
+        "role": "secondary",
+        "displayName": "Ten Brown (light)",
+        "canonical": "#7A4A2A",
+        "tonalRamp": [
+          "#140803",
+          "#361E0E",
+          "#5D371F",
+          "#855434",
+          "#A87554",
+          "#CD9776",
+          "#EBBFA3",
+          "#FFE7D4"
+        ],
+        "theme": "light",
+        "amountBand": "under ₹20",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-20-light": {
+        "role": "secondary",
+        "displayName": "Twenty Lime (light)",
+        "canonical": "#626E14",
+        "tonalRamp": [
+          "#0A0D00",
+          "#232900",
+          "#3F4800",
+          "#5D690B",
+          "#7D8B37",
+          "#A0AE5B",
+          "#C4D190",
+          "#EBF4C8"
+        ],
+        "theme": "light",
+        "amountBand": "₹20–49",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-50-light": {
+        "role": "secondary",
+        "displayName": "Fifty Fluoro Blue (light)",
+        "canonical": "#0F7486",
+        "tonalRamp": [
+          "#000E12",
+          "#002B34",
+          "#004B59",
+          "#006D7F",
+          "#3790A2",
+          "#5EB3C6",
+          "#95D5E5",
+          "#CCF7FF"
+        ],
+        "theme": "light",
+        "amountBand": "₹50–99",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-100-light": {
+        "role": "secondary",
+        "displayName": "Hundred Lavender (light)",
+        "canonical": "#5845B0",
+        "tonalRamp": [
+          "#0A0620",
+          "#241A4F",
+          "#403184",
+          "#5E4CB7",
+          "#7D6FDE",
+          "#9F92FF",
+          "#C3BCFF",
+          "#E9E6FF"
+        ],
+        "theme": "light",
+        "amountBand": "₹100–199",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-200-light": {
+        "role": "secondary",
+        "displayName": "Two Hundred Yellow (light)",
+        "canonical": "#835F00",
+        "tonalRamp": [
+          "#120900",
+          "#332100",
+          "#583C00",
+          "#7E5A00",
+          "#A17C2E",
+          "#C59F53",
+          "#E4C58B",
+          "#FFECC4"
+        ],
+        "theme": "light",
+        "amountBand": "₹200–499",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-500-light": {
+        "role": "secondary",
+        "displayName": "Five Hundred Stone (light)",
+        "canonical": "#66635A",
+        "tonalRamp": [
+          "#0D0B05",
+          "#28251D",
+          "#454239",
+          "#646158",
+          "#858279",
+          "#A8A59B",
+          "#CCC9BF",
+          "#F2EEE4"
+        ],
+        "theme": "light",
+        "amountBand": "₹500–1,999",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      },
+      "ink-2000-light": {
+        "role": "secondary",
+        "displayName": "Two Thousand Magenta (light)",
+        "canonical": "#A51E5E",
+        "tonalRamp": [
+          "#1C010B",
+          "#470425",
+          "#780C42",
+          "#A82261",
+          "#D04A82",
+          "#F86FA4",
+          "#FFA1C9",
+          "#FFD4EE"
+        ],
+        "theme": "light",
+        "amountBand": "₹2,000 and up",
+        "usage": "Encodes amount band only (The One Job Rule)."
+      }
+    },
+    "typographyMeta": {
+      "amount-hero": {
+        "displayName": "Amount Hero",
+        "purpose": "Month total on the note panel and the amount on transaction detail."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Screen titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section heads and the large note chip numeral."
+      },
+      "amount-row": {
+        "displayName": "Amount Row",
+        "purpose": "Right-aligned amounts in list rows."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Payees, field values, raw message text."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Category · account · time lines under payees."
+      },
+      "day-header": {
+        "displayName": "Day Header",
+        "purpose": "Day group labels and their day totals."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Bottom navigation labels."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "motionStatus": "open: not yet specified; to be authored in the Flutter build",
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "412dp",
+        "note": "single-column phone; renders at 2x"
+      }
+    ],
+    "opacity": [
+      {
+        "name": "pending-chip",
+        "value": 0.45,
+        "purpose": "Pending, upcoming and unparsed note chips."
+      }
+    ],
+    "strokes": [
+      {
+        "name": "credit-chip-outline",
+        "value": "1.5dp",
+        "purpose": "Outlined credit note chip in band ink."
+      },
+      {
+        "name": "guilloche-hairline",
+        "value": "0.5dp",
+        "purpose": "Rosette linework on the month note panel."
+      },
+      {
+        "name": "hairline",
+        "value": "1dp",
+        "purpose": "Dividers and card outlines."
+      }
+    ],
+    "platform": {
+      "target": "android",
+      "framework": "Flutter, Material 3",
+      "fontNotes": "Archivo must be loaded as a variable font with wdth ≈112 and tnum for amounts; the Pencil renders could not carry either."
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action per screen, at the bottom in thumb reach.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 12l5 5L20 7\"/></svg>Save &amp; learn</button>",
+      "css": ":host{--bg:#101114;--s1:#17181C;--s2:#1F2126;--s3:#2A2C33;--outline:#34363E;--text:#ECEAE4;--t2:#A9A79F;--t3:#8C8A82;--onink:#101114;--alert:#FF8A65;--alertbg:#3A2019;--i200:#F2B705;--i500:#A8A59B;--i2000:#E0609A;--i50:#4CC3D9;} .ds-btn-primary{display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 28px;border:none;border-radius:9999px;background:var(--text);color:var(--onink);font:600 16px Archivo,Roboto,sans-serif;font-variation-settings:'wdth' 112;cursor:pointer;transition:background .15s}.ds-btn-primary:hover{background:#D9D7D0}.ds-btn-primary:focus-visible{outline:2px solid var(--text);outline-offset:2px}.ds-btn-primary:active{background:#C9C7C0}"
+    },
+    {
+      "name": "Outlined Button",
+      "kind": "button",
+      "refersTo": "button-outlined",
+      "description": "Secondary action beside the primary, or a destructive choice on detail.",
+      "html": "<button class=\"ds-btn-outlined\">Not a transaction</button>",
+      "css": ":host{--bg:#101114;--s1:#17181C;--s2:#1F2126;--s3:#2A2C33;--outline:#34363E;--text:#ECEAE4;--t2:#A9A79F;--t3:#8C8A82;--onink:#101114;--alert:#FF8A65;--alertbg:#3A2019;--i200:#F2B705;--i500:#A8A59B;--i2000:#E0609A;--i50:#4CC3D9;} .ds-btn-outlined{height:40px;padding:0 20px;border:1px solid var(--outline);border-radius:9999px;background:transparent;color:var(--text);font:600 16px Archivo,Roboto,sans-serif;font-variation-settings:'wdth' 112;cursor:pointer;transition:background .15s}.ds-btn-outlined:hover{background:var(--s1)}.ds-btn-outlined:focus-visible{outline:2px solid var(--text);outline-offset:2px}"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "Date, account, category and direction filters above the list.",
+      "html": "<button class=\"ds-filter\">This month<svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M7 10l5 5 5-5z\"/></svg></button>",
+      "css": ":host{--bg:#101114;--s1:#17181C;--s2:#1F2126;--s3:#2A2C33;--outline:#34363E;--text:#ECEAE4;--t2:#A9A79F;--t3:#8C8A82;--onink:#101114;--alert:#FF8A65;--alertbg:#3A2019;--i200:#F2B705;--i500:#A8A59B;--i2000:#E0609A;--i50:#4CC3D9;} .ds-filter{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px 0 16px;border:1px solid var(--outline);border-radius:8px;background:transparent;color:var(--text);font:400 15px Roboto,sans-serif;cursor:pointer}.ds-filter:hover{background:var(--s1)}.ds-filter:focus-visible{outline:2px solid var(--text);outline-offset:2px}"
+    },
+    {
+      "name": "Note Chips",
+      "kind": "chip",
+      "refersTo": "note-chip-debit",
+      "description": "Amount band as a banknote-shaped chip: debit filled, credit outlined, pending at 45%; large form carries the numeral.",
+      "html": "<div class=\"ds-notes\"><span class=\"ds-note\" style=\"background:#F2B705\"></span><span class=\"ds-note ds-note-credit\" style=\"border-color:#A8A59B\"></span><span class=\"ds-note\" style=\"background:#A8A59B;opacity:.45\"></span><span class=\"ds-note-lg\">500</span></div>",
+      "css": ":host{--bg:#101114;--s1:#17181C;--s2:#1F2126;--s3:#2A2C33;--outline:#34363E;--text:#ECEAE4;--t2:#A9A79F;--t3:#8C8A82;--onink:#101114;--alert:#FF8A65;--alertbg:#3A2019;--i200:#F2B705;--i500:#A8A59B;--i2000:#E0609A;--i50:#4CC3D9;} .ds-notes{display:flex;align-items:center;gap:16px;padding:16px;background:var(--bg)}.ds-note{width:24px;height:12px;border-radius:2px;box-sizing:border-box}.ds-note-credit{background:transparent;border:1.5px solid}.ds-note-lg{display:inline-flex;align-items:center;justify-content:flex-end;width:60px;height:28px;padding-right:6px;box-sizing:border-box;border-radius:4px;background:var(--i500);color:var(--onink);font-family:Archivo,Roboto,sans-serif;font-variation-settings:'wdth' 112;font-feature-settings:'tnum';font-weight:700;font-size:12px}"
+    },
+    {
+      "name": "Txn Row",
+      "kind": "custom",
+      "refersTo": "txn-row",
+      "description": "Note chip, payee over meta, right-aligned tabular amount.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-row-chip\"></span><div class=\"ds-row-text\"><div class=\"ds-row-payee\">Swiggy</div><div class=\"ds-row-meta\">Food · Axis ··1234 · 14:32</div></div><div class=\"ds-row-amt\">₹250</div></div>",
+      "css": ":host{--bg:#101114;--s1:#17181C;--s2:#1F2126;--s3:#2A2C33;--outline:#34363E;--text:#ECEAE4;--t2:#A9A79F;--t3:#8C8A82;--onink:#101114;--alert:#FF8A65;--alertbg:#3A2019;--i200:#F2B705;--i500:#A8A59B;--i2000:#E0609A;--i50:#4CC3D9;} .ds-row{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--bg);cursor:pointer}.ds-row:hover{background:var(--s1)}.ds-row-chip{width:24px;height:12px;border-radius:2px;background:var(--i200);flex:none}.ds-row-text{flex:1}.ds-row-payee{color:var(--text);font:400 15px Roboto,sans-serif}.ds-row-meta{color:var(--t2);font:400 12.5px Roboto,sans-serif;margin-top:2px}.ds-row-amt{color:var(--text);font-family:Archivo,Roboto,sans-serif;font-variation-settings:'wdth' 112;font-feature-settings:'tnum';font-weight:600;font-size:16px}"
+    },
+    {
+      "name": "Month Note Panel",
+      "kind": "card",
+      "refersTo": "month-note-panel",
+      "description": "Signature month card: hero total, in/out line, denomination ribbon, guilloche rosette in the total's ink.",
+      "html": "<div class=\"ds-panel\"><svg class=\"ds-panel-g\" viewBox=\"0 0 100 100\" fill=\"none\" stroke=\"#E0609A\" stroke-width=\".5\"><circle cx=\"50\" cy=\"50\" r=\"48\"/><circle cx=\"50\" cy=\"50\" r=\"44\"/><circle cx=\"50\" cy=\"50\" r=\"12\"/><g><ellipse cx=\"50\" cy=\"22\" rx=\"10\" ry=\"22\"/><ellipse cx=\"50\" cy=\"78\" rx=\"10\" ry=\"22\"/><ellipse cx=\"22\" cy=\"50\" rx=\"22\" ry=\"10\"/><ellipse cx=\"78\" cy=\"50\" rx=\"22\" ry=\"10\"/></g></svg><div class=\"ds-panel-month\">October 2026</div><div class=\"ds-panel-total\">₹48,210</div><div class=\"ds-panel-sub\">spent so far · ₹1,12,000 came in</div><div class=\"ds-ribbon\"><i style=\"flex:2;background:#B07A52\"></i><i style=\"flex:4;background:#B9C46A\"></i><i style=\"flex:8;background:#4CC3D9\"></i><i style=\"flex:14;background:#A79BE0\"></i><i style=\"flex:24;background:#F2B705\"></i><i style=\"flex:42;background:#A8A59B\"></i><i style=\"flex:106;background:#E0609A\"></i></div><div class=\"ds-panel-sub\">142 spends · ₹2,000+ notes make up 53% of it</div></div>",
+      "css": ":host{--bg:#101114;--s1:#17181C;--s2:#1F2126;--s3:#2A2C33;--outline:#34363E;--text:#ECEAE4;--t2:#A9A79F;--t3:#8C8A82;--onink:#101114;--alert:#FF8A65;--alertbg:#3A2019;--i200:#F2B705;--i500:#A8A59B;--i2000:#E0609A;--i50:#4CC3D9;} .ds-panel{position:relative;overflow:hidden;width:380px;aspect-ratio:2.07/1;box-sizing:border-box;padding:16px;border-radius:12px;background:var(--s2);color:var(--text);font-family:Roboto,sans-serif}.ds-panel-g{position:absolute;right:-10px;top:4px;width:110px;height:110px}.ds-panel-month{color:var(--t2);font-size:15px}.ds-panel-total{font-family:Archivo,Roboto,sans-serif;font-variation-settings:'wdth' 112;font-feature-settings:'tnum';font-weight:700;font-size:40px;margin-top:16px}.ds-panel-sub{color:var(--t2);font-size:12.5px;margin-top:4px}.ds-ribbon{display:flex;gap:2px;height:6px;margin-top:16px}.ds-ribbon i{border-radius:9999px}"
+    },
+    {
+      "name": "Bottom Nav",
+      "kind": "nav",
+      "refersTo": "nav-bar",
+      "description": "Material 3 navigation bar, four destinations, neutral badge.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-on\" href=\"#\"><span class=\"ds-ind\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M6 3h12v18l-3-2-3 2-3-2-3 2z\"/></svg></span>Transactions</a><a class=\"ds-nav-item\" href=\"#\"><span class=\"ds-ind\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M4 9h8M4 15h8M15 13l5 5M20 13l-5 5\"/></svg><b class=\"ds-badge\">3</b></span>Review</a><a class=\"ds-nav-item\" href=\"#\"><span class=\"ds-ind\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M4 12a8 8 0 0 1 14-5M20 12a8 8 0 0 1-14 5\"/></svg></span>Subscriptions</a><a class=\"ds-nav-item\" href=\"#\"><span class=\"ds-ind\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 4v8h8\"/></svg></span>Summary</a></nav>",
+      "css": ":host{--bg:#101114;--s1:#17181C;--s2:#1F2126;--s3:#2A2C33;--outline:#34363E;--text:#ECEAE4;--t2:#A9A79F;--t3:#8C8A82;--onink:#101114;--alert:#FF8A65;--alertbg:#3A2019;--i200:#F2B705;--i500:#A8A59B;--i2000:#E0609A;--i50:#4CC3D9;} .ds-nav{display:flex;justify-content:space-around;padding:12px 0 16px;background:var(--s1)}.ds-nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--t2);text-decoration:none;font:500 12px Roboto,sans-serif}.ds-ind{position:relative;display:flex;align-items:center;justify-content:center;width:64px;height:32px;border-radius:16px}.ds-nav-item:hover .ds-ind{background:var(--s2)}.ds-nav-item:focus-visible{outline:2px solid var(--text);outline-offset:2px}.ds-on{color:var(--text);font-weight:700}.ds-on .ds-ind{background:var(--s3)}.ds-badge{position:absolute;top:-2px;right:12px;min-width:16px;height:16px;border-radius:8px;background:var(--text);color:var(--onink);font:700 10px Roboto,sans-serif;display:flex;align-items:center;justify-content:center}"
+    },
+    {
+      "name": "Raw Message Card",
+      "kind": "card",
+      "refersTo": "raw-message-card",
+      "description": "Verbatim bank SMS or email behind a transaction; merged duplicates carry a MERGED stamp.",
+      "html": "<div class=\"ds-msg\"><div class=\"ds-msg-head\"><div><div class=\"ds-msg-from\">alerts@axisbank.com</div><div class=\"ds-msg-meta\">Email · 4 Oct, 20:13</div></div><span class=\"ds-stamp\">MERGED</span></div><p class=\"ds-msg-body\">Thank you for using your Axis Bank Credit Card no. XX5678 for INR 1,299.00 at AMAZON PAY IN E.</p></div>",
+      "css": ":host{--bg:#101114;--s1:#17181C;--s2:#1F2126;--s3:#2A2C33;--outline:#34363E;--text:#ECEAE4;--t2:#A9A79F;--t3:#8C8A82;--onink:#101114;--alert:#FF8A65;--alertbg:#3A2019;--i200:#F2B705;--i500:#A8A59B;--i2000:#E0609A;--i50:#4CC3D9;} .ds-msg{width:360px;padding:16px;border:1px solid var(--outline);border-radius:12px;background:var(--s1);font-family:Roboto,sans-serif}.ds-msg-head{display:flex;justify-content:space-between;align-items:flex-start}.ds-msg-from{color:var(--text);font-weight:500;font-size:14px}.ds-msg-meta{color:var(--t3);font-size:12.5px}.ds-msg-body{color:var(--t2);font-size:15px;line-height:1.55;margin:12px 0 0}.ds-stamp{border:1.5px solid var(--t2);border-radius:6px;padding:2px 8px;color:var(--t2);font:700 12px Archivo,Roboto,sans-serif;letter-spacing:.12em;transform:rotate(-4deg)}"
+    },
+    {
+      "name": "Alert Badge",
+      "kind": "chip",
+      "refersTo": "alert-badge",
+      "description": "A changed fact, such as a subscription price rise. Never for queues.",
+      "html": "<span class=\"ds-alert\">↑ Price up, was ₹149</span>",
+      "css": ":host{--bg:#101114;--s1:#17181C;--s2:#1F2126;--s3:#2A2C33;--outline:#34363E;--text:#ECEAE4;--t2:#A9A79F;--t3:#8C8A82;--onink:#101114;--alert:#FF8A65;--alertbg:#3A2019;--i200:#F2B705;--i500:#A8A59B;--i2000:#E0609A;--i50:#4CC3D9;} .ds-alert{display:inline-block;padding:3px 8px;border-radius:8px;background:var(--alertbg);color:var(--alert);font:500 12.5px Roboto,sans-serif;font-feature-settings:'tnum'}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Note Ink Ledger",
+    "overview": "k reads like a ledger kept in banknote ink. Every amount carries the colour of the RBI note you would have paid it with, so the size of a spend registers as colour before the number is read. Everything else steps back: a near-black ground with flat tonal steps, paper-white type, neutral Material Symbols, and Material 3 controls left plain. The inks are the only saturated thing on screen, and they mean one thing.\n\nThe density is a working list, not a dashboard. A screen is one column at a 16dp gutter: the month on a note-shaped panel, a row of filter chips, and day-grouped rows of chip, payee and amount. Depth is tonal, never cast. The one ornament is the guilloche rosette on the month panel, drawn in hairlines in the month total's ink, borrowed from the security printing of the notes themselves.\n\nDark is the primary theme; light is the same system with the inks deepened for a paper ground. Category-coloured donuts and tonal category cards are the confirmed rejection: categories are neutral, amounts are inked.",
+    "keyCharacteristics": [
+      "Seven denomination inks, used only to encode amount band.",
+      "Debit is a filled note chip, credit is an outlined chip with +₹, pending is the filled chip at 45%.",
+      "Archivo, semi-expanded with tabular figures, for amounts and heads; Roboto for everything that is read.",
+      "Flat colour and tonal surface steps; no shadows, gradients or glass.",
+      "Every transaction traces to its raw bank message, shown verbatim."
+    ],
+    "rules": [
+      {
+        "name": "The One Job Rule",
+        "body": "A denomination ink appears only where it encodes the band of a specific amount: note chips, the denomination ribbon, band bars, the guilloche of the month total, and the amount mark in a message being reviewed. Never for categories, accounts, status, focus, selection or decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fill Means Out Rule",
+        "body": "Debit is a filled chip; credit is the same chip outlined in its band ink with a +₹ amount; pending, upcoming and unparsed amounts are the filled chip at 45% opacity. Direction is never carried by red and green.",
+        "section": "colors"
+      },
+      {
+        "name": "The Calm Count Rule",
+        "body": "Review counts, badges and the review banner are neutral. Coral alert is reserved for a changed fact (a price rise), never for a queue waiting on the user.",
+        "section": "colors"
+      },
+      {
+        "name": "The Counted Figure Rule",
+        "body": "Every amount set as a figure (row, hero, column total) is Archivo at wdth 112 with tabular figures, so columns of amounts align digit for digit. The Pencil renders could not carry the width axis or tnum; the Flutter build must.",
+        "section": "typography"
+      },
+      {
+        "name": "The Indian Grouping Rule",
+        "body": "Amounts use Indian digit grouping and the ₹ sign: ₹1,12,000, never ₹112,000 or INR. Paise show only where the source message carries them (detail and review).",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Ink Rule",
+        "body": "Colour is committed and flat: no gradients, no glass, no blur, no cast shadows. If something needs to stand forward, it moves one surface step, or gets a hairline.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Note Proportion Rule",
+        "body": "An amount's ink is always shown as a note-shaped rectangle or a bar, never as a dot, circle or avatar.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Guilloche Rule",
+        "body": "The rosette appears only on the month note panel (and its locked twin), always as hairlines, always in the month total's ink or neutral. It is never a background texture, never filled, never on another card.",
+        "section": "components"
+      },
+      {
+        "name": "The Struck Not Gone Rule",
+        "body": "Merged and deleted records stay visible, marked with a stamp, so the trail back to every bank message is never broken.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** colour an amount's chip by its band: ink-10 under ₹20 through ink-2000 at ₹2,000 and up, using the `-light` twins on the paper theme.",
+      "**Do** set every figure amount in Archivo at wdth 112 with tabular figures, right-aligned, with Indian grouping (₹1,12,000).",
+      "**Do** show categories with neutral Material Symbols Rounded in text-2, and category bars in neutral fill.",
+      "**Do** make depth with surface steps (bg, surface-1, surface-2, surface-3) and 1dp hairlines.",
+      "**Do** make the one primary action a text-coloured pill with a bg-coloured label, at the bottom in thumb reach.",
+      "**Do** keep the raw bank message one tap from any transaction, verbatim."
+    ],
+    "donts": [
+      "**Don't** use a denomination ink for a category, account, status, selection, focus ring or decoration.",
+      "**Don't** show debit and credit as red and green; use filled versus outlined chips and +₹.",
+      "**Don't** colour the review count, badge or banner with alert; coral is only for a changed fact like a price rise.",
+      "**Don't** use gradients, glass, blur or drop shadows.",
+      "**Don't** draw the guilloche anywhere but the month note panel and its locked twin.",
+      "**Don't** reuse the review editor's letterspaced capital field captions as section labels or eyebrows elsewhere.",
+      "**Don't** draw a custom biometric dialog; use the system BiometricPrompt."
+    ]
+  }
+}

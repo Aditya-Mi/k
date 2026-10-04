@@ -49,3 +49,6 @@ app.*.map.json
 
 # Local env
 k.iml
+
+# Impeccable review scratch
+.impeccable/review/
