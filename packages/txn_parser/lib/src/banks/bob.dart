@@ -3,13 +3,13 @@ import '../enums.dart';
 import '../template.dart';
 
 // SMS UPI debit (Dr/Cr) is verified against real samples; other formats are
-// still synthetic (see test/fixtures/bob.json).
+// still synthetic (see test/fixtures/bob.json). BOB sends no email alerts.
 final bobBank = BankDefinition(
   code: 'BOB',
   name: 'Bank of Baroda',
   // BOBSMS seen on real alerts; BOBTXN/BOBCRD unverified.
   smsSenders: const ['BOBSMS', 'BOBTXN', 'BOBCRD'],
-  emailSenders: const ['bankofbaroda.com', 'bobfinancial.com'],
+  emailSenders: const [],
   templates: [
     ParserTemplate(
       id: 'bob_sms_upi_debit',
@@ -76,18 +76,6 @@ final bobBank = BankDefinition(
         r'A/c X+(?<last4>\d{4}) will be debited Rs\.?(?<amount>{amt}) on '
         r'(?<dueDate>[\d\-]+) for (?<payee>.+?) mandate UMRN:? (?<mandateRef>\w+)',
       ),
-    ),
-    ParserTemplate(
-      id: 'bob_email_upi',
-      bankCode: 'BOB',
-      channel: Channel.email,
-      name: 'UPI debit/credit (email)',
-      pattern: rx(
-        r'account X+(?<last4>\d{4}) has been (?<direction>debited|credited) with INR '
-        r'(?<amount>{amt}) on (?<date>\d{2}-[A-Za-z]{3}-\d{4} [\d:]+) towards '
-        r'UPI/(?<ref>\d+)/(?<payee>\S+?)\. Available balance:? INR (?<balance>{amt})',
-      ),
-      defaults: const {'txnType': 'upi'},
     ),
   ],
 );

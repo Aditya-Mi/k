@@ -2,7 +2,7 @@ import '../bank_definition.dart';
 import '../enums.dart';
 import '../template.dart';
 
-// SMS UPI sent, debit card, AutoPay executed and the Kotak811 payment email
+// SMS UPI sent, UPI received, debit card, AutoPay executed and the Kotak811 payment email
 // are verified against real samples; other formats are still synthetic (see test/fixtures/kotak.json).
 final kotakBank = BankDefinition(
   code: 'KOTAK',
@@ -27,7 +27,7 @@ final kotakBank = BankDefinition(
       channel: Channel.sms,
       name: 'UPI received',
       pattern: rx(
-        r'Received Rs\.?(?<amount>{amt}) in your Kotak Bank A/?C X(?<last4>\d{4}) from '
+        r'Received Rs\.?(?<amount>{amt}) in your Kotak Bank A/?C X?(?<last4>\d{4}) from '
         r'(?<payee>.+?) on (?<date>[\d\-]+)\.? ?UPI Ref:? ?(?<ref>\d+)',
       ),
       defaults: const {'direction': 'credit', 'txnType': 'upi'},

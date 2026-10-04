@@ -12,10 +12,10 @@
     "expected": {"status": "parsed", "templateId": "kotak_sms_upi_sent", "amountMinor": 20800, "direction": "debit", "txnType": "upi", "last4": "5543", "payee": "ZEPTO MARKETPLACE PR", "ref": "801397544523", "occurredAt": "2026-10-02T00:00:00"}
   },
   {
-    "name": "UPI received",
-    "channel": "sms", "sender": "AD-KOTAKB-S", "receivedAt": "2026-10-05T09:16:00",
-    "body": "Received Rs.1500.00 in your Kotak Bank AC X1234 from rahul.sharma@okhdfcbank on 05-10-26.UPI Ref:427898765432.",
-    "expected": {"status": "parsed", "amountMinor": 150000, "direction": "credit", "txnType": "upi", "payee": "rahul.sharma@okhdfcbank", "ref": "427898765432"}
+    "name": "Real: UPI received, account without X prefix",
+    "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-09-28T11:02:30",
+    "body": "Received Rs.200.00 in your Kotak Bank AC 5543 from RAHUL SHARMA on 28-09-26.UPI Ref:123456789012",
+    "expected": {"status": "parsed", "templateId": "kotak_sms_upi_received", "amountMinor": 20000, "direction": "credit", "txnType": "upi", "last4": "5543", "payee": "RAHUL SHARMA", "ref": "123456789012", "occurredAt": "2026-09-28T11:02:30"}
   },
   {
     "name": "Credit card spend",

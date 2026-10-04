@@ -2,7 +2,7 @@ import '../bank_definition.dart';
 import '../enums.dart';
 import '../template.dart';
 
-// SMS UPI and the email transaction summary are verified against real
+// SMS UPI, SMS NEFT/IMPS/RTGS credit and the email transaction summary are verified against real
 // samples; other formats are still synthetic (see test/fixtures/axis.json).
 final axisBank = BankDefinition(
   code: 'AXIS',
@@ -39,8 +39,8 @@ final axisBank = BankDefinition(
       name: 'NEFT/IMPS/RTGS credit',
       pattern: rx(
         r'INR (?<amount>{amt}) credited to A/c no\. XX(?<last4>\d{4}) on '
-        r'(?<date>[\d\-]+ at [\d:]+)(?: IST)?\. Info- (?<type>NEFT|IMPS|RTGS)/(?<ref>\w+)/'
-        r'(?<payee>.+?)\. Avl Bal- INR (?<balance>{amt})',
+        r'(?<date>[\d\-]+ at [\d:]+)(?: IST)?\. Info ?- ?(?<type>NEFT|IMPS|RTGS)/(?<ref>\w+)/'
+        r'(?<payee>.+?)\.? (?:Avl Bal|Chk Bal|- Axis Bank)',
       ),
       defaults: const {'direction': 'credit'},
     ),

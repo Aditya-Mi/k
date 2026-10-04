@@ -48,10 +48,10 @@
     "expected": {"status": "needsReview", "amountMinor": 50000, "direction": "credit", "last4": "1234"}
   },
   {
-    "name": "UPI debit email",
+    "name": "BOB sends no email alerts, so its domain is not a bank sender",
     "channel": "email", "sender": "Bank of Baroda <alerts@bankofbaroda.com>", "receivedAt": "2026-10-05T14:34:00",
     "subject": "Transaction Alert",
     "body": "Dear Customer, Your account XXXXXX1234 has been debited with INR 250.00 on 05-Oct-2026 14:32 towards UPI/427812345678/swiggy@axisbank. Available balance: INR 12,345.67",
-    "expected": {"status": "parsed", "templateId": "bob_email_upi", "amountMinor": 25000, "direction": "debit", "txnType": "upi", "ref": "427812345678", "payee": "swiggy@axisbank", "balanceMinor": 1234567, "occurredAt": "2026-10-05T14:32:00"}
+    "expected": {"status": "notBank"}
   }
 ]

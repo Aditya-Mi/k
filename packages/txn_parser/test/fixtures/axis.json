@@ -24,10 +24,10 @@
     "expected": {"status": "parsed", "templateId": "axis_sms_card_spend", "amountMinor": 129900, "direction": "debit", "txnType": "card", "last4": "5678", "payee": "AMAZON PAY IN E", "balanceMinor": 8542050, "occurredAt": "2026-10-04T20:11:45"}
   },
   {
-    "name": "NEFT salary credit",
-    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-01T10:06:00",
-    "body": "INR 45,000.00 credited to A/c no. XX1234 on 01-10-26 at 10:05:33 IST. Info- NEFT/CITIN26123456789/ACME TECHNOLOGIES PVT LTD. Avl Bal- INR 78,912.40 - Axis Bank",
-    "expected": {"status": "parsed", "amountMinor": 4500000, "direction": "credit", "txnType": "neft", "ref": "CITIN26123456789", "payee": "ACME TECHNOLOGIES PVT LTD", "balanceMinor": 7891240, "occurredAt": "2026-10-01T10:05:33"}
+    "name": "Real: NEFT credit with Chk Bal link",
+    "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-09-01T17:38:10",
+    "body": "INR 40060.00 credited to A/c no. XX0640 on 01-09-26 at 17:37:45 IST. Info - NEFT/IN42624456490226/FOOT. Chk Bal https://ccm.axis.bank.in/AXISBK/XXXXXXXX - Axis Bank",
+    "expected": {"status": "parsed", "templateId": "axis_sms_bank_transfer_credit", "amountMinor": 4006000, "direction": "credit", "txnType": "neft", "last4": "0640", "ref": "IN42624456490226", "payee": "FOOT", "occurredAt": "2026-09-01T17:37:45"}
   },
   {
     "name": "ATM withdrawal",
