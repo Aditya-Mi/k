@@ -60,7 +60,9 @@ class AccountsScreen extends StatelessWidget {
               Text(
                 'Balances come from your banks\' messages. When a message has '
                 'none, k adds up the payments since the last figure it saw, '
-                'so the number is marked estimated. Set it yourself any time.',
+                'so the number is marked estimated. Set it yourself any time. '
+                'Cash goes up with ATM withdrawals and down with cash payments '
+                'you add; set it after counting your wallet.',
                 style: t.meta.copyWith(color: c.text3),
               ),
               const SizedBox(height: 24),
@@ -89,7 +91,7 @@ class AccountsScreen extends StatelessWidget {
               title: Text(isCredit ? 'Set available limit' : 'Set balance'),
               onTap: () => Navigator.pop(context, 1),
             ),
-            if (all.length > 1)
+            if (all.length > 1 && !r.account.isCash)
               ListTile(
                 leading: const Icon(Icons.call_merge_rounded),
                 title: const Text('Merge into another account'),
@@ -146,7 +148,7 @@ class AccountsScreen extends StatelessWidget {
               ),
             ),
             for (final o in all)
-              if (o.account.id != r.account.id)
+              if (o.account.id != r.account.id && !o.account.isCash)
                 ListTile(
                   title: Text(o.account.long),
                   onTap: () => Navigator.pop(context, o.account),
@@ -212,7 +214,12 @@ class _AccountRow extends StatelessWidget {
     final b = row.balance;
     final isCredit = row.account.type == AccountType.creditCard;
     final label = isCredit ? 'Available limit' : 'Balance';
-    final meta = b == null
+    final meta = row.account.isCash
+        ? (b == null || b.anchorAt.millisecondsSinceEpoch == 0
+              ? 'ATM withdrawals add, cash payments you log subtract'
+              : 'Counted by you ${_when(b.anchorAt)}'
+                    '${b.estimated ? ', then ATM and cash payments' : ''}')
+        : b == null
         ? 'No balance yet · tap to set'
         : switch (b.source) {
             BalanceSource.bank when b.estimated =>

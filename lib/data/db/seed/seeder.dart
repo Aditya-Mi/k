@@ -19,6 +19,21 @@ class Seeder {
         BanksCompanion.insert(id: Value(bank.code), name: bank.name),
     ], mode: ignore);
 
+    b.insert(
+      _db.banks,
+      BanksCompanion.insert(id: const Value(cashBankId), name: 'Cash'),
+      mode: ignore,
+    );
+    b.insert(
+      _db.accounts,
+      AccountsCompanion.insert(
+        id: const Value(cashAccountId),
+        bankId: cashBankId,
+        type: AccountType.cash,
+      ),
+      mode: ignore,
+    );
+
     b.insertAll(_db.senderRules, [
       for (final bank in builtInBanks)
         for (final rule in bank.senderRules)

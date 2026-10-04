@@ -121,16 +121,20 @@ class _AccountsSection extends StatelessWidget {
           else
             for (final a in accounts)
               SettingsItem(
-                icon: a.isCard
+                icon: a.isCash
+                    ? Icons.payments_outlined
+                    : a.isCard
                     ? Icons.credit_card_outlined
                     : Icons.account_balance_wallet_outlined,
                 title: a.nickname ?? a.long,
-                subtitle: [
-                  if (a.nickname != null) a.long,
-                  if (a.includes.isNotEmpty)
-                    'includes ${a.includes.join(', ')}',
-                  'tap to rename or merge',
-                ].join(' · '),
+                subtitle: a.isCash
+                    ? 'ATM withdrawals add, cash payments you log subtract'
+                    : [
+                        if (a.nickname != null) a.long,
+                        if (a.includes.isNotEmpty)
+                          'includes ${a.includes.join(', ')}',
+                        'tap to rename or merge',
+                      ].join(' · '),
                 onTap: open,
                 trailing: const SettingsChevron(),
               ),

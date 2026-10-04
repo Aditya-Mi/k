@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   /// Alerts that name no account used to create a "no last4" account even when
   /// the bank had exactly one savings/current account; move those rows over.
@@ -137,6 +137,8 @@ class AppDatabase extends _$AppDatabase {
         await _foldDebitCards();
       }
       if (from < 5) await _atmCategory();
+      // v6: the Cash account (seeded; seedAll is idempotent).
+      if (from < 6) await Seeder(this).seedAll();
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

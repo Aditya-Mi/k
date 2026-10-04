@@ -50,6 +50,18 @@ class TxnRow extends StatelessWidget {
               ),
             ),
           ),
+        if (txn.isCash && txn.isDebit)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Tooltip(
+              message: 'Paid from cash, already counted at the ATM',
+              child: Icon(
+                Icons.payments_outlined,
+                size: 16,
+                color: context.k.text2,
+              ),
+            ),
+          ),
         if (txn.merged)
           Padding(
             padding: const EdgeInsets.only(right: 8),

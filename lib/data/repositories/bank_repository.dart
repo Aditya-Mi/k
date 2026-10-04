@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:txn_parser/txn_parser.dart' show Channel;
 
 import '../db/app_database.dart' hide ParserTemplate, SenderRule;
+import '../db/seed/seed_data.dart';
 
 /// A bank and the senders k reads it from (Settings → Banks).
 class BankView extends Equatable {
@@ -36,7 +37,8 @@ class BankRepository {
                   r.enabled.equals(true),
             ),
           ])
-          ..where(b.deletedAt.isNull())
+          // Cash is a pseudo bank: no senders to manage.
+          ..where(b.deletedAt.isNull() & b.id.equals(cashBankId).not())
           ..orderBy([OrderingTerm.asc(b.name), OrderingTerm.asc(r.pattern)]))
         .watch()
         .map((rows) {

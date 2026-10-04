@@ -57,7 +57,7 @@ void main() {
     () async {
       final (snap, meta) = await Snapshot(a).take();
       expect(meta.payments, 1);
-      expect(meta.accounts, 1);
+      expect(meta.accounts, 2); // + the seeded Cash account
 
       await Snapshot(b).restore(snap);
 

@@ -54,5 +54,5 @@ flutter build apk --debug
 - Phase 3 code done: review queue, mark-and-learn (user templates in `parser_templates`), merchant category rules, payee rename, learned formats screen.
 - Phase 4 code done: subscription detection (`lib/data/subscriptions/`), AutoPay matching, reminders.
 - Phase 5 done: email (IMAP app password + Gmail sign-in, `lib/data/email/`), SMS/email dedup, hourly sync, Add payment, theme setting, app icon (`tool/app_icon.py`).
-- Phase 6 code done: summary, app lock (`lib/app/app_lock.dart`), encrypted Drive backup + export/import (`lib/data/backup/`); awaiting device test.
+- Phase 6 code done: summary, app lock (`lib/app/app_lock.dart`), encrypted Drive backup + export/import (`lib/data/backup/`); Cash account (schema v6: ATM adds, logged cash spends subtract, not double-counted); awaiting device test.
 - Later ideas: encrypted multi-device sync (schema already sync-ready), other currencies.

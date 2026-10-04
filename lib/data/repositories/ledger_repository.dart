@@ -4,6 +4,7 @@ import 'package:txn_parser/txn_parser.dart';
 
 import '../db/app_database.dart';
 import '../db/enums.dart';
+import '../db/seed/seed_data.dart';
 import 'ledger_models.dart';
 
 /// Read models and edits for transactions, accounts and upcoming charges.
@@ -125,9 +126,15 @@ class LedgerRepository {
       for (final r in rows) {
         byAccount.putIfAbsent(r.accountId!, () => []).add(r);
       }
+      final atm = [
+        for (final r in rows)
+          if (r.txnType == TxnType.atm && r.accountId != cashAccountId) r,
+      ];
       return {
         for (final a in accs)
-          a.id: ?computeBalance(a, byAccount[a.id] ?? const []),
+          a.id: ?(a.type == AccountType.cash
+              ? computeCashBalance(a, byAccount[a.id] ?? const [], atm)
+              : computeBalance(a, byAccount[a.id] ?? const [])),
       };
     });
   }

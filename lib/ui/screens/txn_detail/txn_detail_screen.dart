@@ -223,7 +223,11 @@ class _Loaded extends StatelessWidget {
                     Text(
                       '${txn.isDebit ? 'Debit' : 'Credit'} · '
                       '${fullStamp(txn.occurredAt)} · '
-                      '${txn.isTransfer ? 'not counted as spent' : '${Bands.ranges[band]} range'}',
+                      '${txn.isTransfer
+                          ? 'not counted as spent'
+                          : txn.isCash
+                          ? 'from cash, counted at the ATM'
+                          : '${Bands.ranges[band]} range'}',
                       style: t.body.copyWith(color: c.text2),
                     ),
                     const SizedBox(height: 24),
@@ -340,7 +344,7 @@ class _Loaded extends StatelessWidget {
                             label: const Text('Not a self transfer'),
                             onPressed: cubit.unlinkTransfer,
                           )
-                        else
+                        else if (!txn.isCash)
                           OutlinedButton.icon(
                             icon: const Icon(
                               Icons.swap_horiz_rounded,
@@ -477,7 +481,10 @@ class _Loaded extends StatelessWidget {
     // Own accounts with no matching row: the other side can be added there.
     final withRow = {for (final o in candidates) o.accountId};
     final addable = accounts.values
-        .where((a) => a.id != txn.account?.id && !withRow.contains(a.id))
+        .where(
+          (a) =>
+              a.id != txn.account?.id && !a.isCash && !withRow.contains(a.id),
+        )
         .toList();
     final picked = await showModalBottomSheet<({String? partner, String? addOn})>(
       context: context,

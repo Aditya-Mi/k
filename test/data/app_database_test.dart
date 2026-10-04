@@ -25,7 +25,7 @@ void main() {
     tearDown(() => db.close());
 
     test('seeds banks, senders, categories, keyword rules, settings', () async {
-      expect(await db.banks.count().getSingle(), builtInBanks.length);
+      expect(await db.banks.count().getSingle(), builtInBanks.length + 1);
       expect(await db.categories.count().getSingle(), seedCategories.length);
       final keywordCount = seedKeywords.values.fold(0, (n, l) => n + l.length);
       expect(await db.categoryRules.count().getSingle(), keywordCount);
@@ -39,7 +39,7 @@ void main() {
 
     test('seeder is idempotent', () async {
       await Seeder(db).seedAll();
-      expect(await db.banks.count().getSingle(), builtInBanks.length);
+      expect(await db.banks.count().getSingle(), builtInBanks.length + 1);
     });
 
     test('rows get UUIDv7 ids and sync timestamps', () async {
@@ -155,7 +155,7 @@ void main() {
       await db.close();
 
       final again = open('right-key');
-      expect(await again.banks.count().getSingle(), builtInBanks.length);
+      expect(await again.banks.count().getSingle(), builtInBanks.length + 1);
       await again.close();
 
       final wrong = open('wrong-key');

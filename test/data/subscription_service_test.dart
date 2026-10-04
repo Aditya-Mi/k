@@ -14,15 +14,16 @@ void main() {
   late String account;
   final now = DateTime(2026, 10, 4, 12);
 
-  Future<String> merchant(String name) async => (await db
-          .into(db.merchants)
-          .insertReturning(
-            MerchantsCompanion.insert(
-              normalizedKey: name.toLowerCase(),
-              displayName: name,
-            ),
-          ))
-      .id;
+  Future<String> merchant(String name) async =>
+      (await db
+              .into(db.merchants)
+              .insertReturning(
+                MerchantsCompanion.insert(
+                  normalizedKey: name.toLowerCase(),
+                  displayName: name,
+                ),
+              ))
+          .id;
 
   Future<String> debit(String merchantId, int rupees, DateTime at) async =>
       (await db
@@ -48,16 +49,17 @@ void main() {
     );
     final ledger = LedgerRepository(db);
     subs = SubscriptionService(db, ledger, SettingsRepository(db));
-    account = (await db
-            .into(db.accounts)
-            .insertReturning(
-              AccountsCompanion.insert(
-                bankId: 'KOTAK',
-                type: AccountType.savings,
-                last4: const Value('4410'),
-              ),
-            ))
-        .id;
+    account =
+        (await db
+                .into(db.accounts)
+                .insertReturning(
+                  AccountsCompanion.insert(
+                    bankId: 'KOTAK',
+                    type: AccountType.savings,
+                    last4: const Value('4410'),
+                  ),
+                ))
+            .id;
   });
   tearDown(() => db.close());
 

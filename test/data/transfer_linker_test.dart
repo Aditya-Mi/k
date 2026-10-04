@@ -177,9 +177,11 @@ void main() {
       );
       await ingest.ingest(axisOut(5000, DateTime(2026, 10, 2, 10, 0)));
       final out = (await txns()).firstWhere((r) => r.amountMinor == 500000);
-      final bob = (await ledger.watchAccounts().first).firstWhere(
-        (a) => a.bankId == 'BOB',
-      );
+      final bob =
+          ((await ledger.watchAccounts().first)
+                  .where((a) => !a.isCash)
+                  .toList())
+              .firstWhere((a) => a.bankId == 'BOB');
 
       await linker.markManual(out.id, addOnAccountId: bob.id);
       var rows = await txns();
@@ -220,9 +222,9 @@ void main() {
     await ingest.ingest(kotakIn(100, DateTime(2026, 9, 30, 9)));
     await ingest.ingest(axisOut(5000, DateTime(2026, 10, 2, 10, 0)));
     final out = (await txns()).firstWhere((r) => r.amountMinor == 500000);
-    final kotak = (await ledger.watchAccounts().first).firstWhere(
-      (a) => a.bankId == 'KOTAK',
-    );
+    final kotak =
+        ((await ledger.watchAccounts().first).where((a) => !a.isCash).toList())
+            .firstWhere((a) => a.bankId == 'KOTAK');
     await linker.markManual(out.id, addOnAccountId: kotak.id);
     expect(await txns(), hasLength(2));
     await linker.unlink(out.id);
@@ -242,7 +244,9 @@ void main() {
         DateTime(2026, 10, 1, 19, 45),
       ),
     );
-    final acc = (await ledger.watchAccounts().first).single;
+    final acc =
+        ((await ledger.watchAccounts().first).where((a) => !a.isCash).toList())
+            .single;
     var bal = (await ledger.watchBalances().first)[acc.id]!;
     expect(bal.amountMinor, 1875133);
     expect(bal.estimated, isFalse);
@@ -288,7 +292,9 @@ void main() {
         DateTime(2026, 10, 1, 19, 45),
       ),
     );
-    final accounts = await ledger.watchAccounts().first;
+    final accounts = (await ledger.watchAccounts().first)
+        .where((a) => !a.isCash)
+        .toList();
     expect(accounts, hasLength(1));
     expect(accounts.single.last4, '4410');
     expect(accounts.single.includes, ['card ··4192']);
@@ -308,12 +314,16 @@ void main() {
     );
     await ingest.ingest(axisOut(100, DateTime(2026, 10, 1, 9)));
     await ingest.ingest(axis7777(50, DateTime(2026, 10, 1, 10)));
-    var accounts = await ledger.watchAccounts().first;
+    var accounts = (await ledger.watchAccounts().first)
+        .where((a) => !a.isCash)
+        .toList();
     final main = accounts.firstWhere((a) => a.last4 == '0640');
     final other = accounts.firstWhere((a) => a.last4 == '7777');
     await ledger.mergeAccount(other.id, main.id);
 
-    accounts = await ledger.watchAccounts().first;
+    accounts = (await ledger.watchAccounts().first)
+        .where((a) => !a.isCash)
+        .toList();
     expect(accounts.single.id, main.id);
     expect(accounts.single.includes, ['a/c ··7777']);
     await ingest.ingest(axis7777(60, DateTime(2026, 10, 2, 10)));

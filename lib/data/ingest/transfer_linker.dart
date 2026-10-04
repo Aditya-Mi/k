@@ -4,6 +4,7 @@ import 'package:txn_parser/txn_parser.dart';
 import '../../core/ids.dart';
 import '../db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../db/enums.dart';
+import '../db/seed/seed_data.dart';
 import 'category_resolver.dart';
 
 const transfersCategoryId = 'cat_transfers';
@@ -40,7 +41,8 @@ class TransferLinker {
                     t.deletedAt.isNull() &
                     t.transferId.isNull() &
                     t.autoTransferOff.equals(false) &
-                    t.accountId.isNotNull(),
+                    t.accountId.isNotNull() &
+                    t.accountId.equals(cashAccountId).not(),
               )
               ..orderBy([(t) => OrderingTerm.asc(t.occurredAt)]))
             .get();
@@ -85,7 +87,11 @@ class TransferLinker {
                   ),
             ))
             .get();
-    return rows.where((o) => o.accountId != t.accountId).toList()
+    return rows
+        .where(
+          (o) => o.accountId != t.accountId && o.accountId != cashAccountId,
+        )
+        .toList()
       ..sort((a, b) => _gap(t, a).compareTo(_gap(t, b)));
   }
 
@@ -198,6 +204,7 @@ class TransferLinker {
                   o.transferId.isNull() &
                   o.autoTransferOff.equals(false) &
                   o.accountId.isNotNull() &
+                  o.accountId.equals(cashAccountId).not() &
                   o.accountId.equals(t.accountId!).not() &
                   o.amountMinor.equals(t.amountMinor) &
                   o.currency.equals(t.currency) &
@@ -217,7 +224,9 @@ class TransferLinker {
       t.deletedAt == null &&
       t.transferId == null &&
       !t.autoTransferOff &&
-      t.accountId != null;
+      t.accountId != null &&
+      // Cash moves through ATM withdrawals, never self transfers.
+      t.accountId != cashAccountId;
 
   bool _matches(Transaction debit, Transaction credit) =>
       credit.direction == Direction.credit &&

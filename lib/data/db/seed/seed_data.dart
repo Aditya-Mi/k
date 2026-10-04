@@ -1,6 +1,11 @@
 // Banks and sender rules are seeded from txn_parser's builtInBanks so the
 // parser stays the single source of truth for bank definitions.
 
+/// Cash in hand: a pseudo bank (accounts need one) and its one account.
+/// Not from the parser — no message ever names it.
+const cashBankId = 'CASH';
+const cashAccountId = 'acc_cash';
+
 /// id, name, Material icon, ARGB color.
 const seedCategories = [
   ('cat_food', 'Food & Dining', 'restaurant', 0xFFE07A5F),

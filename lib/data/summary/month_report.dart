@@ -130,7 +130,7 @@ class MonthReport extends Equatable {
     var spent = 0, came = 0, spends = 0;
 
     for (final t in txns) {
-      if (t.isTransfer) continue;
+      if (!t.countsInTotals) continue;
       final at = t.occurredAt;
       final key = DateTime(at.year, at.month);
       final inMonth = !at.isBefore(start) && at.isBefore(end);

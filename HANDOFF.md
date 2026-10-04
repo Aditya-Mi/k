@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Phase 4 device check pending). Schema v5.
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Phase 4 device check pending; Cash account added). Schema v6.
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -136,6 +136,14 @@ Phase 6 device checks:
 3. Next morning: Last backup ~03:xx (worker). Battery saver may delay it.
 4. Export CSV opens in Sheets; Export backup file → Import it (should say "Opens with your current backup passphrase") → Restore → data back.
 5. Wrong passphrase on a file from another salt → "That passphrase doesn't open this backup".
+
+## Cash in hand (schema v6, 2026-10-05)
+Owner's rule: an ATM withdrawal counts as spent (as before) and adds to cash; a cash payment logged by hand lowers cash but is **not** counted as spent again (₹11k withdrawn for rent + ₹11k cash rent logged = ₹11k spent, not ₹22k).
+- Seeded pseudo bank `CASH` + account `acc_cash` (`AccountType.cash`, ids in `seed_data.dart`); v6 migration just re-runs the idempotent seeder. Hidden from Settings → Banks, never a merge source/target or self-transfer side (auto-link, candidates, "add the other side").
+- `computeCashBalance`: owner's counted figure (Accounts → Set balance) or 0, plus later ATM debits on any other account (an ATM credit/deposit subtracts), plus cash credits, minus cash debits.
+- `TxnView.countsInTotals` (= not a transfer, not cash) drives month panel, Summary report and day "out" totals. So cash payments don't show in Summary categories; the withdrawal stays under "ATM withdrawal".
+- Add payment: "Cash" is an account choice (lowers cash), "Not in k" replaces "Cash or not in k". Txn row shows a cash icon; detail says "from cash, counted at the ATM".
+- Not designed in Pencil (changes to existing screens only).
 
 ## Next step: Phase 6 device test; Phase 4 device check still pending
 Google Cloud project stays in **Testing** (owner's choice: production needs homepage + privacy policy URLs); Gmail grant expires every 7 days.

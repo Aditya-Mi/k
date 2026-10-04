@@ -39,16 +39,20 @@ class AccountView extends Equatable {
   bool get isCard =>
       type == AccountType.creditCard || type == AccountType.debitCard;
 
+  bool get isCash => type == AccountType.cash;
+
   String get _digits => last4 == null ? '' : ' ··$last4';
 
   /// Row meta: "Axis ··1234", "Axis card ··5678".
   String get short =>
       nickname ??
+      (isCash ? 'Cash' : null) ??
       '${bankShortName(bankId, bankName)}${isCard ? ' card' : ''}$_digits';
 
   /// Detail: "Axis Bank credit card ··5678".
   String get long {
     if (nickname != null) return nickname!;
+    if (isCash) return 'Cash in hand';
     final kind = switch (type) {
       AccountType.creditCard => ' credit card',
       AccountType.debitCard => ' debit card',
@@ -118,6 +122,13 @@ class TxnView extends Equatable {
   final String? subscriptionId;
 
   bool get isTransfer => transferId != null;
+
+  /// Paid from cash: it already counted as spent when withdrawn at the ATM.
+  bool get isCash => account?.isCash ?? false;
+
+  /// Counts toward spent / came in. Self transfers and cash payments don't
+  /// (cash was counted once, at the ATM).
+  bool get countsInTotals => !isTransfer && !isCash;
   bool get addedByUser => origin == TxnOrigin.user;
 
   /// "Axis ··0640 → Kotak ··4410"; an untracked side reads "own account".
@@ -263,6 +274,48 @@ AccountBalance? computeBalance(Account account, List<Transaction> txns) {
     amountMinor: base,
     asOf: asOf,
     source: source,
+    anchorAt: anchor,
+    estimatedFrom: moved,
+  );
+}
+
+/// Cash in hand: the owner's figure (or 0 before one) plus ATM withdrawals
+/// from any account and cash received, minus cash payments, after it.
+AccountBalance? computeCashBalance(
+  Account cash,
+  List<Transaction> cashTxns,
+  List<Transaction> atmWithdrawals,
+) {
+  if (cashTxns.isEmpty &&
+      atmWithdrawals.isEmpty &&
+      cash.manualBalanceMinor == null) {
+    return null;
+  }
+  final manual =
+      cash.manualBalanceAt != null && cash.manualBalanceMinor != null;
+  final anchor = manual
+      ? cash.manualBalanceAt!
+      : DateTime.fromMillisecondsSinceEpoch(0);
+  var base = manual ? cash.manualBalanceMinor! : 0;
+  var asOf = anchor;
+  var moved = 0;
+  void add(Transaction t, int signed) {
+    if (!t.occurredAt.isAfter(anchor)) return;
+    base += signed;
+    moved++;
+    if (t.occurredAt.isAfter(asOf)) asOf = t.occurredAt;
+  }
+
+  for (final t in atmWithdrawals) {
+    add(t, t.direction == Direction.debit ? t.amountMinor : -t.amountMinor);
+  }
+  for (final t in cashTxns) {
+    add(t, t.direction == Direction.credit ? t.amountMinor : -t.amountMinor);
+  }
+  return AccountBalance(
+    amountMinor: base,
+    asOf: asOf,
+    source: BalanceSource.manual,
     anchorAt: anchor,
     estimatedFrom: moved,
   );

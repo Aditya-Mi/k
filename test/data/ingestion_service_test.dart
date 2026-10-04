@@ -76,7 +76,9 @@ void main() {
 
   test('card spend with a limit lands on a credit card account', () async {
     await ingest.ingest(axisCard);
-    final account = await db.select(db.accounts).getSingle();
+    final account = await (db.select(
+      db.accounts,
+    )..where((a) => a.id.equals('acc_cash').not())).getSingle();
     expect(account.type, AccountType.creditCard);
     expect(account.last4, '5678');
     expect(account.autoCreated, isTrue);
@@ -108,7 +110,12 @@ void main() {
         DateTime(2026, 10, 6, 9),
       ),
     );
-    expect(await db.accounts.count().getSingle(), 1);
+    expect(
+      (await db.select(db.accounts).get())
+          .where((a) => a.id != 'acc_cash')
+          .length,
+      1,
+    );
     expect(await db.merchants.count().getSingle(), 1);
     expect(await db.transactions.count().getSingle(), 2);
   });

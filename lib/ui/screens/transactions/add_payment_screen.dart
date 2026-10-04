@@ -21,7 +21,7 @@ class AddPaymentScreen extends StatefulWidget {
   State<AddPaymentScreen> createState() => _AddPaymentScreenState();
 }
 
-/// The "Cash or not in k" choice in the account sheet.
+/// The "Not in k" choice in the account sheet (no account, no balance).
 const _noAccount = '';
 
 class _AddPaymentScreenState extends State<AddPaymentScreen> {
@@ -30,7 +30,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
   int? _amount;
   String _payee = '';
 
-  /// Null → not picked yet; [_noAccount] → cash / not tracked.
+  /// Null → not picked yet; [_noAccount] → not tracked.
   String? _accountId;
   List<AccountView> _accounts = const [];
   Category? _category;
@@ -79,7 +79,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
     final account = _accountId == null
         ? null
         : _accountId == _noAccount
-        ? 'Cash or not in k'
+        ? 'Not in k'
         : _accounts.where((a) => a.id == _accountId).firstOrNull?.short;
     return Scaffold(
       appBar: AppBar(
@@ -214,20 +214,26 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
             for (final a in _accounts)
               ListTile(
                 leading: Icon(
-                  a.isCard
+                  a.isCash
+                      ? Icons.payments_outlined
+                      : a.isCard
                       ? Icons.credit_card_outlined
                       : Icons.account_balance_wallet_outlined,
                 ),
                 title: Text(a.short),
-                subtitle: Text(a.long),
+                subtitle: Text(
+                  a.isCash
+                      ? 'Changes cash in hand; already counted at the ATM'
+                      : a.long,
+                ),
                 trailing: a.id == _accountId
                     ? const Icon(Icons.check_rounded)
                     : null,
                 onTap: () => Navigator.pop(context, a.id),
               ),
             ListTile(
-              leading: const Icon(Icons.payments_outlined),
-              title: const Text('Cash or not in k'),
+              leading: const Icon(Icons.help_outline_rounded),
+              title: const Text('Not in k'),
               subtitle: const Text('Not counted in any balance'),
               trailing: _accountId == _noAccount
                   ? const Icon(Icons.check_rounded)

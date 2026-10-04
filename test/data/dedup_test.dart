@@ -139,7 +139,9 @@ void main() {
     () async {
       final first = DateTime(2026, 10, 1, 9);
       await ingest.ingest(sms(10, first, ref: '1'));
-      final account = (await db.select(db.accounts).getSingle()).id;
+      final account = (await (db.select(
+        db.accounts,
+      )..where((a) => a.id.equals('acc_cash').not())).getSingle()).id;
 
       final at = DateTime(2026, 10, 4, 14, 20);
       final id = await ingest.addManual(

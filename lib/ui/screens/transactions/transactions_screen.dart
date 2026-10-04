@@ -249,7 +249,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   String? _outLabel(List<TxnView> rows) {
     final out = rows
-        .where((r) => r.isDebit && !r.isTransfer)
+        .where((r) => r.isDebit && r.countsInTotals)
         .fold(0, (sum, r) => sum + r.amountMinor);
     return out == 0 ? null : '${inr(out)} out';
   }

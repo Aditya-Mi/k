@@ -1,5 +1,15 @@
 /// App-side enums persisted by name — rename = data migration.
-enum AccountType { savings, current, creditCard, debitCard, wallet, other }
+/// `cash`: the one seeded "Cash" account (`acc_cash`) — ATM withdrawals add
+/// to it, cash payments the owner logs subtract.
+enum AccountType {
+  savings,
+  current,
+  creditCard,
+  debitCard,
+  wallet,
+  other,
+  cash,
+}
 
 enum EmailAuthType { oauth, imap }
 
