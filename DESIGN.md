@@ -291,7 +291,13 @@ Note chip · payee (Body) over meta (Meta) · amount (Amount Row) right-aligned.
 ### Month Note Panel
 The signature. A surface-2 card at about 2.07:1 holding the month and sync state, the Amount Hero total, an in/out line, and a full-width denomination ribbon: one rounded bar split into band segments in their inks, proportional to how the month's spend divides across note bands, captioned with spend count and the dominant band's share. Anchored in the card's right third, whole and clear of the ribbon, is a guilloche rosette (hypotrochoid bands and rings, 0.5dp hairlines) in the ink of the month total's band. On the lock screen the same card hides the total and draws the rosette in neutral grey.
 
-**The Guilloche Rule.** The rosette appears only on the month note panel (and its locked twin), always as hairlines, always in the month total's ink or neutral. It is never a background texture, never filled, never on another card.
+**The Guilloche Rule.** Rosettes are hairline line-work (0.5–0.7dp at screen size, 0.9 on the app icon), never filled, never a repeating background texture, never behind a list. They appear in exactly these places:
+1. **Month note panel** (and its locked twin): the house rosette (6-lobe hypotrochoid bands plus rings), whole, in the card's right third, in the month total's ink (neutral stone on the lock screen).
+2. **Transaction detail watermark:** the house rosette at 118dp, 40% opacity, top-right behind the hero amount, in that transaction's ink.
+3. **Subscription seals:** each subscription carries its own 40dp seal, generated deterministically from its name so it is recognisable at a glance and identical every time. Seals are drawn in text-2, never in ink (the amount chip beside the price carries the ink). Generator: h = FNV-1a(name); lobes = 5 + h mod 5; R = 100, r = R/lobes; d = r·(0.9 + ((h>>4) mod 6)·0.18); three hypotrochoids at d·0.7, d, d·1.3, an outer ring at R−r+1.3d+3, and an inner ring when (h>>8) is odd.
+4. **Empty states:** the house rosette at 132dp in text-2 replaces a generic icon (e.g. "Nothing to review").
+5. **The drawn moment:** when k learns a new format, and on successful unlock, a rosette draws itself (see Motion). It is drawn in the ink of the amount involved, or neutral for unlock.
+6. **App icon:** the house rosette in paper white on bg with "k" in Archivo bold in a solid core; adaptive icon, rosette inside the 72dp safe zone.
 
 ### Subscription Cycle Bar
 Under each subscription row: a rounded bar whose track length is the billing cycle (a yearly plan draws a full-width track, a monthly plan a short one) and whose fill is the time left before the next charge.
@@ -308,7 +314,7 @@ In the review editor the raw message is tokenised: each recognised field value s
 App lock defers to Android's BiometricPrompt, which the app does not draw. The app owns only the lock screen behind it: the locked note panel, "k is locked", and a bottom primary Unlock button.
 
 ### Motion
-Not yet specified. To be authored in the Flutter build and recorded here then.
+One authored moment: **the rosette draws itself.** Each hypotrochoid band and ring is stroked from 0 to 100% of its path length (Flutter: `PathMetric.extractPath`), bands staggered by 40ms, 600ms total, emphasized-decelerate easing. It holds 400ms, then the card fades out over 200ms. Used when a review correction teaches k a new format (in the amount's ink, over a scrim card stating what was saved) and on successful unlock (neutral, on the locked note panel, then the panel cross-fades into home). With Android "Remove animations" on, the rosette appears fully drawn with no stroke animation. Everything else uses standard Material 3 transitions; there is no other decorative motion.
 
 ## Do's and Don'ts
 
@@ -326,6 +332,6 @@ Not yet specified. To be authored in the Flutter build and recorded here then.
 - **Don't** show debit and credit as red and green; use filled versus outlined chips and +₹.
 - **Don't** colour the review count, badge or banner with alert; coral is only for a changed fact like a price rise.
 - **Don't** use gradients, glass, blur or drop shadows.
-- **Don't** draw the guilloche anywhere but the month note panel and its locked twin.
+- **Don't** draw a rosette anywhere outside the six places in the Guilloche Rule, and never more than one per screen region.
 - **Don't** reuse the review editor's letterspaced capital field captions as section labels or eyebrows elsewhere.
 - **Don't** draw a custom biometric dialog; use the system BiometricPrompt.
