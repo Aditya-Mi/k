@@ -23,7 +23,10 @@ Future<void> main() async {
   final onboarded = await getIt<SettingsRepository>().getBool(
     SettingsRepository.onboardingDone,
   );
-  runApp(KApp(onboarded: onboarded));
+  final theme = await getIt<SettingsRepository>().get(
+    SettingsRepository.themeMode,
+  );
+  runApp(KApp(onboarded: onboarded, theme: theme));
 }
 
 /// Headless entrypoint run by the native `SmsProcessWorker` when an SMS

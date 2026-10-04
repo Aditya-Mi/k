@@ -10,6 +10,7 @@ import '../../widgets/common.dart';
 import '../../widgets/date_pick.dart';
 import '../../../data/review/learned_formats.dart';
 import '../review/learned_formats_screen.dart';
+import 'appearance_settings.dart';
 import 'email_settings.dart';
 import 'notification_settings.dart';
 
@@ -189,6 +190,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Design 06 items run edge to edge.
           const EmailSettings(),
           const NotificationSettings(),
+          const AppearanceSettings(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(

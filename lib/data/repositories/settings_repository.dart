@@ -13,6 +13,9 @@ class SettingsRepository {
   static const smsLastSyncAt = 'device.sms.lastSyncAt';
   static const onboardingDone = 'device.onboarding.done';
 
+  /// `system` (default), `light` or `dark`.
+  static const themeMode = 'device.theme';
+
   Future<String?> get(String key) async => (await (_db.select(
     _db.appSettings,
   )..where((s) => s.key.equals(key))).getSingleOrNull())?.value;

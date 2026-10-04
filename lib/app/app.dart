@@ -15,9 +15,12 @@ import 'notifications.dart';
 import 'sms_controller.dart';
 
 class KApp extends StatefulWidget {
-  const KApp({super.key, required this.onboarded});
+  const KApp({super.key, required this.onboarded, this.theme});
 
   final bool onboarded;
+
+  /// Saved theme mode name, read before the first frame (no flash).
+  final String? theme;
 
   @override
   State<KApp> createState() => _KAppState();
@@ -43,18 +46,23 @@ class _KAppState extends State<KApp> {
   }
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'k',
-    debugShowCheckedModeBanner: false,
-    theme: buildTheme(Brightness.light),
-    darkTheme: buildTheme(Brightness.dark),
-    home: _onboarded
-        ? HomeShell(sms: _sms)
-        : OnboardingScreen(
-            onDone: () {
-              setState(() => _onboarded = true);
-              _sms.refresh();
-            },
-          ),
+  Widget build(BuildContext context) => StreamBuilder<String?>(
+    stream: getIt<SettingsRepository>().watch(SettingsRepository.themeMode),
+    initialData: widget.theme,
+    builder: (context, snap) => MaterialApp(
+      title: 'k',
+      debugShowCheckedModeBanner: false,
+      theme: buildTheme(Brightness.light),
+      darkTheme: buildTheme(Brightness.dark),
+      themeMode: ThemeMode.values.asNameMap()[snap.data] ?? ThemeMode.system,
+      home: _onboarded
+          ? HomeShell(sms: _sms)
+          : OnboardingScreen(
+              onDone: () {
+                setState(() => _onboarded = true);
+                _sms.refresh();
+              },
+            ),
+    ),
   );
 }
