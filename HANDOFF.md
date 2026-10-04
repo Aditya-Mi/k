@@ -81,6 +81,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - UI: Subscriptions tab (totals, suggestion cards, "Reminds N days before" → global sheet, rows with seal / price-up / unused / cycle bar), detail (rename, amount, repeats, next charge date via the cycle line, category, remind me, not using it, charges list, stop tracking). `CategoryButton` moved to `widgets/common.dart`.
 
 - Track from a payment (design `02c`): txn detail → "Track as subscription" sheet (repeats + next charge) → `SubscriptionService.trackFromTransaction` (reuses an open plan for the merchant, else a `manual` one). Linked txns show a "Subscription" field that opens the plan.
+- Notifications (`lib/app/notifications.dart`, `KNotifications`, replaces ReminderScheduler): subscription reminders (scheduled), payment logged (one per txn) and needs review (one running notice, id 1) — live alerts only after a receiver-queue drain (`SmsSync.onLive`, both isolates; background engine inits the plugin), never catch-up/history, not while the app is visible; review notice cleared on resume. Private visibility (hidden on lock screen). Toggles `device.notify.payments` / `device.notify.review` (default on). Settings → Notifications section (design 06 updated; `notification_settings.dart` has `SettingsItem`/`SettingsHead` in the 06 style — the rest of Settings is still the Phase 2 layout).
 - Review queue is re-read on every app start (`reprocessReview`), so parser updates clear waiting items without a reinstall.
 
 ### For the parser session

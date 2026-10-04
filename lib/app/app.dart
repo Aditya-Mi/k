@@ -10,6 +10,7 @@ import '../platform/sms_bridge.dart';
 import '../ui/screens/home_shell.dart';
 import '../ui/screens/onboarding/onboarding_screen.dart';
 import '../ui/theme/k_theme.dart';
+import 'notifications.dart';
 import 'sms_controller.dart';
 
 class KApp extends StatefulWidget {
@@ -30,6 +31,7 @@ class _KAppState extends State<KApp> {
     getIt<TransferLinker>(),
     getIt<SubscriptionService>(),
     getIt<IngestionService>(),
+    getIt<KNotifications>(),
   )..start();
 
   @override

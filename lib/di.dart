@@ -1,7 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 
-import 'app/reminder_scheduler.dart';
+import 'app/notifications.dart';
 import 'core/security/db_key_manager.dart';
 import 'data/db/app_database.dart';
 import 'data/db/connection.dart';
@@ -25,14 +25,14 @@ Future<void> configureDependencies() async {
   final ingestion = IngestionService(db);
   final bridge = SmsBridge();
   final ledger = LedgerRepository(db, onRulesChanged: ingestion.invalidate);
-  final reminders = ReminderScheduler();
+  final notifications = KNotifications(db, ledger, settings);
   late final SubscriptionService subscriptions;
   subscriptions = SubscriptionService(
     db,
     ledger,
     settings,
     onChanged: () async =>
-        reminders.sync((await subscriptions.watch().first).active),
+        notifications.syncReminders((await subscriptions.watch().first).active),
   );
 
   getIt
@@ -40,7 +40,7 @@ Future<void> configureDependencies() async {
     ..registerSingleton<AppDatabase>(db)
     ..registerSingleton<SettingsRepository>(settings)
     ..registerSingleton<LedgerRepository>(ledger)
-    ..registerSingleton<ReminderScheduler>(reminders)
+    ..registerSingleton<KNotifications>(notifications)
     ..registerSingleton<SubscriptionService>(subscriptions)
     ..registerSingleton<IngestionService>(ingestion)
     ..registerSingleton<TransferLinker>(TransferLinker(db))
@@ -49,5 +49,7 @@ Future<void> configureDependencies() async {
       () => ReviewService(db, ingestion, getIt<LedgerRepository>()),
     )
     ..registerLazySingleton<LearnedFormats>(() => LearnedFormats(db, ingestion))
-    ..registerSingleton<SmsSync>(SmsSync(bridge, ingestion, settings));
+    ..registerSingleton<SmsSync>(
+      SmsSync(bridge, ingestion, settings, onLive: notifications.notifyNew),
+    );
 }

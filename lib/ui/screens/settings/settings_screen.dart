@@ -10,6 +10,7 @@ import '../../widgets/common.dart';
 import '../../widgets/date_pick.dart';
 import '../../../data/review/learned_formats.dart';
 import '../review/learned_formats_screen.dart';
+import 'notification_settings.dart';
 
 /// Phase 2 settings: SMS capture health only. Banks, Gmail, backup and app
 /// lock arrive in later phases.
@@ -103,110 +104,128 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Settings'),
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          const SizedBox(height: 8),
-          Text('Bank SMS', style: t.title),
-          const SizedBox(height: 4),
-          FieldRow(
-            label: 'SMS access',
-            onTap: smsOk ? null : _fixSms,
-            value: Text(
-              _sms == null ? '…' : (smsOk ? 'On' : 'Off · tap to fix'),
-              style: t.body,
-            ),
-          ),
-          if (_sms?.isPermanentlyDenied ?? false)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                'If Android will not show the prompt: App info → ⋮ → Allow '
-                'restricted settings, then Permissions → SMS → Allow.',
-                style: t.meta,
-              ),
-            ),
-          FieldRow(
-            label: 'Battery limits',
-            onTap: batteryOk
-                ? null
-                : () async {
-                    await Permission.ignoreBatteryOptimizations.request();
-                    await _refresh();
-                  },
-            value: Text(
-              _battery == null
-                  ? '…'
-                  : (batteryOk ? 'Unrestricted' : 'Limited · tap to fix'),
-              style: t.body,
-            ),
-          ),
-          StreamBuilder<DateTime?>(
-            stream: getIt<SettingsRepository>().watchDate(
-              SettingsRepository.smsLastSyncAt,
-            ),
-            builder: (context, snap) => FieldRow(
-              label: 'Last checked',
-              value: Text(
-                snap.data == null
-                    ? 'Never'
-                    : '${dayMonth(snap.data!)}, ${hhmm(snap.data!)}',
-                style: t.body,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              OutlinedButton.icon(
-                onPressed: _checking || !smsOk ? null : _checkNow,
-                icon: _checking
-                    ? const SizedBox.square(
-                        dimension: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh_rounded, size: 20),
-                label: const Text('Check inbox now'),
-              ),
-              OutlinedButton.icon(
-                onPressed: _checking || !smsOk ? null : _importOlder,
-                icon: const Icon(Icons.history_rounded, size: 20),
-                label: const Text('Import older messages'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text('Message formats', style: t.title),
-          const SizedBox(height: 4),
-          StreamBuilder<List<LearnedFormat>>(
-            stream: getIt<LearnedFormats>().watch(),
-            builder: (context, snap) => FieldRow(
-              label: 'Learned in Review',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => const LearnedFormatsScreen(),
-                ),
-              ),
-              value: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    snap.data == null ? '…' : '${snap.data!.length}',
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                Text('Bank SMS', style: t.title),
+                const SizedBox(height: 4),
+                FieldRow(
+                  label: 'SMS access',
+                  onTap: smsOk ? null : _fixSms,
+                  value: Text(
+                    _sms == null ? '…' : (smsOk ? 'On' : 'Off · tap to fix'),
                     style: t.body,
                   ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.chevron_right_rounded, color: c.text2),
-                ],
-              ),
+                ),
+                if (_sms?.isPermanentlyDenied ?? false)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'If Android will not show the prompt: App info → ⋮ → Allow '
+                      'restricted settings, then Permissions → SMS → Allow.',
+                      style: t.meta,
+                    ),
+                  ),
+                FieldRow(
+                  label: 'Battery limits',
+                  onTap: batteryOk
+                      ? null
+                      : () async {
+                          await Permission.ignoreBatteryOptimizations.request();
+                          await _refresh();
+                        },
+                  value: Text(
+                    _battery == null
+                        ? '…'
+                        : (batteryOk ? 'Unrestricted' : 'Limited · tap to fix'),
+                    style: t.body,
+                  ),
+                ),
+                StreamBuilder<DateTime?>(
+                  stream: getIt<SettingsRepository>().watchDate(
+                    SettingsRepository.smsLastSyncAt,
+                  ),
+                  builder: (context, snap) => FieldRow(
+                    label: 'Last checked',
+                    value: Text(
+                      snap.data == null
+                          ? 'Never'
+                          : '${dayMonth(snap.data!)}, ${hhmm(snap.data!)}',
+                      style: t.body,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _checking || !smsOk ? null : _checkNow,
+                      icon: _checking
+                          ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh_rounded, size: 20),
+                      label: const Text('Check inbox now'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _checking || !smsOk ? null : _importOlder,
+                      icon: const Icon(Icons.history_rounded, size: 20),
+                      label: const Text('Import older messages'),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            'Messages are read on this phone and stored encrypted. Nothing is '
-            'sent anywhere.',
-            style: t.meta.copyWith(color: c.text3),
+          const SizedBox(height: 8),
+          // Design 06 items run edge to edge.
+          const NotificationSettings(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                Text('Message formats', style: t.title),
+                const SizedBox(height: 4),
+                StreamBuilder<List<LearnedFormat>>(
+                  stream: getIt<LearnedFormats>().watch(),
+                  builder: (context, snap) => FieldRow(
+                    label: 'Learned in Review',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => const LearnedFormatsScreen(),
+                      ),
+                    ),
+                    value: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          snap.data == null ? '…' : '${snap.data!.length}',
+                          style: t.body,
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.chevron_right_rounded, color: c.text2),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Messages are read on this phone and stored encrypted. Nothing is '
+                  'sent anywhere.',
+                  style: t.meta.copyWith(color: c.text3),
+                ),
+              ],
+            ),
           ),
         ],
       ),

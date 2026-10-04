@@ -9,6 +9,7 @@ import '../data/ingest/transfer_linker.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/subscriptions/subscription_service.dart';
 import '../platform/sms_bridge.dart';
+import 'notifications.dart';
 
 /// Keeps the ledger fed while the UI runs: drains the live queue on every
 /// receiver event, and on start/resume also catches up from the inbox.
@@ -21,6 +22,7 @@ class SmsController with WidgetsBindingObserver {
     this._transfers,
     this._subscriptions,
     this._ingestion,
+    this._notifications,
   );
 
   final SmsSync _sync;
@@ -29,6 +31,7 @@ class SmsController with WidgetsBindingObserver {
   final SettingsRepository _settings;
   final SubscriptionService _subscriptions;
   final IngestionService _ingestion;
+  final KNotifications _notifications;
 
   /// Null until first checked.
   final smsGranted = ValueNotifier<bool?>(null);
@@ -39,6 +42,8 @@ class SmsController with WidgetsBindingObserver {
     if (_started) return;
     _started = true;
     WidgetsBinding.instance.addObserver(this);
+    _notifications.appVisible = true;
+    unawaited(_notifications.clearReview());
     _events = _bridge.onPending.listen(
       (_) => _guard(_sync.drainPending).then((_) => _refreshSubscriptions()),
     );
@@ -71,7 +76,12 @@ class SmsController with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) unawaited(refresh());
+    final visible = state == AppLifecycleState.resumed;
+    _notifications.appVisible = visible;
+    if (visible) {
+      unawaited(_notifications.clearReview());
+      unawaited(refresh());
+    }
   }
 
   Future<void> _guard(Future<int> Function() run) async {

@@ -54,6 +54,18 @@ class LedgerRepository {
           .get()
           .then((rows) => rows.map(_toView).toList());
 
+  /// Rows logged from bank messages since [since] (live notifications).
+  Future<List<TxnView>> loggedSince(DateTime since) =>
+      (_txnJoin()
+            ..where(
+              _db.transactions.deletedAt.isNull() &
+                  _db.transactions.origin.equalsValue(TxnOrigin.message) &
+                  _db.transactions.createdAt.isBiggerOrEqualValue(since),
+            )
+            ..orderBy([OrderingTerm.asc(_db.transactions.occurredAt)]))
+          .get()
+          .then((rows) => rows.map(_toView).toList());
+
   Stream<List<TxnView>> watchCharges(String subscriptionId) =>
       (_txnJoin()
             ..where(

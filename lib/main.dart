@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'app/app.dart';
-import 'app/reminder_scheduler.dart';
+import 'app/notifications.dart';
 import 'data/db/app_database.dart';
 import 'data/ingest/sms_sync.dart';
 import 'data/repositories/settings_repository.dart';
@@ -14,7 +14,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await configureDependencies();
   try {
-    await getIt<ReminderScheduler>().init();
+    await getIt<KNotifications>().init();
   } catch (e, s) {
     // Reminders off for this run; the app itself must still open.
     debugPrint('k: reminders unavailable: $e\n$s');
@@ -35,6 +35,11 @@ Future<void> smsBackgroundMain() async {
   var ok = false;
   try {
     await configureDependencies();
+    try {
+      await getIt<KNotifications>().init();
+    } catch (e) {
+      debugPrint('k: notifications unavailable in background: $e');
+    }
     await getIt<SmsSync>().drainPending();
     ok = true;
   } catch (e, s) {

@@ -12,11 +12,15 @@ import 'ingestion_service.dart';
 /// - catch-up: inbox rows past the saved `_id` cursor (missed broadcasts)
 /// - history: first-run import from a chosen date
 class SmsSync {
-  SmsSync(this._bridge, this._ingest, this._settings);
+  SmsSync(this._bridge, this._ingest, this._settings, {this.onLive});
 
   final SmsBridge _bridge;
   final IngestionService _ingest;
   final SettingsRepository _settings;
+
+  /// After a live drain stored messages; rows created since the given time
+  /// are what just arrived (catch-up and history never call this).
+  final Future<void> Function(DateTime since)? onLive;
 
   static const _pageSize = 500;
 
@@ -32,6 +36,7 @@ class SmsSync {
   Future<int> drainPending() => _serial(() async {
     final pending = await _bridge.drainPending();
     if (pending.isEmpty) return 0;
+    final started = DateTime.now();
     final handled = <String>[];
     var logged = 0;
     for (final sms in pending) {
@@ -48,6 +53,7 @@ class SmsSync {
     }
     await _bridge.ackPending(handled);
     await _markSynced();
+    if (handled.isNotEmpty) await onLive?.call(started);
     return logged;
   });
 
