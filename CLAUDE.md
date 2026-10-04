@@ -1,5 +1,7 @@
 # k — personal payment logger
 
+> New session? Read `HANDOFF.md` first (current state, decisions, next step).
+
 Sideloaded Android app (personal use, never Play Store). Reads bank SMS + bank alert emails, logs transactions, detects subscriptions. All data on-device; never send message contents off-device.
 
 ## Working rules
