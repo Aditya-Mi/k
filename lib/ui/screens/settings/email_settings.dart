@@ -109,6 +109,12 @@ class EmailSettings extends StatelessWidget {
                 leading: const Icon(Icons.key_outlined),
                 title: const Text('Enter a new app password'),
                 onTap: () => Navigator.pop(context, 'password'),
+              )
+            else if (a.error != null)
+              ListTile(
+                leading: const Icon(Icons.account_circle_outlined),
+                title: const Text('Sign in with Google again'),
+                onTap: () => Navigator.pop(context, 'google'),
               ),
             ListTile(
               leading: const Icon(Icons.refresh_rounded),
@@ -132,6 +138,9 @@ class EmailSettings extends StatelessWidget {
             builder: (_) => AppPasswordScreen(email: a.row.email),
           ),
         );
+      case 'google':
+        final from = a.row.lastSyncAt ?? DateTime.now();
+        await connectGoogle(context, from.subtract(const Duration(days: 1)));
       case 'check':
         final n = await sync.syncAll();
         if (context.mounted) {
@@ -150,9 +159,12 @@ class EmailSettings extends StatelessWidget {
           context: context,
           builder: (context) => AlertDialog(
             title: Text('Disconnect ${a.row.email}?'),
-            content: const Text(
-              'k stops reading this inbox and forgets its password. Payments '
-              'already logged stay.',
+            content: Text(
+              a.row.authType == EmailAuthType.oauth
+                  ? 'k stops reading this inbox and gives up its Gmail '
+                        'access. Payments already logged stay.'
+                  : 'k stops reading this inbox and forgets its password. '
+                        'Payments already logged stay.',
             ),
             actions: [
               TextButton(

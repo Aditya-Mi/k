@@ -52,5 +52,6 @@ flutter build apk --debug
 - Phase 2 code done (native SMS capture + headless worker, ingestion pipeline, Transactions/detail/onboarding UI); awaiting on-device test. Next: Phase 3 (review queue + learned templates + category rules).
 - Phase 2b done: self-transfer linking (`TransferLinker`, schema v2). Phase 2c done: computed account balances + Accounts screen, owner-added transfer side (schema v3), account merge (v4).
 - Phase 3 code done: review queue, mark-and-learn (user templates in `parser_templates`), merchant category rules, payee rename, learned formats screen.
-- Phase 4 code done: subscription detection (`lib/data/subscriptions/`), AutoPay matching, reminders (`lib/app/reminder_scheduler.dart`). Next: Phase 5 (Gmail + dedup).
+- Phase 4 code done: subscription detection (`lib/data/subscriptions/`), AutoPay matching, reminders.
+- Phase 5 code done: email (IMAP app password + Gmail sign-in, `lib/data/email/`), SMS/email dedup, hourly sync. Next: Phase 6 (summary, backup/export, app lock).
 - Later ideas: encrypted multi-device sync (schema already sync-ready), other currencies.

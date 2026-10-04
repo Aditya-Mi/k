@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-04 (Phases 2–4 code done; Phase 3 device-tested; Phase 4 awaiting device test).
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 code done; Phase 3 device-tested; Phases 4–5 awaiting device test).
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -25,7 +25,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Phase 2c: account balances + owner-added transfer side + account merge | **Done.** `flutter test` 33 pass |
 | Phase 3: review queue, save & learn, category rules | **Done.** Owner tested on device (fixes: dialog crash, slash words, learned formats screen) |
 | Phase 4: subscriptions + reminders | **Code done, awaiting on-device test.** `flutter test` 54 pass, debug APK builds |
-| Phase 5: email + dedup | **In progress.** IMAP app-password path, dedup, hourly worker, Settings UI done (`flutter test` 65 pass). Gmail sign-in waits for the owner's Google Cloud client |
+| Phase 5: email + dedup | **Code done, awaiting on-device test.** IMAP app password + Gmail sign-in, dedup, hourly worker, Settings UI (`flutter test` 67 pass, debug APK builds) |
 | Phase 6 | Not started: summary + backup/export + app lock |
 
 ## Phase 2: what was built
@@ -90,15 +90,22 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - AutoPay / e-mandate templates must capture `payee` (merchant) and `dueDate`; alerts without a payee can't attach to a subscription.
 - Missing Kotak format (upcoming AutoPay, kind mandate): `AUTOPAY of Rs.195.00 to APPLE MEDIA SERVICES will be debited on 29 Sep 2026. Please ensure sufficient balance in account -Kotak` (no account digits). Executed form already parses (`kotak_sms_autopay_done`).
 
-## Phase 5: email + dedup (in progress)
+## Phase 5: email + dedup
 - Dedup (`IngestionService._crossChannelTwin`): same account, amount, direction within `dedup.windowMinutes` (10) and the existing row has no source from this channel → this message becomes a second source (`IngestOutcome.merged`), filling missing ref/balance/payee. Same-channel repeats never merge.
 - `lib/data/email/`: `EmailSource` interface, `ImapSource` (enough_mail, TLS 993, All Mail via \All flag else INBOX, `UID n:*` / `SINCE` + `OR FROM` bank sender rules, cursor `uidValidity:lastUid`, BODY.PEEK so mail stays unread), `EmailSync` (accounts in `email_accounts`, secrets in secure storage `email.secret.<id>`, `device.email.<id>.since/error`, serialized `syncAll`, `syncIfStale`, `onLive` → notifications).
 - Background: native `email/EmailSyncWorker` (periodic 60 min, network) → headless `emailBackgroundMain`; scheduled via `k/sms` `scheduleEmailSync` on connect/disconnect and every app refresh; foreground top-up when >30 min stale.
 - UI: Settings → Email (inboxes, failed state in alert colour, sheet: new app password / check now / disconnect), `ConnectInboxScreen` (06b; Google option disabled until `googleReady`), `AppPasswordScreen` (06c). Designs 06b/06c/06d in k.pen.
 - Main manifest now declares INTERNET (release builds).
-- Next: Gmail sign-in (google_sign_in + Gmail API `gmail.readonly`, `GmailSource` behind the same interface, flip `ConnectInboxScreen.googleReady`) once the owner sends the Web client ID. Owner's Cloud steps: project "k" → enable Gmail API (+ Drive API for Phase 6) → Branding (name k) → Audience External + Publish (In production, unverified) → Data access scope `gmail.readonly` → Android client (package `dev.adityamittal.k`, debug SHA-1 `0B:F8:56:BD:8A:18:AA:D1:34:98:C7:B6:E3:54:6A:37:0E:E4:A7:5B`) → Web client "k sign-in" (its client ID is what the app needs).
+- Gmail sign-in: Cloud project "k" set up by the owner (External, In production, unverified; scopes `gmail.readonly` + `drive.file`). `lib/data/email/google_auth.dart` holds the Web client ID (`serverClientId`; the Android client is matched by package + debug SHA-1, nothing from it in the app). `signIn()` = `authenticate` + `authorizeScopes`; `token(email)` calls the platform interface directly with the account email and no prompt, so it works in the headless worker (plugin's authorize uses the app context). `GmailSource` (`gmail_source.dart`): REST `messages?q=from:(a OR b) after:<sec>` → `format=raw` → enough_mail; cursor `ms:<newest internalDate>`, re-looks 1h back (content hash drops repeats); 401 → clear token, retry once. MIME → `FetchedEmail` shared in `mime_email.dart`. `EmailSync.addGoogle`; disconnecting the last Google inbox revokes access. Settings sheet: "Sign in with Google again" when a Gmail inbox fails.
 
-## Next step: on-device check of Phase 4 and Phase 5 (app password)
+## Branding + theme
+- Launcher icon: adaptive, bg `#101114` (`values/colors.xml`), foreground is a VectorDrawable generated by `python3 tool/app_icon.py` (rosette math as `rosette.dart` + Archivo Bold "k" outline from the bundled font, 0.6dp strokes, inside the 66dp safe circle) — vector so it stays sharp; PNG export was blurry. Design: `oIgGv` in `design/k.pen` (`qrR0K` = foreground-layer reference). Legacy `mipmap-*/ic_launcher.png` only matter below API 26 (unused). Android 12+ splash bg per theme in `values-v31` / `values-night-v31`.
+- Settings → Appearance → Theme (System / Light / Dark), `device.theme`, read before first frame in `main.dart`. Design 06 updated.
+- Don't upload a logo in Google Cloud Branding: a logo forces brand verification.
+
+## Next step: on-device check of Phase 4 and Phase 5
+Phase 5 checks: Settings → Email → Connect → Sign in with Google (unverified warning → Advanced → Go to k; allow Gmail read) → bank mail imports; a payment with SMS + email shows once with two sources; app password path; background hourly sync after swiping the app away.
+
 Phase 4 checks:
 1. Subscriptions tab: suggestions appear for merchants with 3 monthly charges (or AutoPay alerts); Track it asks for notification permission.
 2. Totals line, next charge dates, cycle bars look right; open a plan, edit amount/repeats/next charge/reminder; Not using it dims the row.

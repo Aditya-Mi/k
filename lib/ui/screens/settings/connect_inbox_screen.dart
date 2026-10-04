@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../data/email/email_source.dart';
 import '../../../data/email/email_sync.dart';
+import '../../../data/email/google_auth.dart';
 import '../../../di.dart';
 import '../../../platform/sms_bridge.dart';
 import '../../format.dart';
@@ -9,13 +11,40 @@ import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/date_pick.dart';
 
-/// Pick how k reads mail (design 06b). Gmail sign-in arrives once the
-/// Google Cloud client exists; until then only the app password works.
+/// Google sign-in → Gmail read access → inbox saved and read from [since].
+/// Shows the outcome in a snackbar; true when the inbox is connected.
+Future<bool> connectGoogle(BuildContext context, DateTime since) async {
+  final messenger = ScaffoldMessenger.of(context);
+  void say(String s) => messenger.showSnackBar(SnackBar(content: Text(s)));
+  try {
+    final email = await getIt<GoogleAuth>().signIn();
+    final logged = await getIt<EmailSync>().addGoogle(
+      email: email,
+      since: since,
+    );
+    await getIt<SmsBridge>().scheduleEmailSync(on: true);
+    say(
+      logged == 0
+          ? 'Connected $email. No new payments in the mail.'
+          : 'Connected $email. $logged new '
+                '${logged == 1 ? 'payment' : 'payments'} logged.',
+    );
+    return true;
+  } on GoogleSignInException catch (e) {
+    if (e.code != GoogleSignInExceptionCode.canceled) {
+      say("Google sign-in didn't finish. Try again.");
+    }
+  } on EmailAuthException {
+    say("Google didn't give k access to Gmail. Allow it when asked.");
+  } catch (_) {
+    say("Couldn't reach Gmail. Check the connection.");
+  }
+  return false;
+}
+
+/// Pick how k reads mail (design 06b).
 class ConnectInboxScreen extends StatefulWidget {
   const ConnectInboxScreen({super.key});
-
-  /// Flipped on when the OAuth client is configured.
-  static const googleReady = false;
 
   @override
   State<ConnectInboxScreen> createState() => _ConnectInboxScreenState();
@@ -26,6 +55,15 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
     final now = DateTime.now();
     return DateTime(now.year, now.month);
   }();
+  bool _signingIn = false;
+
+  Future<void> _google() async {
+    setState(() => _signingIn = true);
+    final ok = await connectGoogle(context, _since);
+    if (!mounted) return;
+    setState(() => _signingIn = false);
+    if (ok) Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,12 +90,12 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
           _Option(
             icon: Icons.account_circle_outlined,
             title: 'Sign in with Google',
-            tag: ConnectInboxScreen.googleReady ? 'Recommended' : 'Soon',
-            subtitle: ConnectInboxScreen.googleReady
-                ? "Read-only Gmail access. Google will say k isn't verified: "
-                      "it's your own app, tap Advanced → Go to k."
-                : 'Needs the Google Cloud client to be set up first.',
-            onTap: ConnectInboxScreen.googleReady ? () {} : null,
+            tag: 'Recommended',
+            subtitle:
+                "Read-only Gmail access. Google will say k isn't verified: "
+                "it's your own app, tap Advanced → Go to k.",
+            busy: _signingIn,
+            onTap: _signingIn ? null : _google,
           ),
           const SizedBox(height: 16),
           _Option(
@@ -112,6 +150,7 @@ class _Option extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.tag,
+    this.busy = false,
     this.onTap,
   });
 
@@ -119,6 +158,7 @@ class _Option extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? tag;
+  final bool busy;
   final VoidCallback? onTap;
 
   @override
@@ -126,7 +166,7 @@ class _Option extends StatelessWidget {
     final c = context.k;
     final t = context.kt;
     return Opacity(
-      opacity: onTap == null ? 0.5 : 1,
+      opacity: onTap == null && !busy ? 0.5 : 1,
       child: Material(
         color: c.surface1,
         shape: RoundedRectangleBorder(
@@ -186,7 +226,19 @@ class _Option extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right_rounded, size: 20, color: c.text3),
+                busy
+                    ? SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: c.text2,
+                        ),
+                      )
+                    : Icon(
+                        Icons.chevron_right_rounded,
+                        size: 20,
+                        color: c.text3,
+                      ),
               ],
             ),
           ),

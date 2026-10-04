@@ -1,6 +1,7 @@
 import 'package:enough_mail/enough_mail.dart';
 
 import 'email_source.dart';
+import 'mime_email.dart';
 
 /// IMAP over TLS with an app password (Gmail: imap.gmail.com:993). Searches
 /// All Mail when the server has it (bank alerts are often auto-archived),
@@ -82,7 +83,7 @@ class ImapSource implements EmailSource {
           '(UID INTERNALDATE BODY.PEEK[])',
         );
         for (final m in fetched.messages) {
-          final e = _toEmail(m);
+          final e = emailFromMime(m, fallbackId: 'uid:${m.uid}');
           if (e != null) emails.add(e);
           if ((m.uid ?? 0) > maxUid) maxUid = m.uid!;
         }
@@ -94,26 +95,6 @@ class ImapSource implements EmailSource {
     } finally {
       await client.logout().catchError((_) {});
     }
-  }
-
-  FetchedEmail? _toEmail(MimeMessage m) {
-    final body = m.decodeTextPlainPart() ?? m.decodeTextHtmlPart();
-    if (body == null) return null;
-    final from = m.from?.firstOrNull;
-    final sender = from == null
-        ? (m.fromEmail ?? '')
-        : (from.hasPersonalName
-              ? '${from.personalName} <${from.email}>'
-              : from.email);
-    final at = m.decodeDate()?.toLocal() ?? DateTime.now();
-    return FetchedEmail(
-      externalId:
-          m.getHeaderValue('message-id')?.trim() ?? 'uid:${m.uid ?? at}',
-      sender: sender,
-      subject: m.decodeSubject(),
-      body: body,
-      receivedAt: at,
-    );
   }
 
   static (int?, int) _parse(String? cursor) {

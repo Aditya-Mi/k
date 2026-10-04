@@ -6,6 +6,7 @@ import 'core/security/db_key_manager.dart';
 import 'data/db/app_database.dart';
 import 'data/db/connection.dart';
 import 'data/email/email_sync.dart';
+import 'data/email/google_auth.dart';
 import 'data/ingest/ingestion_service.dart';
 import 'data/ingest/sms_sync.dart';
 import 'data/ingest/transfer_linker.dart';
@@ -26,6 +27,7 @@ Future<void> configureDependencies() async {
   final settings = SettingsRepository(db);
   final ingestion = IngestionService(db);
   final bridge = SmsBridge();
+  final google = GoogleAuth();
   final ledger = LedgerRepository(db, onRulesChanged: ingestion.invalidate);
   final notifications = KNotifications(db, ledger, settings);
   late final SubscriptionService subscriptions;
@@ -51,12 +53,14 @@ Future<void> configureDependencies() async {
       () => ReviewService(db, ingestion, getIt<LedgerRepository>()),
     )
     ..registerLazySingleton<LearnedFormats>(() => LearnedFormats(db, ingestion))
+    ..registerSingleton<GoogleAuth>(google)
     ..registerSingleton<EmailSync>(
       EmailSync(
         db,
         ingestion,
         settings,
         secure,
+        google: google,
         onLive: notifications.notifyNew,
       ),
     )
