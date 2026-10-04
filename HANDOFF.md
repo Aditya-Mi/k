@@ -23,7 +23,8 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Phase 2: native SMS ingestion + Transactions list | **Code done, awaiting on-device test.** `flutter test` 21 pass, analyze clean, debug APK builds |
 | Phase 2b: self-transfer linking | **Done.** `flutter test` 28 pass. Owner tested Phase 2 on device: SMS capture works |
 | Phase 2c: account balances + owner-added transfer side + account merge | **Done.** `flutter test` 33 pass |
-| Phases 3–6 | Not started: 3 review queue + categorization rules, 4 subscriptions + reminders, 5 Gmail + dedup, 6 summary + backup/export + app lock |
+| Phase 3: review queue, save & learn, category rules | **Code done, awaiting on-device test.** `flutter test` 38 pass |
+| Phases 4–6 | Not started: 4 subscriptions + reminders, 5 Gmail + dedup, 6 summary + backup/export + app lock |
 
 ## Phase 2: what was built
 **Android** (`android/app/src/main/kotlin/dev/adityamittal/k/sms/`)
@@ -57,7 +58,19 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Debit card alerts log on the bank's sole savings/current account automatically (card account created already merged). v4 migration folds existing auto-created debit card accounts the same way.
 - Accounts screen → "Merge into another account" (confirm; no unmerge yet).
 
-## Next step: on-device check of 2b/2c, then Phase 3
+## Phase 3: review + learning
+- `IngestionService` refactored: shared `_log` (txn/upcoming creation), `parseRaw`, `logReviewed`, `reprocessReview` (re-reads the queue after a format is learned), `markNotTransaction`.
+- `lib/data/review/field_marks.dart`: `MarkField` (account, direction, amount, payee, ref, date, balance), `trimToField` (selection → what the field holds, e.g. XX1234 → 1234), `prefillMarks` (places parser guesses in the text). Done app-side because the parser package belongs to the parser session.
+- `lib/data/review/review_service.dart`: queue stream (re-parses each item for guess + reason), `fieldsOf(draft)`, `save` = optional learn (TemplateGenerator → verified by a throwaway ParserEngine reading the sample back: amount, direction, account; tries capturing the direction word first, else fixed direction default) → insert `parser_templates` (priority 10) → log txn → merchant rule if a category was picked → `reprocessReview`.
+- UI: Review tab (`review_queue_screen.dart`, empty state 03c), editor (`review_editor_screen.dart` + cubit; `message_marks.dart` renders marks with captions; long-press a word → sheet to grow/shrink the selection and pick a field; tap a mark to change/remove), learned overlay (`learned_overlay.dart`, rosette draws 600ms staggered 40ms/path, hold, fade; reduce-motion shows it drawn).
+- Category rules: detail category sheet has "Use for all <payee>" (default on) → `category_rules` merchant rule (`mr_<key>`, origin user) + re-files that merchant's non-hand-edited, non-transfer payments; ingestion cache invalidated via `LedgerRepository.onRulesChanged`. Payee rename on detail (tap the name) renames the merchant everywhere.
+
+## Next step: on-device check of Phase 3, then Phase 4 (subscriptions)
+1. Review tab lists unread messages with a guessed amount and reason.
+2. Open one: marks prefilled; long-press words to fix; Save & learn → overlay; similar waiting messages clear.
+3. Learned formats live in `parser_templates`; send the parser session the sample texts so built-ins can absorb them later.
+4. Detail: change category with "Use for all" on → other payments to that payee re-file; rename a payee.
+
 Owner to run `flutter run` (or `adb install`) on the Nothing Phone 2 and check:
 1. Onboarding: SMS Allow. If sideloaded via file manager/browser, Android 13+ blocks it → App info → ⋮ → Allow restricted settings. `flutter run`/`adb install` installs are not restricted.
 2. Battery Allow, plus Nothing OS App info → Battery → Unrestricted.
@@ -78,6 +91,7 @@ Then Phase 3: review queue + fix-by-selection + learned templates + category rul
 
 ## Open items
 - Balance after a manual set is "set by you", then estimated by later payments; negative balances can't be entered (overdraft) — add if needed.
+- Phase 3 gaps: no screen to list/delete learned formats yet; learning only makes transaction formats (not mandate/ignore); no undo for "Not a transaction" in review.
 - Phase 2 shortcuts: section head shows the whole list's date span (not the span in view); upcoming charges have no account last4 (not stored on `upcoming_charges`); credits with no keyword stay Uncategorized; merchant names from VPAs can be ugly ("Zeptonowcashfree") until Phase 3 renames/merges.
 - Widget tests render via `tester.runAsync` + drift streams hang on teardown — screenshot harness was deleted; if adding widget tests, close cubits/DB inside runAsync.
 - Light-theme inks ink-10/20/200 sit close; verify on device.

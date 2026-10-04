@@ -81,6 +81,7 @@ class TxnView extends Equatable {
     this.notes,
     this.refNo,
     this.transferId,
+    this.merchantId,
     this.origin = TxnOrigin.message,
     this.transferPartnerId,
     this.partnerAccount,
@@ -110,6 +111,7 @@ class TxnView extends Equatable {
   final AccountView? partnerAccount;
 
   final TxnOrigin origin;
+  final String? merchantId;
 
   bool get isTransfer => transferId != null;
   bool get addedByUser => origin == TxnOrigin.user;
@@ -135,6 +137,7 @@ class TxnView extends Equatable {
     notes,
     refNo,
     transferId,
+    merchantId,
     origin,
     transferPartnerId, partnerAccount,
   ];

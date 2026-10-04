@@ -8,9 +8,12 @@ import 'ledger_models.dart';
 
 /// Read models and edits for transactions, accounts and upcoming charges.
 class LedgerRepository {
-  LedgerRepository(this._db);
+  LedgerRepository(this._db, {this.onRulesChanged});
 
   final AppDatabase _db;
+
+  /// Lets ingestion drop its cached category rules.
+  final void Function()? onRulesChanged;
 
   Stream<List<TxnView>> watchTransactions(TxnFilter f) {
     final t = _db.transactions;
@@ -176,6 +179,11 @@ class LedgerRepository {
             );
       });
 
+  /// Bank id → display name ("AXIS" → "Axis Bank").
+  Future<Map<String, String>> bankNames() async => {
+    for (final b in await _db.select(_db.banks).get()) b.id: b.name,
+  };
+
   Stream<List<Category>> watchCategories() =>
       (_db.select(_db.categories)
             ..where((c) => c.deletedAt.isNull())
@@ -234,8 +242,64 @@ class LedgerRepository {
         .watchSingle();
   }
 
-  Future<void> setCategory(String txnId, String categoryId) =>
-      _updateTxn(txnId, TransactionsCompanion(categoryId: Value(categoryId)));
+  /// Sets a transaction's category. With [applyToMerchant], also teaches a
+  /// merchant rule and re-files that merchant's other payments the owner
+  /// has not categorized by hand (self transfers stay Transfers).
+  Future<void> setCategory(
+    String txnId,
+    String categoryId, {
+    bool applyToMerchant = false,
+  }) => _db.transaction(() async {
+    await _updateTxn(
+      txnId,
+      TransactionsCompanion(categoryId: Value(categoryId)),
+    );
+    if (!applyToMerchant) return;
+    final txn = await (_db.select(
+      _db.transactions,
+    )..where((t) => t.id.equals(txnId))).getSingle();
+    final merchantId = txn.merchantId;
+    if (merchantId == null) return;
+    final merchant = await (_db.select(
+      _db.merchants,
+    )..where((m) => m.id.equals(merchantId))).getSingle();
+    await _db
+        .into(_db.categoryRules)
+        .insertOnConflictUpdate(
+          CategoryRulesCompanion.insert(
+            id: Value('mr_${merchant.normalizedKey}'),
+            matchType: RuleMatchType.merchant,
+            pattern: merchant.normalizedKey,
+            categoryId: categoryId,
+            priority: const Value(100),
+            origin: RuleOrigin.user,
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+    await (_db.update(_db.transactions)..where(
+          (t) =>
+              t.merchantId.equals(merchantId) &
+              t.userEdited.equals(false) &
+              t.transferId.isNull() &
+              t.deletedAt.isNull(),
+        ))
+        .write(
+          TransactionsCompanion(
+            categoryId: Value(categoryId),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+    onRulesChanged?.call();
+  });
+
+  /// Merchant display name, for every payment to it.
+  Future<void> renameMerchant(String merchantId, String name) =>
+      (_db.update(_db.merchants)..where((m) => m.id.equals(merchantId))).write(
+        MerchantsCompanion(
+          displayName: Value(name.trim()),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
 
   Future<void> setNote(String txnId, String? note) => _updateTxn(
     txnId,
@@ -336,6 +400,7 @@ class LedgerRepository {
       txnType: t.txnType,
       occurredAt: t.occurredAt,
       payee: merchant?.displayName ?? t.payeeRaw ?? _fallbackPayee(t),
+      merchantId: merchant?.id,
       sourceCount: r.read(_sourceCount) ?? 0,
       account: account == null || bank == null ? null : _account(account, bank),
       category: r.readTableOrNull(_db.categories),

@@ -8,6 +8,7 @@ import 'data/ingest/ingestion_service.dart';
 import 'data/ingest/sms_sync.dart';
 import 'data/ingest/transfer_linker.dart';
 import 'data/repositories/ledger_repository.dart';
+import 'data/review/review_service.dart';
 import 'data/repositories/settings_repository.dart';
 import 'platform/sms_bridge.dart';
 
@@ -25,9 +26,14 @@ Future<void> configureDependencies() async {
     ..registerSingleton<DbKeyManager>(keyManager)
     ..registerSingleton<AppDatabase>(db)
     ..registerSingleton<SettingsRepository>(settings)
-    ..registerSingleton<LedgerRepository>(LedgerRepository(db))
+    ..registerSingleton<LedgerRepository>(
+      LedgerRepository(db, onRulesChanged: ingestion.invalidate),
+    )
     ..registerSingleton<IngestionService>(ingestion)
     ..registerSingleton<TransferLinker>(TransferLinker(db))
     ..registerSingleton<SmsBridge>(bridge)
+    ..registerLazySingleton<ReviewService>(
+      () => ReviewService(db, ingestion, getIt<LedgerRepository>()),
+    )
     ..registerSingleton<SmsSync>(SmsSync(bridge, ingestion, settings));
 }

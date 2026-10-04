@@ -116,7 +116,6 @@ class IngestionService {
 
   Future<IngestOutcome> ingest(IncomingMessage m) async {
     final engine = await _parser();
-    final categories = _categories ??= await CategoryResolver.load(_db);
 
     final result = engine.parse(
       RawInput(
@@ -171,92 +170,201 @@ class IngestionService {
             : IngestOutcome.needsReview;
       }
 
-      final merchant = await _merchantFor(fields.payee);
-      if (isMandate) {
-        await _db
-            .into(_db.upcomingCharges)
-            .insert(
-              UpcomingChargesCompanion.insert(
-                merchantId: Value(merchant?.id),
-                amountMinor: fields.amountMinor!,
-                currency: Value(fields.currency),
-                dueDate: fields.dueDate!,
-                mandateRef: Value(fields.mandateRef),
-                rawMessageId: Value(raw.id),
-                status: UpcomingChargeStatus.pending,
-              ),
-            );
-        return IngestOutcome.upcoming;
-      }
-
-      final account = await _accountFor(
+      return _log(
+        raw,
         result.bankCode!,
+        result.kind,
         fields,
         normalizeText([?m.subject, m.body].join(' ')),
       );
-      final occurredAt = fields.occurredAt ?? m.receivedAt;
+    });
+  }
 
-      // A late bank message for a side the owner added: it becomes that row.
-      final added = await _ownerAddedRow(account.id, fields, occurredAt);
-      if (added != null) {
-        await (_db.update(
-          _db.transactions,
-        )..where((t) => t.id.equals(added.id))).write(
-          TransactionsCompanion(
-            origin: const Value(TxnOrigin.message),
-            occurredAt: Value(occurredAt),
-            txnType: Value(fields.txnType ?? added.txnType),
-            merchantId: Value(merchant?.id),
-            payeeRaw: Value(fields.payee),
-            refNo: Value(fields.ref),
-            balanceMinor: Value(fields.balanceMinor),
-            updatedAt: Value(DateTime.now()),
-          ),
-        );
-        await _db
-            .into(_db.transactionSources)
-            .insert(
-              TransactionSourcesCompanion.insert(
-                transactionId: added.id,
-                rawMessageId: raw.id,
-              ),
-            );
-        return IngestOutcome.transaction;
+  /// Parses a stored message with the current formats (review prefill,
+  /// re-checks after learning).
+  Future<ParseResult> parseRaw(RawMessage raw) async => (await _parser()).parse(
+    RawInput(
+      channel: raw.channel,
+      sender: raw.sender,
+      body: raw.body,
+      subject: raw.subject,
+      receivedAt: raw.receivedAt,
+    ),
+  );
+
+  /// Logs a review-queue message from fields the owner confirmed.
+  Future<void> logReviewed(
+    RawMessage raw,
+    ParsedFields fields, {
+    String? accountId,
+    String? categoryId,
+    String? templateId,
+  }) => _db.transaction(() async {
+    await _log(
+      raw,
+      raw.bankId!,
+      TemplateKind.transaction,
+      fields,
+      normalizeText([?raw.subject, raw.body].join(' ')),
+      accountId: accountId,
+      categoryId: categoryId,
+    );
+    await _markParsed(raw.id, templateId);
+  });
+
+  /// Re-reads every review-queue message; logs the ones that now parse.
+  /// Returns how many left the queue.
+  Future<int> reprocessReview() async {
+    final waiting =
+        await (_db.select(_db.rawMessages)..where(
+              (r) =>
+                  r.deletedAt.isNull() &
+                  r.status.equalsValue(RawMessageStatus.needsReview),
+            ))
+            .get();
+    var cleared = 0;
+    for (final raw in waiting) {
+      final result = await parseRaw(raw);
+      if (result.status != ParseStatus.parsed) continue;
+      final f = result.fields;
+      if (result.kind == TemplateKind.mandate &&
+          (f.dueDate == null || f.amountMinor == null)) {
+        continue;
       }
+      await _db.transaction(() async {
+        await _log(
+          raw,
+          result.bankCode!,
+          result.kind,
+          f,
+          normalizeText([?raw.subject, raw.body].join(' ')),
+        );
+        await _markParsed(raw.id, result.templateId);
+      });
+      cleared++;
+    }
+    return cleared;
+  }
 
-      final txn = await _db
-          .into(_db.transactions)
-          .insertReturning(
-            TransactionsCompanion.insert(
-              accountId: Value(account.id),
+  Future<void> markNotTransaction(String rawId) =>
+      (_db.update(_db.rawMessages)..where((r) => r.id.equals(rawId))).write(
+        RawMessagesCompanion(
+          status: const Value(RawMessageStatus.nonTransaction),
+          parseNote: const Value('marked not a transaction'),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+
+  Future<void> _markParsed(String rawId, String? templateId) =>
+      (_db.update(_db.rawMessages)..where((r) => r.id.equals(rawId))).write(
+        RawMessagesCompanion(
+          status: const Value(RawMessageStatus.parsed),
+          templateId: Value(templateId),
+          parseNote: const Value(null),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+
+  /// Parsed fields → upcoming charge or transaction (+ source link). Runs
+  /// inside the caller's DB transaction.
+  Future<IngestOutcome> _log(
+    RawMessage raw,
+    String bankId,
+    TemplateKind kind,
+    ParsedFields fields,
+    String text, {
+    String? accountId,
+    String? categoryId,
+  }) async {
+    final categories = _categories ??= await CategoryResolver.load(_db);
+    final isMandate = kind == TemplateKind.mandate;
+    final merchant = await _merchantFor(fields.payee);
+    if (isMandate) {
+      await _db
+          .into(_db.upcomingCharges)
+          .insert(
+            UpcomingChargesCompanion.insert(
+              merchantId: Value(merchant?.id),
               amountMinor: fields.amountMinor!,
               currency: Value(fields.currency),
-              direction: fields.direction!,
-              txnType: fields.txnType ?? TxnType.other,
-              merchantId: Value(merchant?.id),
-              payeeRaw: Value(fields.payee),
-              refNo: Value(fields.ref),
-              occurredAt: occurredAt,
-              balanceMinor: Value(fields.balanceMinor),
-              categoryId: Value(
-                categories.resolve(
-                  merchantKey: merchant?.normalizedKey,
-                  payee: fields.payee,
-                ),
-              ),
+              dueDate: fields.dueDate!,
+              mandateRef: Value(fields.mandateRef),
+              rawMessageId: Value(raw.id),
+              status: UpcomingChargeStatus.pending,
             ),
           );
+      return IngestOutcome.upcoming;
+    }
+
+    final account = accountId != null
+        ? await (_db.select(
+            _db.accounts,
+          )..where((a) => a.id.equals(accountId))).getSingle()
+        : await _accountFor(bankId, fields, text);
+    final occurredAt = fields.occurredAt ?? raw.receivedAt;
+
+    // A late bank message for a side the owner added: it becomes that row.
+    final added = await _ownerAddedRow(account.id, fields, occurredAt);
+    if (added != null) {
+      await (_db.update(
+        _db.transactions,
+      )..where((t) => t.id.equals(added.id))).write(
+        TransactionsCompanion(
+          origin: const Value(TxnOrigin.message),
+          occurredAt: Value(occurredAt),
+          txnType: Value(fields.txnType ?? added.txnType),
+          merchantId: Value(merchant?.id),
+          payeeRaw: Value(fields.payee),
+          refNo: Value(fields.ref),
+          balanceMinor: Value(fields.balanceMinor),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
       await _db
           .into(_db.transactionSources)
           .insert(
             TransactionSourcesCompanion.insert(
-              transactionId: txn.id,
+              transactionId: added.id,
               rawMessageId: raw.id,
             ),
           );
-      await _transfers.autoLink(txn.id);
       return IngestOutcome.transaction;
-    });
+    }
+
+    final txn = await _db
+        .into(_db.transactions)
+        .insertReturning(
+          TransactionsCompanion.insert(
+            accountId: Value(account.id),
+            amountMinor: fields.amountMinor!,
+            currency: Value(fields.currency),
+            direction: fields.direction!,
+            txnType: fields.txnType ?? TxnType.other,
+            merchantId: Value(merchant?.id),
+            payeeRaw: Value(fields.payee),
+            refNo: Value(fields.ref),
+            occurredAt: occurredAt,
+            balanceMinor: Value(fields.balanceMinor),
+            categoryId: Value(
+              categoryId ??
+                  categories.resolve(
+                    merchantKey: merchant?.normalizedKey,
+                    payee: fields.payee,
+                  ),
+            ),
+            userEdited: Value(categoryId != null),
+          ),
+        );
+    await _db
+        .into(_db.transactionSources)
+        .insert(
+          TransactionSourcesCompanion.insert(
+            transactionId: txn.id,
+            rawMessageId: raw.id,
+          ),
+        );
+    await _transfers.autoLink(txn.id);
+    return IngestOutcome.transaction;
   }
 
   /// Same account, amount and direction, added by the owner within ±3 days.

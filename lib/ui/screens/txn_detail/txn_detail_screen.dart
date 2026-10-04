@@ -68,7 +68,10 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
     if (!isClosed) emit(s);
   }
 
-  Future<void> setCategory(String id) => _ledger.setCategory(txnId, id);
+  Future<void> setCategory(String id, {bool forMerchant = false}) =>
+      _ledger.setCategory(txnId, id, applyToMerchant: forMerchant);
+  Future<void> renamePayee(String merchantId, String name) =>
+      _ledger.renameMerchant(merchantId, name);
   Future<void> unlinkTransfer() => _transfers.unlink(txnId);
   Future<void> markTransfer({String? partnerId, String? addOnAccountId}) =>
       _transfers.markManual(
@@ -198,7 +201,20 @@ class _Loaded extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Text(txn.payee, style: t.headline),
+                    GestureDetector(
+                      onTap: txn.merchantId == null || txn.isTransfer
+                          ? null
+                          : () => _renamePayee(context, cubit, txn),
+                      child: Row(
+                        children: [
+                          Flexible(child: Text(txn.payee, style: t.headline)),
+                          if (txn.merchantId != null && !txn.isTransfer) ...[
+                            const SizedBox(width: 8),
+                            Icon(Icons.edit_outlined, size: 18, color: c.text3),
+                          ],
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     Text(
                       '${txn.isDebit ? 'Debit' : 'Credit'} · '
@@ -362,33 +378,93 @@ class _Loaded extends StatelessWidget {
     TxnDetailCubit cubit,
     TxnView txn,
   ) async {
+    // Teach the merchant by default; transfers and payee-less rows can't.
+    var forMerchant = txn.merchantId != null && !txn.isTransfer;
     final picked = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.75,
-          ),
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              for (final cat in categories)
-                ListTile(
-                  leading: Icon(categoryIcon(cat.icon), color: context.k.text2),
-                  title: Text(cat.name),
-                  trailing: cat.id == txn.category?.id
-                      ? const Icon(Icons.check_rounded)
-                      : null,
-                  onTap: () => Navigator.pop(context, cat.id),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheet) => SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.8,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (txn.merchantId != null && !txn.isTransfer)
+                  SwitchListTile(
+                    value: forMerchant,
+                    onChanged: (v) => setSheet(() => forMerchant = v),
+                    title: Text('Use for all ${txn.payee}'),
+                    subtitle: const Text(
+                      'Past and future payments, unless you set one yourself',
+                    ),
+                  ),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final cat in categories)
+                        ListTile(
+                          leading: Icon(
+                            categoryIcon(cat.icon),
+                            color: context.k.text2,
+                          ),
+                          title: Text(cat.name),
+                          trailing: cat.id == txn.category?.id
+                              ? const Icon(Icons.check_rounded)
+                              : null,
+                          onTap: () => Navigator.pop(context, cat.id),
+                        ),
+                    ],
+                  ),
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
-    if (picked != null && picked != txn.category?.id) {
-      await cubit.setCategory(picked);
+    if (picked != null && (picked != txn.category?.id || forMerchant)) {
+      await cubit.setCategory(picked, forMerchant: forMerchant);
+    }
+  }
+
+  Future<void> _renamePayee(
+    BuildContext context,
+    TxnDetailCubit cubit,
+    TxnView txn,
+  ) async {
+    final controller = TextEditingController(text: txn.payee);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename payee'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(controller: controller, autofocus: true),
+            const SizedBox(height: 8),
+            Text('Changes every payment to them.', style: context.kt.meta),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (name != null && name.trim().isNotEmpty) {
+      await cubit.renamePayee(txn.merchantId!, name);
     }
   }
 

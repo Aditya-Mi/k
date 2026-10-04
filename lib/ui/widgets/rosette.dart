@@ -122,8 +122,8 @@ int fnv1a(String s) {
   return h;
 }
 
-/// Hairline rosette. [progress] < 1 draws each path partially (the drawn
-/// moment); bands are staggered by the caller's animation.
+/// Hairline rosette. [progress] < 1 draws each path partially, staggered —
+/// the drawn moment (DESIGN.md Motion).
 class Rosette extends StatelessWidget {
   const Rosette({
     super.key,
@@ -176,13 +176,20 @@ class _RosettePainter extends CustomPainter {
       ..save()
       ..translate(size.width / 2, size.height / 2)
       ..scale(scale);
-    for (final path in paths) {
-      if (progress >= 1) {
+    // Drawn moment: each path starts 40ms after the previous in a 600ms draw.
+    const stagger = 40 / 600;
+    final span = 1 - (paths.length - 1) * stagger;
+    for (final (i, path) in paths.indexed) {
+      final p = progress >= 1
+          ? 1.0
+          : ((progress - i * stagger) / span).clamp(0.0, 1.0);
+      if (p >= 1) {
         canvas.drawPath(path, paint);
         continue;
       }
+      if (p <= 0) continue;
       for (final metric in path.computeMetrics()) {
-        canvas.drawPath(metric.extractPath(0, metric.length * progress), paint);
+        canvas.drawPath(metric.extractPath(0, metric.length * p), paint);
       }
     }
     canvas.restore();

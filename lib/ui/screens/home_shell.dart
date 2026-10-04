@@ -7,6 +7,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../di.dart';
 import '../theme/k_theme.dart';
 import '../widgets/common.dart';
+import 'review/review_queue_screen.dart';
 import 'transactions/transactions_cubit.dart';
 import 'transactions/transactions_screen.dart';
 
@@ -40,12 +41,7 @@ class _HomeShellState extends State<HomeShell> {
                 smsGranted: widget.sms.smsGranted,
                 onOpenReview: () => setState(() => _tab = 1),
               ),
-              const _Later(
-                title: 'Review',
-                body:
-                    'Bank messages k could not read will be fixed here. '
-                    'Coming in the next phase.',
-              ),
+              const ReviewQueueScreen(),
               const _Later(
                 title: 'Subscriptions',
                 body: 'Repeat charges and AutoPay mandates will show here.',

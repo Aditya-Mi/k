@@ -1,0 +1,280 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:txn_parser/txn_parser.dart';
+
+import '../../../data/db/app_database.dart' hide ParserTemplate, SenderRule;
+import '../../../data/db/enums.dart';
+import '../../../data/repositories/ledger_models.dart';
+import '../../../data/repositories/ledger_repository.dart';
+import '../../../data/review/field_marks.dart';
+import '../../../data/review/review_service.dart';
+
+class ReviewEditorState {
+  const ReviewEditorState({
+    this.queue = const [],
+    this.index = 0,
+    this.marks = const [],
+    this.direction = Direction.debit,
+    this.amountMinor,
+    this.payee,
+    this.ref,
+    this.occurredAt,
+    this.accountId,
+    this.categoryId,
+    this.learn = true,
+    this.saving = false,
+    this.accounts = const [],
+    this.categories = const [],
+    this.loaded = false,
+    this.lastResult,
+    this.bankNames = const {},
+  });
+
+  final List<ReviewItem> queue;
+  final int index;
+  final List<FieldMark> marks;
+  final Direction direction;
+
+  /// Typed overrides (null → from marks).
+  final int? amountMinor;
+  final String? payee;
+  final String? ref;
+  final DateTime? occurredAt;
+  final String? accountId;
+  final String? categoryId;
+  final bool learn;
+  final bool saving;
+  final List<AccountView> accounts;
+  final List<Category> categories;
+  final bool loaded;
+  final Map<String, String> bankNames;
+
+  /// Set right after a save, for the learned overlay / snackbar.
+  final ({SaveResult result, ParsedFields fields, String bank})? lastResult;
+
+  ReviewItem? get item => index < queue.length ? queue[index] : null;
+
+  ReviewDraft get draft => ReviewDraft(
+    marks: marks,
+    direction: direction,
+    amountMinor: amountMinor,
+    accountId: accountId,
+    payee: payee,
+    ref: ref,
+    occurredAt: occurredAt,
+    categoryId: categoryId,
+    learn: learn,
+  );
+
+  ReviewEditorState copyWith({
+    List<ReviewItem>? queue,
+    int? index,
+    List<FieldMark>? marks,
+    Direction? direction,
+    int? Function()? amountMinor,
+    String? Function()? payee,
+    String? Function()? ref,
+    DateTime? Function()? occurredAt,
+    String? Function()? accountId,
+    String? Function()? categoryId,
+    bool? learn,
+    bool? saving,
+    List<AccountView>? accounts,
+    List<Category>? categories,
+    bool? loaded,
+    Map<String, String>? bankNames,
+    ({SaveResult result, ParsedFields fields, String bank})? Function()?
+    lastResult,
+  }) => ReviewEditorState(
+    queue: queue ?? this.queue,
+    index: index ?? this.index,
+    marks: marks ?? this.marks,
+    direction: direction ?? this.direction,
+    amountMinor: amountMinor != null ? amountMinor() : this.amountMinor,
+    payee: payee != null ? payee() : this.payee,
+    ref: ref != null ? ref() : this.ref,
+    occurredAt: occurredAt != null ? occurredAt() : this.occurredAt,
+    accountId: accountId != null ? accountId() : this.accountId,
+    categoryId: categoryId != null ? categoryId() : this.categoryId,
+    learn: learn ?? this.learn,
+    saving: saving ?? this.saving,
+    accounts: accounts ?? this.accounts,
+    categories: categories ?? this.categories,
+    loaded: loaded ?? this.loaded,
+    bankNames: bankNames ?? this.bankNames,
+    lastResult: lastResult != null ? lastResult() : this.lastResult,
+  );
+}
+
+class ReviewEditorCubit extends Cubit<ReviewEditorState> {
+  ReviewEditorCubit(this._review, this._ledger, {required String startRawId})
+    : super(const ReviewEditorState()) {
+    _load(startRawId);
+  }
+
+  final ReviewService _review;
+  final LedgerRepository _ledger;
+
+  Future<void> _load(String? rawId) async {
+    final queue = await _review.watchQueue().first;
+    final accounts = await _ledger.watchAccounts().first;
+    final categories = await _ledger.watchCategories().first;
+    final banks = await _ledger.bankNames();
+    if (isClosed) return;
+    var index = queue.indexWhere((i) => i.raw.id == rawId);
+    if (index < 0) {
+      index = state.index.clamp(0, queue.isEmpty ? 0 : queue.length - 1);
+    }
+    emit(
+      _fresh(queue, index).copyWith(
+        accounts: accounts,
+        categories: categories,
+        bankNames: banks,
+        loaded: true,
+        lastResult: () => state.lastResult,
+      ),
+    );
+  }
+
+  /// Draft reset to the parser's guesses for queue[index].
+  ReviewEditorState _fresh(List<ReviewItem> queue, int index) {
+    if (queue.isEmpty) {
+      return ReviewEditorState(
+        accounts: state.accounts,
+        categories: state.categories,
+        bankNames: state.bankNames,
+      );
+    }
+    final item = queue[index];
+    return ReviewEditorState(
+      queue: queue,
+      index: index,
+      marks: prefillMarks(item.text, item.guess.fields),
+      direction: item.guess.fields.direction ?? Direction.debit,
+      accounts: state.accounts,
+      categories: state.categories,
+      bankNames: state.bankNames,
+      learn: state.learn,
+    );
+  }
+
+  ParsedFields fields() => _review.fieldsOf(state.item!, state.draft);
+
+  /// "Axis Bank ··1234", "Axis Bank ··1234 · new", or the bank's only
+  /// savings account when the message names none.
+  String accountLabel() {
+    final item = state.item!;
+    if (state.accountId != null) {
+      final a = state.accounts
+          .where((a) => a.id == state.accountId)
+          .firstOrNull;
+      if (a != null) return a.long;
+    }
+    final bankAccounts = state.accounts.where((a) => a.bankId == item.bankId);
+    final last4 = fields().last4;
+    if (last4 != null) {
+      final hit = bankAccounts.where((a) => a.last4 == last4).firstOrNull;
+      if (hit != null) return hit.long;
+      final hitFolded = bankAccounts
+          .where((a) => a.includes.any((s) => s.endsWith(last4)))
+          .firstOrNull;
+      if (hitFolded != null) return hitFolded.long;
+      return '${_bankName(item)} ··$last4 · new';
+    }
+    final savings = bankAccounts
+        .where(
+          (a) =>
+              a.last4 != null &&
+              (a.type == AccountType.savings || a.type == AccountType.current),
+        )
+        .toList();
+    if (savings.length == 1) return savings.single.long;
+    return '${_bankName(item)} · no account number';
+  }
+
+  List<AccountView> bankAccounts() =>
+      state.accounts.where((a) => a.bankId == state.item?.bankId).toList();
+
+  String _bankName(ReviewItem item) =>
+      state.bankNames[item.bankId] ?? item.bankId;
+
+  /// "Axis", "Kotak", "BOB".
+  String bankShort() =>
+      bankShortName(state.item!.bankId, _bankName(state.item!));
+
+  /// Marks [start, end) as [field] after trimming to what the field holds.
+  /// Returns false when the selection can't be that field.
+  bool mark(MarkField field, int start, int end) {
+    final text = state.item!.text;
+    final range = trimToField(text, field, start, end);
+    if (range == null) return false;
+    final (s, e) = range;
+    final marks = [
+      for (final m in state.marks)
+        if (m.field != field && !m.overlaps(s, e)) m,
+      FieldMark(field, s, e),
+    ]..sort((a, b) => a.start.compareTo(b.start));
+    emit(
+      state.copyWith(
+        marks: marks,
+        // A fresh mark wins over a typed value for that field.
+        amountMinor: field == MarkField.amount ? () => null : null,
+        payee: field == MarkField.payee ? () => null : null,
+        ref: field == MarkField.ref ? () => null : null,
+        occurredAt: field == MarkField.date ? () => null : null,
+        accountId: field == MarkField.account ? () => null : null,
+      ),
+    );
+    return true;
+  }
+
+  void unmark(FieldMark m) =>
+      emit(state.copyWith(marks: [...state.marks]..remove(m)));
+
+  void setDirection(Direction d) => emit(state.copyWith(direction: d));
+  void setAmount(int minor) => emit(state.copyWith(amountMinor: () => minor));
+  void setPayee(String v) => emit(state.copyWith(payee: () => v));
+  void setRef(String v) => emit(state.copyWith(ref: () => v));
+  void setDate(DateTime d) => emit(state.copyWith(occurredAt: () => d));
+  void setAccount(String? id) => emit(state.copyWith(accountId: () => id));
+  void setCategory(String id) => emit(state.copyWith(categoryId: () => id));
+  void setLearn(bool v) => emit(state.copyWith(learn: v));
+
+  Future<void> save() async {
+    final item = state.item;
+    if (item == null || state.saving) return;
+    emit(state.copyWith(saving: true));
+    final parsed = fields();
+    try {
+      final result = await _review.save(item, state.draft);
+      emit(
+        state.copyWith(
+          saving: false,
+          lastResult: () => (
+            result: result,
+            fields: parsed,
+            bank: bankShortName(item.bankId, _bankName(item)),
+          ),
+        ),
+      );
+      await _load(null);
+    } catch (_) {
+      emit(state.copyWith(saving: false));
+      rethrow;
+    }
+  }
+
+  Future<void> notATransaction() async {
+    final item = state.item;
+    if (item == null) return;
+    await _review.notATransaction(item);
+    await _load(null);
+  }
+
+  void consumeResult() => emit(state.copyWith(lastResult: () => null));
+
+  void skip() {
+    if (state.queue.length < 2) return;
+    final next = (state.index + 1) % state.queue.length;
+    emit(_fresh(state.queue, next).copyWith(loaded: true));
+  }
+}
