@@ -45,7 +45,7 @@
     "name": "Refund of failed txn is kept (not 'declined')",
     "channel": "sms", "sender": "BZ-BOBTXN-S", "receivedAt": "2026-10-07T10:00:00",
     "body": "Rs.500.00 credited to A/c XXXXXX1234 towards reversal of failed UPI txn Ref 427800001111. -Bank of Baroda",
-    "expected": {"status": "needsReview", "amountMinor": 50000, "direction": "credit", "last4": "1234"}
+    "expected": {"status": "needsReview", "amountMinor": 50000, "direction": "credit", "last4": "1234", "payee": null}
   },
   {
     "name": "BOB sends no email alerts, so its domain is not a bank sender",
