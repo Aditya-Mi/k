@@ -2,7 +2,7 @@ import '../bank_definition.dart';
 import '../enums.dart';
 import '../template.dart';
 
-// SMS UPI debit (Dr/Cr) is verified against real samples; other formats are
+// SMS UPI debit (Dr/Cr) and UPI credit are verified against real samples; other formats are
 // still synthetic (see test/fixtures/bob.json). BOB sends no email alerts.
 final bobBank = BankDefinition(
   code: 'BOB',
@@ -27,9 +27,11 @@ final bobBank = BankDefinition(
       bankCode: 'BOB',
       channel: Channel.sms,
       name: 'UPI credit',
+      // No account number or payer in this format.
       pattern: rx(
-        r'Rs\.?(?<amount>{amt}) Credited to A/c \.*(?<last4>\d{4}) thru UPI/(?<ref>\d+) by '
-        r'(?<payee>\S+?)\. Total Bal:? ?Rs\.?(?<balance>{amt})(?:.*?\((?<date>[\d\-]+)\))?',
+        r'Your account is credited with {rs}(?<amount>{amt}) on '
+        r'(?<date>\d{4}-\d{2}-\d{2} [\d:]+(?: [AP]M)?) by UPI Ref No:? (?<ref>\d+);? '
+        r'AvlBal:? ?Rs\.?(?<balance>{amt})',
       ),
       defaults: const {'direction': 'credit', 'txnType': 'upi'},
     ),
