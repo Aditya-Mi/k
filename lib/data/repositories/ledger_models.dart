@@ -75,6 +75,7 @@ class TxnView extends Equatable {
     this.notes,
     this.refNo,
     this.transferId,
+    this.origin = TxnOrigin.message,
     this.transferPartnerId,
     this.partnerAccount,
   });
@@ -102,7 +103,10 @@ class TxnView extends Equatable {
   final String? transferPartnerId;
   final AccountView? partnerAccount;
 
+  final TxnOrigin origin;
+
   bool get isTransfer => transferId != null;
+  bool get addedByUser => origin == TxnOrigin.user;
 
   /// "Axis ··0640 → Kotak ··4410"; an untracked side reads "own account".
   String get transferRoute {
@@ -118,7 +122,14 @@ class TxnView extends Equatable {
   @override
   List<Object?> get props => [
     id, amountMinor, currency, direction, txnType, occurredAt, payee, //
-    sourceCount, account, category, balanceMinor, notes, refNo, transferId,
+    sourceCount,
+    account,
+    category,
+    balanceMinor,
+    notes,
+    refNo,
+    transferId,
+    origin,
     transferPartnerId, partnerAccount,
   ];
 }
@@ -143,15 +154,105 @@ class UpcomingView extends Equatable {
 }
 
 class TxnDetailView extends Equatable {
-  const TxnDetailView(this.txn, this.sources);
+  const TxnDetailView(
+    this.txn,
+    this.sources, {
+    this.sourcesFromPartner = false,
+  });
 
   final TxnView txn;
 
   /// Bank messages behind this transaction, oldest first.
   final List<RawMessage> sources;
 
+  /// True when [txn] was added by the owner and [sources] are the messages of
+  /// the other side of its self transfer.
+  final bool sourcesFromPartner;
+
   @override
-  List<Object?> get props => [txn, sources];
+  List<Object?> get props => [txn, sources, sourcesFromPartner];
+}
+
+enum BalanceSource { bank, manual }
+
+class AccountBalance extends Equatable {
+  const AccountBalance({
+    required this.amountMinor,
+    required this.asOf,
+    required this.source,
+    required this.anchorAt,
+    this.estimatedFrom = 0,
+  });
+
+  /// Balance, or available limit for a credit card.
+  final int amountMinor;
+
+  /// Time of the newest money movement included.
+  final DateTime asOf;
+
+  /// Where the last known figure came from, and when.
+  final BalanceSource source;
+  final DateTime anchorAt;
+
+  /// Payments after that figure, added or subtracted by k. 0 = exact.
+  final int estimatedFrom;
+
+  bool get estimated => estimatedFrom > 0;
+
+  @override
+  List<Object?> get props => [
+    amountMinor,
+    asOf,
+    source,
+    anchorAt,
+    estimatedFrom,
+  ];
+}
+
+/// Last known figure — the newest bank-reported balance on a transaction, or
+/// the owner's manual entry if that is newer — plus every later movement
+/// (credits add, debits subtract; same for a card's available limit).
+/// Null when nothing is known yet.
+AccountBalance? computeBalance(Account account, List<Transaction> txns) {
+  Transaction? reported;
+  for (final t in txns) {
+    if (t.balanceMinor == null) continue;
+    if (reported == null || t.occurredAt.isAfter(reported.occurredAt)) {
+      reported = t;
+    }
+  }
+  int base;
+  DateTime anchor;
+  BalanceSource source;
+  final manualAt = account.manualBalanceAt;
+  if (account.manualBalanceMinor != null &&
+      manualAt != null &&
+      (reported == null || !manualAt.isBefore(reported.occurredAt))) {
+    base = account.manualBalanceMinor!;
+    anchor = manualAt;
+    source = BalanceSource.manual;
+  } else if (reported != null) {
+    base = reported.balanceMinor!;
+    anchor = reported.occurredAt;
+    source = BalanceSource.bank;
+  } else {
+    return null;
+  }
+  var asOf = anchor;
+  var moved = 0;
+  for (final t in txns) {
+    if (!t.occurredAt.isAfter(anchor)) continue;
+    base += t.direction == Direction.credit ? t.amountMinor : -t.amountMinor;
+    moved++;
+    if (t.occurredAt.isAfter(asOf)) asOf = t.occurredAt;
+  }
+  return AccountBalance(
+    amountMinor: base,
+    asOf: asOf,
+    source: source,
+    anchorAt: anchor,
+    estimatedFrom: moved,
+  );
 }
 
 /// List filter. [from]/[to] is a half-open range on occurredAt.

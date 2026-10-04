@@ -70,8 +70,12 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
 
   Future<void> setCategory(String id) => _ledger.setCategory(txnId, id);
   Future<void> unlinkTransfer() => _transfers.unlink(txnId);
-  Future<void> markTransfer({String? partnerId}) =>
-      _transfers.markManual(txnId, partnerId: partnerId);
+  Future<void> markTransfer({String? partnerId, String? addOnAccountId}) =>
+      _transfers.markManual(
+        txnId,
+        partnerId: partnerId,
+        addOnAccountId: addOnAccountId,
+      );
   Future<List<Transaction>> transferCandidates() =>
       _transfers.candidatesFor(txnId);
   Future<List<AccountView>> accounts() => _ledger.watchAccounts().first;
@@ -262,12 +266,23 @@ class _Loaded extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
                     Text(
-                      sources.length > 1
+                      txn.addedByUser
+                          ? 'Added by you'
+                          : sources.length > 1
                           ? 'Came from ${sources.length} bank messages'
                           : 'Came from this bank message',
                       style: t.title.copyWith(fontSize: 18),
                     ),
-                    if (sources.length > 1) ...[
+                    if (txn.addedByUser) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        detail.sourcesFromPartner
+                            ? 'Your bank sent no message for this side. It '
+                                  'mirrors the other side of the transfer:'
+                            : 'Your bank sent no message for this.',
+                        style: t.body.copyWith(color: c.text2),
+                      ),
+                    ] else if (sources.length > 1) ...[
                       const SizedBox(height: 4),
                       Text(
                         'Same amount, account and time, so they were merged into one',
@@ -276,7 +291,10 @@ class _Loaded extends StatelessWidget {
                     ],
                     const SizedBox(height: 12),
                     for (final (i, m) in sources.indexed) ...[
-                      RawMessageCard(message: m, merged: i > 0),
+                      RawMessageCard(
+                        message: m,
+                        merged: i > 0 && !detail.sourcesFromPartner,
+                      ),
                       const SizedBox(height: 12),
                     ],
                     const SizedBox(height: 12),
@@ -385,7 +403,12 @@ class _Loaded extends StatelessWidget {
     final accounts = {for (final a in await cubit.accounts()) a.id: a};
     if (!context.mounted) return;
     final t = context.kt;
-    final picked = await showModalBottomSheet<(String?,)>(
+    // Own accounts with no matching row: the other side can be added there.
+    final withRow = {for (final o in candidates) o.accountId};
+    final addable = accounts.values
+        .where((a) => a.id != txn.account?.id && !withRow.contains(a.id))
+        .toList();
+    final picked = await showModalBottomSheet<({String? partner, String? addOn})>(
       context: context,
       isScrollControlled: true,
       builder: (context) => SafeArea(
@@ -431,7 +454,16 @@ class _Loaded extends StatelessWidget {
                       '${dayMonth(o.occurredAt)}, ${hhmm(o.occurredAt)}',
                     ].join(' · '),
                   ),
-                  onTap: () => Navigator.pop(context, (o.id,)),
+                  onTap: () =>
+                      Navigator.pop(context, (partner: o.id, addOn: null)),
+                ),
+              for (final a in addable)
+                ListTile(
+                  leading: Icon(Icons.add_rounded, color: context.k.text2),
+                  title: Text('${txn.isDebit ? 'To' : 'From'} ${a.short}'),
+                  subtitle: const Text('No message from this bank — add it'),
+                  onTap: () =>
+                      Navigator.pop(context, (partner: null, addOn: a.id)),
                 ),
               ListTile(
                 leading: const Icon(Icons.account_balance_outlined),
@@ -440,14 +472,20 @@ class _Loaded extends StatelessWidget {
                       ? 'To an account not in k'
                       : 'From an account not in k',
                 ),
-                onTap: () => Navigator.pop(context, (null,)),
+                onTap: () =>
+                    Navigator.pop(context, (partner: null, addOn: null)),
               ),
             ],
           ),
         ),
       ),
     );
-    if (picked != null) await cubit.markTransfer(partnerId: picked.$1);
+    if (picked != null) {
+      await cubit.markTransfer(
+        partnerId: picked.partner,
+        addOnAccountId: picked.addOn,
+      );
+    }
   }
 
   Future<void> _editNote(

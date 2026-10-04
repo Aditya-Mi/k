@@ -194,6 +194,36 @@ class IngestionService {
         fields,
         normalizeText([?m.subject, m.body].join(' ')),
       );
+      final occurredAt = fields.occurredAt ?? m.receivedAt;
+
+      // A late bank message for a side the owner added: it becomes that row.
+      final added = await _ownerAddedRow(account.id, fields, occurredAt);
+      if (added != null) {
+        await (_db.update(
+          _db.transactions,
+        )..where((t) => t.id.equals(added.id))).write(
+          TransactionsCompanion(
+            origin: const Value(TxnOrigin.message),
+            occurredAt: Value(occurredAt),
+            txnType: Value(fields.txnType ?? added.txnType),
+            merchantId: Value(merchant?.id),
+            payeeRaw: Value(fields.payee),
+            refNo: Value(fields.ref),
+            balanceMinor: Value(fields.balanceMinor),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+        await _db
+            .into(_db.transactionSources)
+            .insert(
+              TransactionSourcesCompanion.insert(
+                transactionId: added.id,
+                rawMessageId: raw.id,
+              ),
+            );
+        return IngestOutcome.transaction;
+      }
+
       final txn = await _db
           .into(_db.transactions)
           .insertReturning(
@@ -206,7 +236,7 @@ class IngestionService {
               merchantId: Value(merchant?.id),
               payeeRaw: Value(fields.payee),
               refNo: Value(fields.ref),
-              occurredAt: fields.occurredAt ?? m.receivedAt,
+              occurredAt: occurredAt,
               balanceMinor: Value(fields.balanceMinor),
               categoryId: Value(
                 categories.resolve(
@@ -227,6 +257,34 @@ class IngestionService {
       await _transfers.autoLink(txn.id);
       return IngestOutcome.transaction;
     });
+  }
+
+  /// Same account, amount and direction, added by the owner within ±3 days.
+  Future<Transaction?> _ownerAddedRow(
+    String accountId,
+    ParsedFields f,
+    DateTime at,
+  ) async {
+    const span = Duration(days: 3);
+    final rows =
+        await (_db.select(_db.transactions)..where(
+              (t) =>
+                  t.deletedAt.isNull() &
+                  t.origin.equalsValue(TxnOrigin.user) &
+                  t.accountId.equals(accountId) &
+                  t.amountMinor.equals(f.amountMinor!) &
+                  t.direction.equalsValue(f.direction) &
+                  t.occurredAt.isBetweenValues(at.subtract(span), at.add(span)),
+            ))
+            .get();
+    if (rows.isEmpty) return null;
+    rows.sort(
+      (a, b) => a.occurredAt
+          .difference(at)
+          .abs()
+          .compareTo(b.occurredAt.difference(at).abs()),
+    );
+    return rows.first;
   }
 
   Future<bool> _isDuplicate(IncomingMessage m) async {
@@ -270,6 +328,23 @@ class IngestionService {
     String text,
   ) async {
     final last4 = f.last4;
+    // Some alerts name no account ("Your account is credited"). If the bank
+    // has exactly one savings/current account, it is that one.
+    if (last4 == null) {
+      final bank =
+          await (_db.select(_db.accounts)..where(
+                (a) =>
+                    a.bankId.equals(bankId) &
+                    a.deletedAt.isNull() &
+                    a.last4.isNotNull() &
+                    a.type.isInValues([
+                      AccountType.savings,
+                      AccountType.current,
+                    ]),
+              ))
+              .get();
+      if (bank.length == 1) return bank.single;
+    }
     final existing =
         await (_db.select(_db.accounts)
               ..where(
@@ -364,8 +439,9 @@ String merchantDisplayName(String payee, String key) {
       .split(RegExp(r'\s+'))
       .where((w) => w.isNotEmpty)
       .map((w) {
+        final letters = w.replaceAll(RegExp('[^A-Za-z]'), '').length;
         final vowels = _vowel.allMatches(w).length;
-        if (w.length > 1 && vowels / w.length < 0.25) return w.toUpperCase();
+        if (letters > 1 && vowels / letters < 0.25) return w.toUpperCase();
         return w[0].toUpperCase() + w.substring(1).toLowerCase();
       })
       .join(' ');

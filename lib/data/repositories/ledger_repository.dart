@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:txn_parser/txn_parser.dart';
 
 import '../db/app_database.dart';
@@ -41,30 +42,80 @@ class LedgerRepository {
 
   Stream<TxnDetailView?> watchDetail(String id) {
     final query = _txnJoin()..where(_db.transactions.id.equals(id));
-    final txn = query.watchSingleOrNull().map(
-      (r) => r == null ? null : _toView(r),
-    );
-    final sources =
-        (_db.select(_db.rawMessages).join([
-                innerJoin(
-                  _db.transactionSources,
-                  _db.transactionSources.rawMessageId.equalsExp(
-                    _db.rawMessages.id,
-                  ),
-                ),
-              ])
-              ..where(_db.transactionSources.transactionId.equals(id))
-              ..orderBy([OrderingTerm.asc(_db.rawMessages.receivedAt)]))
-            .watch()
-            .map(
-              (rows) => rows.map((r) => r.readTable(_db.rawMessages)).toList(),
-            );
-    return txn.asyncExpand(
-      (view) => view == null
-          ? Stream.value(null)
-          : sources.map((s) => TxnDetailView(view, s)),
-    );
+    return query
+        .watchSingleOrNull()
+        .map((r) => r == null ? null : _toView(r))
+        .switchMap((view) {
+          if (view == null) return Stream.value(null);
+          return _watchSources(id).switchMap((own) {
+            final partner = view.transferPartnerId;
+            // A row added by the owner borrows its partner's message trail.
+            if (own.isNotEmpty || partner == null) {
+              return Stream.value(TxnDetailView(view, own));
+            }
+            return _watchSources(partner)
+                .map((s) => TxnDetailView(view, s, sourcesFromPartner: true));
+          });
+        });
   }
+
+  Stream<List<RawMessage>> _watchSources(String txnId) =>
+      (_db.select(_db.rawMessages).join([
+              innerJoin(
+                _db.transactionSources,
+                _db.transactionSources.rawMessageId.equalsExp(
+                  _db.rawMessages.id,
+                ),
+              ),
+            ])
+            ..where(_db.transactionSources.transactionId.equals(txnId))
+            ..orderBy([OrderingTerm.asc(_db.rawMessages.receivedAt)]))
+          .watch()
+          .map(
+            (rows) => rows.map((r) => r.readTable(_db.rawMessages)).toList(),
+          );
+
+  /// Current balance per account id (see [computeBalance]).
+  Stream<Map<String, AccountBalance>> watchBalances() {
+    final t = _db.transactions;
+    final txns = (_db.select(
+      t,
+    )..where((o) => o.deletedAt.isNull() & o.accountId.isNotNull())).watch();
+    final accounts = (_db.select(
+      _db.accounts,
+    )..where((a) => a.deletedAt.isNull())).watch();
+    return Rx.combineLatest2(accounts, txns, (accs, rows) {
+      final byAccount = <String, List<Transaction>>{};
+      for (final r in rows) {
+        byAccount.putIfAbsent(r.accountId!, () => []).add(r);
+      }
+      return {
+        for (final a in accs)
+          a.id: ?computeBalance(a, byAccount[a.id] ?? const []),
+      };
+    });
+  }
+
+  Future<void> renameAccount(String id, String? nickname) =>
+      (_db.update(_db.accounts)..where((a) => a.id.equals(id))).write(
+        AccountsCompanion(
+          nickname: Value(
+            nickname == null || nickname.trim().isEmpty
+                ? null
+                : nickname.trim(),
+          ),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+
+  Future<void> setManualBalance(String id, int minor, DateTime at) =>
+      (_db.update(_db.accounts)..where((a) => a.id.equals(id))).write(
+        AccountsCompanion(
+          manualBalanceMinor: Value(minor),
+          manualBalanceAt: Value(at),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
 
   Stream<List<AccountView>> watchAccounts() {
     final a = _db.accounts;
@@ -247,6 +298,7 @@ class LedgerRepository {
       notes: t.notes,
       refNo: t.refNo,
       transferId: t.transferId,
+      origin: t.origin,
       transferPartnerId: partner?.id,
       partnerAccount: partnerAccount == null || partnerBank == null
           ? null

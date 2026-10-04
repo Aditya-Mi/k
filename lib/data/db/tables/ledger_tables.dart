@@ -15,6 +15,11 @@ class Accounts extends Table with SyncColumns {
   TextColumn get currency => text().withDefault(const Constant('INR'))();
   BoolColumn get autoCreated => boolean().withDefault(const Constant(false))();
 
+  /// Balance (or available limit for cards) the owner entered, as of
+  /// [manualBalanceAt]. Used when it is newer than any bank-reported balance.
+  IntColumn get manualBalanceMinor => integer().nullable()();
+  DateTimeColumn get manualBalanceAt => dateTime().nullable()();
+
   @override
   List<Set<Column>> get uniqueKeys => [
     {bankId, last4},
@@ -75,6 +80,10 @@ class Transactions extends Table with SyncColumns {
   /// User said "not a self transfer" — auto-linking must skip this row.
   BoolColumn get autoTransferOff =>
       boolean().withDefault(const Constant(false))();
+
+  /// `user` rows have no bank message of their own.
+  TextColumn get origin =>
+      textEnum<TxnOrigin>().withDefault(Constant(TxnOrigin.message.name))();
 }
 
 /// Dedup link: one transaction ← many raw messages (SMS + email).

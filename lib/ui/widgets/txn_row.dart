@@ -15,7 +15,11 @@ class TxnRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final meta = txn.isTransfer
-        ? '${txn.transferRoute} · ${hhmm(txn.occurredAt)}'
+        ? [
+            txn.transferRoute,
+            if (txn.addedByUser) 'added by you',
+            hhmm(txn.occurredAt),
+          ].join(' · ')
         : [
             txn.category?.name ?? 'Uncategorized',
             if (txn.account != null) txn.account!.short,

@@ -22,6 +22,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Design | Done. `design/k.pen`, exports in `design/screens/`, `DESIGN.md` |
 | Phase 2: native SMS ingestion + Transactions list | **Code done, awaiting on-device test.** `flutter test` 21 pass, analyze clean, debug APK builds |
 | Phase 2b: self-transfer linking | **Done.** `flutter test` 28 pass. Owner tested Phase 2 on device: SMS capture works |
+| Phase 2c: account balances + owner-added transfer side | **Done.** `flutter test` 31 pass |
 | Phases 3–6 | Not started: 3 review queue + categorization rules, 4 subscriptions + reminders, 5 Gmail + dedup, 6 summary + backup/export + app lock |
 
 ## Phase 2: what was built
@@ -44,7 +45,14 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - `lib/data/ingest/transfer_linker.dart`: auto rule = debit + credit, same amount/currency, different own accounts, within 30 min (owner-approved), closest wins. Runs per ingested txn and as `autoLinkAll()` backfill on app start. Linked rows get category `cat_transfers` unless user-edited; unlink re-resolves category.
 - UI: row title "Self transfer", meta "Axis ··0640 → Kotak ··4410 · time", swap icon; excluded from month spent/in/spend count and day "out" totals. Detail: "Self transfer" field, "Not a self transfer" (unlink) or "Mark as self transfer" (pick same-amount opposite row on another account within ±3 days, or "account not in k").
 
-## Next step: on-device check of 2b, then Phase 3
+## Phase 2c: balances + missing transfer side
+- Schema v3: `transactions.origin` (`message`|`user`), `accounts.manual_balance_minor/_at`. Migration also folds "no last4" accounts into the bank's only savings/current account (BOB UPI credits name no account).
+- Ingestion: alert without last4 → the bank's single savings/current account if there is exactly one.
+- Balances are computed, not stored (`computeBalance` in `ledger_models.dart`): newest bank-reported balance (txn `balanceMinor`) or the owner's manual figure if newer, plus later credits − debits (marked estimated). Card = available limit. Accounts screen (wallet icon on home): balance + source, Rename, Set balance/limit.
+- "Mark as self transfer" can add the missing side on another tracked account (`origin = user`, "added by you"; detail shows the other side's message). A late real SMS (same account/amount/direction within ±3 days) becomes that row. Unlink soft-deletes an added side.
+- Fixed: detail screen now uses `switchMap` (edits refresh live). Rosette now uses exact design geometry minus the 5-lobe core (owner request).
+
+## Next step: on-device check of 2b/2c, then Phase 3
 Owner to run `flutter run` (or `adb install`) on the Nothing Phone 2 and check:
 1. Onboarding: SMS Allow. If sideloaded via file manager/browser, Android 13+ blocks it → App info → ⋮ → Allow restricted settings. `flutter run`/`adb install` installs are not restricted.
 2. Battery Allow, plus Nothing OS App info → Battery → Unrestricted.
@@ -64,6 +72,7 @@ Then Phase 3: review queue + fix-by-selection + learned templates + category rul
 - `.impeccable/review/` is gitignored scratch; `.impeccable/questions/*.state.json` may show as modified — harmless.
 
 ## Open items
+- Balance after a manual set is "set by you", then estimated by later payments; negative balances can't be entered (overdraft) — add if needed.
 - Phase 2 shortcuts: section head shows the whole list's date span (not the span in view); upcoming charges have no account last4 (not stored on `upcoming_charges`); credits with no keyword stay Uncategorized; merchant names from VPAs can be ugly ("Zeptonowcashfree") until Phase 3 renames/merges.
 - Widget tests render via `tester.runAsync` + drift streams hang on teardown — screenshot harness was deleted; if adding widget tests, close cubits/DB inside runAsync.
 - Light-theme inks ink-10/20/200 sit close; verify on device.

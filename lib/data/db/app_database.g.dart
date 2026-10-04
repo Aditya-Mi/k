@@ -3788,6 +3788,28 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _manualBalanceMinorMeta =
+      const VerificationMeta('manualBalanceMinor');
+  @override
+  late final GeneratedColumn<int> manualBalanceMinor = GeneratedColumn<int>(
+    'manual_balance_minor',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _manualBalanceAtMeta = const VerificationMeta(
+    'manualBalanceAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> manualBalanceAt =
+      GeneratedColumn<DateTime>(
+        'manual_balance_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3800,6 +3822,8 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     nickname,
     currency,
     autoCreated,
+    manualBalanceMinor,
+    manualBalanceAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3869,6 +3893,24 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         ),
       );
     }
+    if (data.containsKey('manual_balance_minor')) {
+      context.handle(
+        _manualBalanceMinorMeta,
+        manualBalanceMinor.isAcceptableOrUnknown(
+          data['manual_balance_minor']!,
+          _manualBalanceMinorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('manual_balance_at')) {
+      context.handle(
+        _manualBalanceAtMeta,
+        manualBalanceAt.isAcceptableOrUnknown(
+          data['manual_balance_at']!,
+          _manualBalanceAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3924,6 +3966,14 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.bool,
         data['${effectivePrefix}auto_created'],
       )!,
+      manualBalanceMinor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}manual_balance_minor'],
+      ),
+      manualBalanceAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}manual_balance_at'],
+      ),
     );
   }
 
@@ -3949,6 +3999,11 @@ class Account extends DataClass implements Insertable<Account> {
   final String? nickname;
   final String currency;
   final bool autoCreated;
+
+  /// Balance (or available limit for cards) the owner entered, as of
+  /// [manualBalanceAt]. Used when it is newer than any bank-reported balance.
+  final int? manualBalanceMinor;
+  final DateTime? manualBalanceAt;
   const Account({
     required this.id,
     required this.createdAt,
@@ -3960,6 +4015,8 @@ class Account extends DataClass implements Insertable<Account> {
     this.nickname,
     required this.currency,
     required this.autoCreated,
+    this.manualBalanceMinor,
+    this.manualBalanceAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3982,6 +4039,12 @@ class Account extends DataClass implements Insertable<Account> {
     }
     map['currency'] = Variable<String>(currency);
     map['auto_created'] = Variable<bool>(autoCreated);
+    if (!nullToAbsent || manualBalanceMinor != null) {
+      map['manual_balance_minor'] = Variable<int>(manualBalanceMinor);
+    }
+    if (!nullToAbsent || manualBalanceAt != null) {
+      map['manual_balance_at'] = Variable<DateTime>(manualBalanceAt);
+    }
     return map;
   }
 
@@ -4003,6 +4066,12 @@ class Account extends DataClass implements Insertable<Account> {
           : Value(nickname),
       currency: Value(currency),
       autoCreated: Value(autoCreated),
+      manualBalanceMinor: manualBalanceMinor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(manualBalanceMinor),
+      manualBalanceAt: manualBalanceAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(manualBalanceAt),
     );
   }
 
@@ -4024,6 +4093,8 @@ class Account extends DataClass implements Insertable<Account> {
       nickname: serializer.fromJson<String?>(json['nickname']),
       currency: serializer.fromJson<String>(json['currency']),
       autoCreated: serializer.fromJson<bool>(json['autoCreated']),
+      manualBalanceMinor: serializer.fromJson<int?>(json['manualBalanceMinor']),
+      manualBalanceAt: serializer.fromJson<DateTime?>(json['manualBalanceAt']),
     );
   }
   @override
@@ -4042,6 +4113,8 @@ class Account extends DataClass implements Insertable<Account> {
       'nickname': serializer.toJson<String?>(nickname),
       'currency': serializer.toJson<String>(currency),
       'autoCreated': serializer.toJson<bool>(autoCreated),
+      'manualBalanceMinor': serializer.toJson<int?>(manualBalanceMinor),
+      'manualBalanceAt': serializer.toJson<DateTime?>(manualBalanceAt),
     };
   }
 
@@ -4056,6 +4129,8 @@ class Account extends DataClass implements Insertable<Account> {
     Value<String?> nickname = const Value.absent(),
     String? currency,
     bool? autoCreated,
+    Value<int?> manualBalanceMinor = const Value.absent(),
+    Value<DateTime?> manualBalanceAt = const Value.absent(),
   }) => Account(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -4067,6 +4142,12 @@ class Account extends DataClass implements Insertable<Account> {
     nickname: nickname.present ? nickname.value : this.nickname,
     currency: currency ?? this.currency,
     autoCreated: autoCreated ?? this.autoCreated,
+    manualBalanceMinor: manualBalanceMinor.present
+        ? manualBalanceMinor.value
+        : this.manualBalanceMinor,
+    manualBalanceAt: manualBalanceAt.present
+        ? manualBalanceAt.value
+        : this.manualBalanceAt,
   );
   Account copyWithCompanion(AccountsCompanion data) {
     return Account(
@@ -4082,6 +4163,12 @@ class Account extends DataClass implements Insertable<Account> {
       autoCreated: data.autoCreated.present
           ? data.autoCreated.value
           : this.autoCreated,
+      manualBalanceMinor: data.manualBalanceMinor.present
+          ? data.manualBalanceMinor.value
+          : this.manualBalanceMinor,
+      manualBalanceAt: data.manualBalanceAt.present
+          ? data.manualBalanceAt.value
+          : this.manualBalanceAt,
     );
   }
 
@@ -4097,7 +4184,9 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('last4: $last4, ')
           ..write('nickname: $nickname, ')
           ..write('currency: $currency, ')
-          ..write('autoCreated: $autoCreated')
+          ..write('autoCreated: $autoCreated, ')
+          ..write('manualBalanceMinor: $manualBalanceMinor, ')
+          ..write('manualBalanceAt: $manualBalanceAt')
           ..write(')'))
         .toString();
   }
@@ -4114,6 +4203,8 @@ class Account extends DataClass implements Insertable<Account> {
     nickname,
     currency,
     autoCreated,
+    manualBalanceMinor,
+    manualBalanceAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -4128,7 +4219,9 @@ class Account extends DataClass implements Insertable<Account> {
           other.last4 == this.last4 &&
           other.nickname == this.nickname &&
           other.currency == this.currency &&
-          other.autoCreated == this.autoCreated);
+          other.autoCreated == this.autoCreated &&
+          other.manualBalanceMinor == this.manualBalanceMinor &&
+          other.manualBalanceAt == this.manualBalanceAt);
 }
 
 class AccountsCompanion extends UpdateCompanion<Account> {
@@ -4142,6 +4235,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<String?> nickname;
   final Value<String> currency;
   final Value<bool> autoCreated;
+  final Value<int?> manualBalanceMinor;
+  final Value<DateTime?> manualBalanceAt;
   final Value<int> rowid;
   const AccountsCompanion({
     this.id = const Value.absent(),
@@ -4154,6 +4249,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.nickname = const Value.absent(),
     this.currency = const Value.absent(),
     this.autoCreated = const Value.absent(),
+    this.manualBalanceMinor = const Value.absent(),
+    this.manualBalanceAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AccountsCompanion.insert({
@@ -4167,6 +4264,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.nickname = const Value.absent(),
     this.currency = const Value.absent(),
     this.autoCreated = const Value.absent(),
+    this.manualBalanceMinor = const Value.absent(),
+    this.manualBalanceAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : bankId = Value(bankId),
        type = Value(type);
@@ -4181,6 +4280,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<String>? nickname,
     Expression<String>? currency,
     Expression<bool>? autoCreated,
+    Expression<int>? manualBalanceMinor,
+    Expression<DateTime>? manualBalanceAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4194,6 +4295,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (nickname != null) 'nickname': nickname,
       if (currency != null) 'currency': currency,
       if (autoCreated != null) 'auto_created': autoCreated,
+      if (manualBalanceMinor != null)
+        'manual_balance_minor': manualBalanceMinor,
+      if (manualBalanceAt != null) 'manual_balance_at': manualBalanceAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4209,6 +4313,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<String?>? nickname,
     Value<String>? currency,
     Value<bool>? autoCreated,
+    Value<int?>? manualBalanceMinor,
+    Value<DateTime?>? manualBalanceAt,
     Value<int>? rowid,
   }) {
     return AccountsCompanion(
@@ -4222,6 +4328,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       nickname: nickname ?? this.nickname,
       currency: currency ?? this.currency,
       autoCreated: autoCreated ?? this.autoCreated,
+      manualBalanceMinor: manualBalanceMinor ?? this.manualBalanceMinor,
+      manualBalanceAt: manualBalanceAt ?? this.manualBalanceAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4261,6 +4369,12 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (autoCreated.present) {
       map['auto_created'] = Variable<bool>(autoCreated.value);
     }
+    if (manualBalanceMinor.present) {
+      map['manual_balance_minor'] = Variable<int>(manualBalanceMinor.value);
+    }
+    if (manualBalanceAt.present) {
+      map['manual_balance_at'] = Variable<DateTime>(manualBalanceAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4280,6 +4394,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('nickname: $nickname, ')
           ..write('currency: $currency, ')
           ..write('autoCreated: $autoCreated, ')
+          ..write('manualBalanceMinor: $manualBalanceMinor, ')
+          ..write('manualBalanceAt: $manualBalanceAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7201,6 +7317,16 @@ class $TransactionsTable extends Transactions
     defaultValue: const Constant(false),
   );
   @override
+  late final GeneratedColumnWithTypeConverter<TxnOrigin, String> origin =
+      GeneratedColumn<String>(
+        'origin',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(TxnOrigin.message.name),
+      ).withConverter<TxnOrigin>($TransactionsTable.$converterorigin);
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     createdAt,
@@ -7222,6 +7348,7 @@ class $TransactionsTable extends Transactions
     userEdited,
     transferId,
     autoTransferOff,
+    origin,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7449,6 +7576,12 @@ class $TransactionsTable extends Transactions
         DriftSqlType.bool,
         data['${effectivePrefix}auto_transfer_off'],
       )!,
+      origin: $TransactionsTable.$converterorigin.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}origin'],
+        )!,
+      ),
     );
   }
 
@@ -7461,6 +7594,8 @@ class $TransactionsTable extends Transactions
       const EnumNameConverter<Direction>(Direction.values);
   static JsonTypeConverter2<TxnType, String, String> $convertertxnType =
       const EnumNameConverter<TxnType>(TxnType.values);
+  static JsonTypeConverter2<TxnOrigin, String, String> $converterorigin =
+      const EnumNameConverter<TxnOrigin>(TxnOrigin.values);
 }
 
 class Transaction extends DataClass implements Insertable<Transaction> {
@@ -7495,6 +7630,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
 
   /// User said "not a self transfer" — auto-linking must skip this row.
   final bool autoTransferOff;
+
+  /// `user` rows have no bank message of their own.
+  final TxnOrigin origin;
   const Transaction({
     required this.id,
     required this.createdAt,
@@ -7516,6 +7654,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.userEdited,
     this.transferId,
     required this.autoTransferOff,
+    required this.origin,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7568,6 +7707,11 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       map['transfer_id'] = Variable<String>(transferId);
     }
     map['auto_transfer_off'] = Variable<bool>(autoTransferOff);
+    {
+      map['origin'] = Variable<String>(
+        $TransactionsTable.$converterorigin.toSql(origin),
+      );
+    }
     return map;
   }
 
@@ -7613,6 +7757,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ? const Value.absent()
           : Value(transferId),
       autoTransferOff: Value(autoTransferOff),
+      origin: Value(origin),
     );
   }
 
@@ -7646,6 +7791,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       userEdited: serializer.fromJson<bool>(json['userEdited']),
       transferId: serializer.fromJson<String?>(json['transferId']),
       autoTransferOff: serializer.fromJson<bool>(json['autoTransferOff']),
+      origin: $TransactionsTable.$converterorigin.fromJson(
+        serializer.fromJson<String>(json['origin']),
+      ),
     );
   }
   @override
@@ -7676,6 +7824,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'userEdited': serializer.toJson<bool>(userEdited),
       'transferId': serializer.toJson<String?>(transferId),
       'autoTransferOff': serializer.toJson<bool>(autoTransferOff),
+      'origin': serializer.toJson<String>(
+        $TransactionsTable.$converterorigin.toJson(origin),
+      ),
     };
   }
 
@@ -7700,6 +7851,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     bool? userEdited,
     Value<String?> transferId = const Value.absent(),
     bool? autoTransferOff,
+    TxnOrigin? origin,
   }) => Transaction(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -7723,6 +7875,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     userEdited: userEdited ?? this.userEdited,
     transferId: transferId.present ? transferId.value : this.transferId,
     autoTransferOff: autoTransferOff ?? this.autoTransferOff,
+    origin: origin ?? this.origin,
   );
   Transaction copyWithCompanion(TransactionsCompanion data) {
     return Transaction(
@@ -7764,6 +7917,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       autoTransferOff: data.autoTransferOff.present
           ? data.autoTransferOff.value
           : this.autoTransferOff,
+      origin: data.origin.present ? data.origin.value : this.origin,
     );
   }
 
@@ -7789,13 +7943,14 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('notes: $notes, ')
           ..write('userEdited: $userEdited, ')
           ..write('transferId: $transferId, ')
-          ..write('autoTransferOff: $autoTransferOff')
+          ..write('autoTransferOff: $autoTransferOff, ')
+          ..write('origin: $origin')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     createdAt,
     updatedAt,
@@ -7816,7 +7971,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     userEdited,
     transferId,
     autoTransferOff,
-  );
+    origin,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -7840,7 +7996,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.notes == this.notes &&
           other.userEdited == this.userEdited &&
           other.transferId == this.transferId &&
-          other.autoTransferOff == this.autoTransferOff);
+          other.autoTransferOff == this.autoTransferOff &&
+          other.origin == this.origin);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
@@ -7864,6 +8021,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<bool> userEdited;
   final Value<String?> transferId;
   final Value<bool> autoTransferOff;
+  final Value<TxnOrigin> origin;
   final Value<int> rowid;
   const TransactionsCompanion({
     this.id = const Value.absent(),
@@ -7886,6 +8044,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.userEdited = const Value.absent(),
     this.transferId = const Value.absent(),
     this.autoTransferOff = const Value.absent(),
+    this.origin = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TransactionsCompanion.insert({
@@ -7909,6 +8068,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.userEdited = const Value.absent(),
     this.transferId = const Value.absent(),
     this.autoTransferOff = const Value.absent(),
+    this.origin = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : amountMinor = Value(amountMinor),
        direction = Value(direction),
@@ -7935,6 +8095,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<bool>? userEdited,
     Expression<String>? transferId,
     Expression<bool>? autoTransferOff,
+    Expression<String>? origin,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -7958,6 +8119,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (userEdited != null) 'user_edited': userEdited,
       if (transferId != null) 'transfer_id': transferId,
       if (autoTransferOff != null) 'auto_transfer_off': autoTransferOff,
+      if (origin != null) 'origin': origin,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -7983,6 +8145,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<bool>? userEdited,
     Value<String?>? transferId,
     Value<bool>? autoTransferOff,
+    Value<TxnOrigin>? origin,
     Value<int>? rowid,
   }) {
     return TransactionsCompanion(
@@ -8006,6 +8169,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       userEdited: userEdited ?? this.userEdited,
       transferId: transferId ?? this.transferId,
       autoTransferOff: autoTransferOff ?? this.autoTransferOff,
+      origin: origin ?? this.origin,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -8077,6 +8241,11 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (autoTransferOff.present) {
       map['auto_transfer_off'] = Variable<bool>(autoTransferOff.value);
     }
+    if (origin.present) {
+      map['origin'] = Variable<String>(
+        $TransactionsTable.$converterorigin.toSql(origin.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -8106,6 +8275,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('userEdited: $userEdited, ')
           ..write('transferId: $transferId, ')
           ..write('autoTransferOff: $autoTransferOff, ')
+          ..write('origin: $origin, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -13079,6 +13249,8 @@ typedef $$AccountsTableCreateCompanionBuilder = AccountsCompanion Function({
   Value<String?> nickname,
   Value<String> currency,
   Value<bool> autoCreated,
+  Value<int?> manualBalanceMinor,
+  Value<DateTime?> manualBalanceAt,
   Value<int> rowid,
 });
 typedef $$AccountsTableUpdateCompanionBuilder = AccountsCompanion Function({
@@ -13092,6 +13264,8 @@ typedef $$AccountsTableUpdateCompanionBuilder = AccountsCompanion Function({
   Value<String?> nickname,
   Value<String> currency,
   Value<bool> autoCreated,
+  Value<int?> manualBalanceMinor,
+  Value<DateTime?> manualBalanceAt,
   Value<int> rowid,
 });
 
@@ -13187,6 +13361,16 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<bool> get autoCreated => $composableBuilder(
     column: $table.autoCreated,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get manualBalanceMinor => $composableBuilder(
+    column: $table.manualBalanceMinor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get manualBalanceAt => $composableBuilder(
+    column: $table.manualBalanceAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13293,6 +13477,16 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get manualBalanceMinor => $composableBuilder(
+    column: $table.manualBalanceMinor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get manualBalanceAt => $composableBuilder(
+    column: $table.manualBalanceAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$BanksTableOrderingComposer get bankId {
     final $$BanksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -13352,6 +13546,16 @@ class $$AccountsTableAnnotationComposer
 
   GeneratedColumn<bool> get autoCreated => $composableBuilder(
     column: $table.autoCreated,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get manualBalanceMinor => $composableBuilder(
+    column: $table.manualBalanceMinor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get manualBalanceAt => $composableBuilder(
+    column: $table.manualBalanceAt,
     builder: (column) => column,
   );
 
@@ -13442,6 +13646,8 @@ class $$AccountsTableTableManager
                 Value<String?> nickname = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<bool> autoCreated = const Value.absent(),
+                Value<int?> manualBalanceMinor = const Value.absent(),
+                Value<DateTime?> manualBalanceAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AccountsCompanion(
                 id: id,
@@ -13454,6 +13660,8 @@ class $$AccountsTableTableManager
                 nickname: nickname,
                 currency: currency,
                 autoCreated: autoCreated,
+                manualBalanceMinor: manualBalanceMinor,
+                manualBalanceAt: manualBalanceAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -13468,6 +13676,8 @@ class $$AccountsTableTableManager
                 Value<String?> nickname = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<bool> autoCreated = const Value.absent(),
+                Value<int?> manualBalanceMinor = const Value.absent(),
+                Value<DateTime?> manualBalanceAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AccountsCompanion.insert(
                 id: id,
@@ -13480,6 +13690,8 @@ class $$AccountsTableTableManager
                 nickname: nickname,
                 currency: currency,
                 autoCreated: autoCreated,
+                manualBalanceMinor: manualBalanceMinor,
+                manualBalanceAt: manualBalanceAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -15710,6 +15922,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<bool> userEdited,
       Value<String?> transferId,
       Value<bool> autoTransferOff,
+      Value<TxnOrigin> origin,
       Value<int> rowid,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
@@ -15734,6 +15947,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<bool> userEdited,
       Value<String?> transferId,
       Value<bool> autoTransferOff,
+      Value<TxnOrigin> origin,
       Value<int> rowid,
     });
 
@@ -15943,6 +16157,12 @@ class $$TransactionsTableFilterComposer
     column: $table.autoTransferOff,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<TxnOrigin, TxnOrigin, String> get origin =>
+      $composableBuilder(
+        column: $table.origin,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   $$AccountsTableFilterComposer get accountId {
     final $$AccountsTableFilterComposer composer = $composerBuilder(
@@ -16176,6 +16396,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get origin => $composableBuilder(
+    column: $table.origin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$AccountsTableOrderingComposer get accountId {
     final $$AccountsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -16337,6 +16562,9 @@ class $$TransactionsTableAnnotationComposer
     column: $table.autoTransferOff,
     builder: (column) => column,
   );
+
+  GeneratedColumnWithTypeConverter<TxnOrigin, String> get origin =>
+      $composableBuilder(column: $table.origin, builder: (column) => column);
 
   $$AccountsTableAnnotationComposer get accountId {
     final $$AccountsTableAnnotationComposer composer = $composerBuilder(
@@ -16537,6 +16765,7 @@ class $$TransactionsTableTableManager
                 Value<bool> userEdited = const Value.absent(),
                 Value<String?> transferId = const Value.absent(),
                 Value<bool> autoTransferOff = const Value.absent(),
+                Value<TxnOrigin> origin = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
                 id: id,
@@ -16559,6 +16788,7 @@ class $$TransactionsTableTableManager
                 userEdited: userEdited,
                 transferId: transferId,
                 autoTransferOff: autoTransferOff,
+                origin: origin,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -16583,6 +16813,7 @@ class $$TransactionsTableTableManager
                 Value<bool> userEdited = const Value.absent(),
                 Value<String?> transferId = const Value.absent(),
                 Value<bool> autoTransferOff = const Value.absent(),
+                Value<TxnOrigin> origin = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 id: id,
@@ -16605,6 +16836,7 @@ class $$TransactionsTableTableManager
                 userEdited: userEdited,
                 transferId: transferId,
                 autoTransferOff: autoTransferOff,
+                origin: origin,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -3,6 +3,10 @@ enum AccountType { savings, current, creditCard, debitCard, wallet, other }
 
 enum EmailAuthType { oauth, imap }
 
+/// Where a transaction came from: a bank message, or added by the owner
+/// (e.g. the untracked side of a self transfer).
+enum TxnOrigin { message, user }
+
 enum RawMessageStatus { pending, parsed, needsReview, nonTransaction, ignored }
 
 enum RuleMatchType { merchant, keyword }

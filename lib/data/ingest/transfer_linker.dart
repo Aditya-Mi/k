@@ -3,6 +3,7 @@ import 'package:txn_parser/txn_parser.dart';
 
 import '../../core/ids.dart';
 import '../db/app_database.dart' hide ParserTemplate, SenderRule;
+import '../db/enums.dart';
 import 'category_resolver.dart';
 
 const transfersCategoryId = 'cat_transfers';
@@ -89,13 +90,35 @@ class TransferLinker {
   }
 
   /// User marks a self transfer, with the other side if it is tracked.
-  Future<void> markManual(String txnId, {String? partnerId}) =>
-      _db.transaction(() async {
-        final t = await _byId(txnId);
-        if (t == null) return;
-        final partner = partnerId == null ? null : await _byId(partnerId);
-        await _link([t, ?partner]);
-      });
+  ///
+  /// [addOnAccountId]: the other side is an account in k whose bank sent no
+  /// message — add the missing side there, marked as added by the owner.
+  Future<void> markManual(
+    String txnId, {
+    String? partnerId,
+    String? addOnAccountId,
+  }) => _db.transaction(() async {
+    final t = await _byId(txnId);
+    if (t == null) return;
+    var partner = partnerId == null ? null : await _byId(partnerId);
+    if (partner == null && addOnAccountId != null) {
+      partner = await _db
+          .into(_db.transactions)
+          .insertReturning(
+            TransactionsCompanion.insert(
+              accountId: Value(addOnAccountId),
+              amountMinor: t.amountMinor,
+              currency: Value(t.currency),
+              direction: _opposite(t.direction),
+              txnType: t.txnType,
+              occurredAt: t.occurredAt,
+              categoryId: const Value(transfersCategoryId),
+              origin: const Value(TxnOrigin.user),
+            ),
+          );
+    }
+    await _link([t, ?partner]);
+  });
 
   /// "Not a self transfer": unlinks both sides and stops auto-linking them.
   Future<void> unlink(String txnId) => _db.transaction(() async {
@@ -108,6 +131,19 @@ class TransferLinker {
     final resolver = await CategoryResolver.load(_db);
     final now = DateTime.now();
     for (final side in sides) {
+      // A side the owner added only existed for this transfer.
+      if (side.origin == TxnOrigin.user) {
+        await (_db.update(
+          _db.transactions,
+        )..where((o) => o.id.equals(side.id))).write(
+          TransactionsCompanion(
+            deletedAt: Value(now),
+            transferId: const Value(null),
+            updatedAt: Value(now),
+          ),
+        );
+        continue;
+      }
       String? category;
       if (!side.userEdited && side.categoryId == transfersCategoryId) {
         final merchant = side.merchantId == null
