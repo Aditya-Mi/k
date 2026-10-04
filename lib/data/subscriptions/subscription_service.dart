@@ -203,6 +203,7 @@ class SubscriptionService {
     await _db.transaction(() async {
       await _expireMandates(at);
       await _matchCharges(tolerance);
+      await _matchFirstCharge(tolerance);
       await _attachMandates(tolerance);
       await _detect(at, tolerance);
     });
@@ -267,6 +268,64 @@ class SubscriptionService {
         if (!samePrice && !onTime) continue;
         sub = await _charge(sub, t);
       }
+    }
+  }
+
+  /// A plan added by hand has no payee yet. Its first charge is a debit
+  /// within [priceChangeWindow] of the expected day, about the same amount,
+  /// whose payee shares a word with the plan's name ("Apple Music" →
+  /// "APPLE MEDIA SERVICES"). From then on it follows that payee.
+  Future<void> _matchFirstCharge(double tolerance) async {
+    final subs =
+        await (_db.select(_db.subscriptions)..where(
+              (s) =>
+                  s.deletedAt.isNull() &
+                  s.merchantId.isNull() &
+                  s.nextExpectedAt.isNotNull() &
+                  s.status.equalsValue(SubscriptionStatus.active),
+            ))
+            .get();
+    for (final sub in subs) {
+      final words = nameWords(sub.name);
+      if (words.isEmpty) continue;
+      final due = sub.nextExpectedAt!;
+      final rows =
+          await (_db.select(_db.transactions).join([
+                leftOuterJoin(
+                  _db.merchants,
+                  _db.merchants.id.equalsExp(_db.transactions.merchantId),
+                ),
+              ])..where(
+                _db.transactions.deletedAt.isNull() &
+                    _db.transactions.subscriptionId.isNull() &
+                    _db.transactions.transferId.isNull() &
+                    _db.transactions.merchantId.isNotNull() &
+                    _db.transactions.direction.equalsValue(Direction.debit) &
+                    _db.transactions.occurredAt.isBetweenValues(
+                      due.subtract(priceChangeWindow),
+                      due.add(priceChangeWindow),
+                    ),
+              ))
+              .get();
+      Transaction? best;
+      for (final r in rows) {
+        final t = r.readTable(_db.transactions);
+        final m = r.readTableOrNull(_db.merchants);
+        final payee = nameWords('${m?.displayName ?? ''} ${t.payeeRaw ?? ''}');
+        if (!words.any(payee.contains)) continue;
+        if (!withinTolerance(t.amountMinor, sub.amountMinor, tolerance)) {
+          continue;
+        }
+        if (best == null ||
+            t.occurredAt.difference(due).abs() <
+                best.occurredAt.difference(due).abs()) {
+          best = t;
+        }
+      }
+      if (best == null) continue;
+      final linked = sub.copyWith(merchantId: Value(best.merchantId));
+      await _db.update(_db.subscriptions).replace(linked);
+      await _charge(linked, best);
     }
   }
 
@@ -469,6 +528,33 @@ class SubscriptionService {
         );
   }
 
+  /// Owner adds a plan before any charge is logged (design 04d).
+  Future<String> addManual({
+    required String name,
+    required int amountMinor,
+    required SubscriptionFrequency frequency,
+    required DateTime next,
+    int? reminderDays,
+  }) async {
+    final row = await _db
+        .into(_db.subscriptions)
+        .insertReturning(
+          SubscriptionsCompanion.insert(
+            name: name.trim(),
+            amountMinor: amountMinor,
+            frequency: frequency,
+            intervalDays: cycleDays(frequency),
+            nextExpectedAt: Value(next),
+            status: SubscriptionStatus.active,
+            source: SubscriptionSource.manual,
+            reminderDays: Value(reminderDays),
+            categoryId: const Value('cat_subscriptions'),
+          ),
+        );
+    await onChanged?.call();
+    return row.id;
+  }
+
   /// Owner starts tracking from one payment (history not imported, or a
   /// plan the detector missed). Reuses the merchant's suggestion if any.
   Future<String> trackFromTransaction(
@@ -624,3 +710,8 @@ class SubscriptionService {
         .write(const UpcomingChargesCompanion(subscriptionId: Value(null)));
   }
 }
+
+/// Lowercase words of 3+ letters/digits, for name ↔ payee matching.
+Set<String> nameWords(String s) => {
+  for (final m in RegExp('[a-z0-9]{3,}').allMatches(s.toLowerCase())) m[0]!,
+};

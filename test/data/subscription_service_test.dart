@@ -174,6 +174,33 @@ void main() {
     expect((await subs.watch().first).suggestions, isEmpty);
   });
 
+  test('manual plan links its first charge by name, amount and date', () async {
+    final id = await subs.addManual(
+      name: 'Apple Music',
+      amountMinor: 19500,
+      frequency: SubscriptionFrequency.monthly,
+      next: DateTime(2026, 10, 23),
+    );
+    final apple = await merchant('Apple Media Services');
+    final other = await merchant('Apple Store');
+    await debit(other, 79900, DateTime(2026, 10, 22)); // wrong amount
+    final paid = await debit(apple, 195, DateTime(2026, 10, 23, 6));
+    await subs.refresh(now: DateTime(2026, 10, 23, 12));
+    final v = (await subs.watchOne(id).first)!;
+    expect(v.row.merchantId, apple);
+    expect(v.chargeDates, [DateTime(2026, 10, 23, 6)]);
+    expect(v.row.nextExpectedAt, DateTime(2026, 11, 23, 6));
+    final t = await (db.select(
+      db.transactions,
+    )..where((x) => x.id.equals(paid))).getSingle();
+    expect(t.subscriptionId, id);
+
+    // November follows the payee like any tracked plan.
+    await debit(apple, 195, DateTime(2026, 11, 23, 6));
+    await subs.refresh(now: DateTime(2026, 11, 23, 12));
+    expect((await subs.watchOne(id).first)!.chargeDates, hasLength(2));
+  });
+
   test('stopped plans can be suggested again from new charges', () async {
     final m = await merchant('Hotstar');
     for (final mo in [5, 6, 7]) {

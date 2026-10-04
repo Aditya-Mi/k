@@ -7,6 +7,7 @@ import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/note_chip.dart';
+import 'add_subscription_screen.dart';
 import 'subscription_detail_screen.dart';
 import 'subscription_parts.dart';
 
@@ -23,16 +24,27 @@ class SubscriptionsScreen extends StatelessWidget {
       builder: (context, snap) {
         final o = snap.data;
         final title = Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Text('Subscriptions', style: t.headline),
+          padding: const EdgeInsets.fromLTRB(16, 4, 4, 0),
+          child: Row(
+            children: [
+              Expanded(child: Text('Subscriptions', style: t.headline)),
+              IconButton(
+                tooltip: 'Add subscription',
+                icon: const Icon(Icons.add_rounded),
+                onPressed: () => _add(context),
+              ),
+            ],
+          ),
         );
-        if (o == null) return Align(alignment: Alignment.topLeft, child: title);
+        if (o == null) {
+          return Align(alignment: Alignment.topCenter, child: title);
+        }
         if (o.suggestions.isEmpty && o.active.isEmpty) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               title,
-              const Expanded(
+              Expanded(
                 child: Center(
                   child: SingleChildScrollView(
                     child: EmptyState(
@@ -41,6 +53,11 @@ class SubscriptionsScreen extends StatelessWidget {
                           'k spots charges that repeat, and AutoPay alerts '
                           'from your bank. After a couple of months of '
                           'payments, suggestions show up here to confirm.',
+                      action: OutlinedButton.icon(
+                        onPressed: () => _add(context),
+                        icon: const Icon(Icons.add_rounded, size: 20),
+                        label: const Text('Add one yourself'),
+                      ),
                     ),
                   ),
                 ),
@@ -98,6 +115,13 @@ class SubscriptionsScreen extends StatelessWidget {
     );
   }
 }
+
+void _add(BuildContext context) => Navigator.of(context).push(
+  MaterialPageRoute<void>(
+    fullscreenDialog: true,
+    builder: (_) => const AddSubscriptionScreen(),
+  ),
+);
 
 class _SuggestionCard extends StatelessWidget {
   const _SuggestionCard({required this.sub});
