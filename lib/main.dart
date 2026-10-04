@@ -1,54 +1,41 @@
-import 'package:drift/drift.dart' hide Column;
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
+import 'app/app.dart';
 import 'data/db/app_database.dart';
+import 'data/ingest/sms_sync.dart';
+import 'data/repositories/settings_repository.dart';
 import 'di.dart';
+import 'platform/sms_bridge.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await configureDependencies();
-  runApp(const KApp());
+  final onboarded = await getIt<SettingsRepository>().getBool(
+    SettingsRepository.onboardingDone,
+  );
+  runApp(KApp(onboarded: onboarded));
 }
 
-class KApp extends StatelessWidget {
-  const KApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'k',
-      theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
-      home: const _DbStatusScreen(),
-    );
-  }
-}
-
-/// Phase 1 placeholder: proves the encrypted DB opens and seeds ran.
-class _DbStatusScreen extends StatelessWidget {
-  const _DbStatusScreen();
-
-  Future<String> _status() async {
-    final db = getIt<AppDatabase>();
-    final cipher = await db.customSelect('PRAGMA cipher;').getSingle();
-    final categories = await db.categories.count().getSingle();
-    final rules = await db.categoryRules.count().getSingle();
-    return 'cipher: ${cipher.data.values.first}\n'
-        'categories: $categories\nkeyword rules: $rules';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('k')),
-      body: Center(
-        child: FutureBuilder(
-          future: _status(),
-          builder: (context, snap) => Text(
-            snap.hasError ? 'DB error: ${snap.error}' : (snap.data ?? '…'),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
+/// Headless entrypoint run by the native `SmsProcessWorker` when an SMS
+/// arrives while the app is closed: store queued SMS, then report back.
+@pragma('vm:entry-point')
+Future<void> smsBackgroundMain() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
+  final bridge = SmsBridge();
+  var ok = false;
+  try {
+    await configureDependencies();
+    await getIt<SmsSync>().drainPending();
+    ok = true;
+  } catch (e, s) {
+    debugPrint('k: background SMS ingest failed: $e\n$s');
+  } finally {
+    if (getIt.isRegistered<AppDatabase>()) {
+      await getIt<AppDatabase>().close();
+    }
+    await bridge.backgroundDone(ok: ok);
   }
 }

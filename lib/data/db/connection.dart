@@ -29,6 +29,8 @@ void applyKey(Database rawDb, String key) {
     throw StateError('sqlite3mc not bundled: refusing to open unencrypted DB');
   }
   rawDb.execute("PRAGMA key = '$key';");
+  // The headless SMS worker and the UI may both hold the DB open briefly.
+  rawDb.execute('PRAGMA busy_timeout = 5000;');
   // Fails fast with "file is not a database" if the key is wrong.
   rawDb.select('SELECT count(*) FROM sqlite_master;');
 }

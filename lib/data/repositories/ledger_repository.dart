@@ -1,0 +1,250 @@
+import 'package:drift/drift.dart';
+import 'package:txn_parser/txn_parser.dart';
+
+import '../db/app_database.dart';
+import '../db/enums.dart';
+import 'ledger_models.dart';
+
+/// Read models and edits for transactions, accounts and upcoming charges.
+class LedgerRepository {
+  LedgerRepository(this._db);
+
+  final AppDatabase _db;
+
+  Stream<List<TxnView>> watchTransactions(TxnFilter f) {
+    final t = _db.transactions;
+    final m = _db.merchants;
+    final query = _txnJoin()
+      ..where(
+        t.deletedAt.isNull() &
+            t.occurredAt.isBiggerOrEqualValue(f.from) &
+            t.occurredAt.isSmallerThanValue(f.to),
+      )
+      ..orderBy([OrderingTerm.desc(t.occurredAt)]);
+    if (f.accountIds.isNotEmpty) query.where(t.accountId.isIn(f.accountIds));
+    if (f.categoryIds.isNotEmpty) {
+      query.where(t.categoryId.isIn(f.categoryIds));
+    }
+    if (f.direction != null) query.where(t.direction.equalsValue(f.direction));
+    final q = f.query.trim();
+    if (q.isNotEmpty) {
+      final like = '%${q.replaceAll('%', r'\%').replaceAll('_', r'\_')}%';
+      query.where(
+        m.displayName.like(like) |
+            t.payeeRaw.like(like) |
+            t.notes.like(like) |
+            t.refNo.like(like),
+      );
+    }
+    return query.watch().map((rows) => rows.map(_toView).toList());
+  }
+
+  Stream<TxnDetailView?> watchDetail(String id) {
+    final query = _txnJoin()..where(_db.transactions.id.equals(id));
+    final txn = query.watchSingleOrNull().map(
+      (r) => r == null ? null : _toView(r),
+    );
+    final sources =
+        (_db.select(_db.rawMessages).join([
+                innerJoin(
+                  _db.transactionSources,
+                  _db.transactionSources.rawMessageId.equalsExp(
+                    _db.rawMessages.id,
+                  ),
+                ),
+              ])
+              ..where(_db.transactionSources.transactionId.equals(id))
+              ..orderBy([OrderingTerm.asc(_db.rawMessages.receivedAt)]))
+            .watch()
+            .map(
+              (rows) => rows.map((r) => r.readTable(_db.rawMessages)).toList(),
+            );
+    return txn.asyncExpand(
+      (view) => view == null
+          ? Stream.value(null)
+          : sources.map((s) => TxnDetailView(view, s)),
+    );
+  }
+
+  Stream<List<AccountView>> watchAccounts() {
+    final a = _db.accounts;
+    final b = _db.banks;
+    return (_db.select(a).join([innerJoin(b, b.id.equalsExp(a.bankId))])
+          ..where(a.deletedAt.isNull())
+          ..orderBy([OrderingTerm.asc(b.name), OrderingTerm.asc(a.last4)]))
+        .watch()
+        .map(
+          (rows) => [
+            for (final r in rows) _account(r.readTable(a), r.readTable(b)),
+          ],
+        );
+  }
+
+  Stream<List<Category>> watchCategories() =>
+      (_db.select(_db.categories)
+            ..where((c) => c.deletedAt.isNull())
+            ..orderBy([(c) => OrderingTerm.asc(c.sortOrder)]))
+          .watch();
+
+  /// AutoPay / mandate alerts due today or later.
+  Stream<List<UpcomingView>> watchUpcoming(DateTime now) {
+    final u = _db.upcomingCharges;
+    final m = _db.merchants;
+    final r = _db.rawMessages;
+    final b = _db.banks;
+    final today = DateTime(now.year, now.month, now.day);
+    return (_db.select(u).join([
+            leftOuterJoin(m, m.id.equalsExp(u.merchantId)),
+            leftOuterJoin(r, r.id.equalsExp(u.rawMessageId)),
+            leftOuterJoin(b, b.id.equalsExp(r.bankId)),
+          ])
+          ..where(
+            u.deletedAt.isNull() &
+                u.status.equalsValue(UpcomingChargeStatus.pending) &
+                u.dueDate.isBiggerOrEqualValue(today),
+          )
+          ..orderBy([OrderingTerm.asc(u.dueDate)]))
+        .watch()
+        .map(
+          (rows) => [
+            for (final row in rows)
+              () {
+                final charge = row.readTable(u);
+                final bank = row.readTableOrNull(b);
+                return UpcomingView(
+                  id: charge.id,
+                  name: row.readTableOrNull(m)?.displayName ?? 'AutoPay',
+                  amountMinor: charge.amountMinor,
+                  dueDate: charge.dueDate,
+                  bankShort: bank == null
+                      ? null
+                      : bankShortName(bank.id, bank.name),
+                );
+              }(),
+          ],
+        );
+  }
+
+  Stream<int> watchReviewCount() {
+    final r = _db.rawMessages;
+    final count = r.id.count();
+    return (_db.selectOnly(r)
+          ..addColumns([count])
+          ..where(
+            r.deletedAt.isNull() &
+                r.status.equalsValue(RawMessageStatus.needsReview),
+          ))
+        .map((row) => row.read(count) ?? 0)
+        .watchSingle();
+  }
+
+  Future<void> setCategory(String txnId, String categoryId) =>
+      _updateTxn(txnId, TransactionsCompanion(categoryId: Value(categoryId)));
+
+  Future<void> setNote(String txnId, String? note) => _updateTxn(
+    txnId,
+    TransactionsCompanion(
+      notes: Value(note == null || note.trim().isEmpty ? null : note.trim()),
+    ),
+  );
+
+  /// Removes the transaction; its messages stay, marked so ingestion and the
+  /// review queue leave them alone. Soft delete keeps the trail.
+  Future<void> removeTransaction(
+    String txnId, {
+    required bool notATransaction,
+  }) => _db.transaction(() async {
+    final now = DateTime.now();
+    await (_db.update(
+      _db.transactions,
+    )..where((t) => t.id.equals(txnId))).write(
+      TransactionsCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+        userEdited: const Value(true),
+      ),
+    );
+    final rawIds = _db.selectOnly(_db.transactionSources)
+      ..addColumns([_db.transactionSources.rawMessageId])
+      ..where(_db.transactionSources.transactionId.equals(txnId));
+    await (_db.update(
+      _db.rawMessages,
+    )..where((r) => r.id.isInQuery(rawIds))).write(
+      RawMessagesCompanion(
+        status: Value(
+          notATransaction
+              ? RawMessageStatus.nonTransaction
+              : RawMessageStatus.ignored,
+        ),
+        parseNote: Value(
+          notATransaction ? 'marked not a transaction' : 'transaction deleted',
+        ),
+        updatedAt: Value(now),
+      ),
+    );
+  });
+
+  Future<void> _updateTxn(String id, TransactionsCompanion c) =>
+      (_db.update(_db.transactions)..where((t) => t.id.equals(id))).write(
+        c.copyWith(
+          userEdited: const Value(true),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+
+  JoinedSelectStatement<HasResultSet, dynamic> _txnJoin() {
+    final t = _db.transactions;
+    final a = _db.accounts;
+    final b = _db.banks;
+    final m = _db.merchants;
+    final c = _db.categories;
+    final s = _db.transactionSources;
+    return _db.select(t).join([
+        leftOuterJoin(a, a.id.equalsExp(t.accountId)),
+        leftOuterJoin(b, b.id.equalsExp(a.bankId)),
+        leftOuterJoin(m, m.id.equalsExp(t.merchantId)),
+        leftOuterJoin(c, c.id.equalsExp(t.categoryId)),
+        leftOuterJoin(s, s.transactionId.equalsExp(t.id)),
+      ])
+      ..addColumns([_sourceCount])
+      ..groupBy([t.id]);
+  }
+
+  late final _sourceCount = _db.transactionSources.id.count();
+
+  TxnView _toView(TypedResult r) {
+    final t = r.readTable(_db.transactions);
+    final account = r.readTableOrNull(_db.accounts);
+    final bank = r.readTableOrNull(_db.banks);
+    final merchant = r.readTableOrNull(_db.merchants);
+    return TxnView(
+      id: t.id,
+      amountMinor: t.amountMinor,
+      currency: t.currency,
+      direction: t.direction,
+      txnType: t.txnType,
+      occurredAt: t.occurredAt,
+      payee: merchant?.displayName ?? t.payeeRaw ?? _fallbackPayee(t),
+      sourceCount: r.read(_sourceCount) ?? 0,
+      account: account == null || bank == null ? null : _account(account, bank),
+      category: r.readTableOrNull(_db.categories),
+      balanceMinor: t.balanceMinor,
+      notes: t.notes,
+      refNo: t.refNo,
+    );
+  }
+
+  String _fallbackPayee(Transaction t) => switch (t.txnType) {
+    TxnType.atm => 'ATM withdrawal',
+    _ => t.direction == Direction.credit ? 'Money in' : 'Payment',
+  };
+
+  AccountView _account(Account a, Bank b) => AccountView(
+    id: a.id,
+    bankId: b.id,
+    bankName: b.name,
+    type: a.type,
+    last4: a.last4,
+    nickname: a.nickname,
+  );
+}

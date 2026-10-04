@@ -26,10 +26,7 @@ void main() {
 
     test('seeds banks, senders, categories, keyword rules, settings', () async {
       expect(await db.banks.count().getSingle(), builtInBanks.length);
-      expect(
-        await db.categories.count().getSingle(),
-        seedCategories.length,
-      );
+      expect(await db.categories.count().getSingle(), seedCategories.length);
       final keywordCount = seedKeywords.values.fold(0, (n, l) => n + l.length);
       expect(await db.categoryRules.count().getSingle(), keywordCount);
       final senders = await db.select(db.senderRules).get();
@@ -137,9 +134,8 @@ void main() {
     });
     tearDown(() => dir.deleteSync(recursive: true));
 
-    AppDatabase open(String key) => AppDatabase(
-      NativeDatabase(file, setup: (raw) => applyKey(raw, key)),
-    );
+    AppDatabase open(String key) =>
+        AppDatabase(NativeDatabase(file, setup: (raw) => applyKey(raw, key)));
 
     test('file on disk is not plaintext SQLite', () async {
       final db = open('test-key-123');
@@ -147,7 +143,10 @@ void main() {
       await db.close();
 
       final header = file.readAsBytesSync().sublist(0, 16);
-      expect(String.fromCharCodes(header), isNot(startsWith('SQLite format 3')));
+      expect(
+        String.fromCharCodes(header),
+        isNot(startsWith('SQLite format 3')),
+      );
     });
 
     test('reopens with the right key, fails with a wrong one', () async {

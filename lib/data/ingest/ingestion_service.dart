@@ -1,0 +1,369 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+import 'package:drift/drift.dart';
+import 'package:txn_parser/txn_parser.dart';
+
+import '../db/app_database.dart' hide ParserTemplate, SenderRule;
+import '../db/enums.dart';
+import 'category_resolver.dart';
+
+/// A bank message as it enters the app, from any channel.
+class IncomingMessage {
+  const IncomingMessage({
+    required this.channel,
+    required this.sender,
+    required this.body,
+    required this.receivedAt,
+    this.subject,
+    this.externalId,
+    this.simSlot,
+    this.emailAccountId,
+  });
+
+  final Channel channel;
+  final String sender;
+  final String body;
+  final String? subject;
+  final DateTime receivedAt;
+  final String? externalId;
+  final int? simSlot;
+  final String? emailAccountId;
+
+  /// sha256(channel|sender|receivedAt|body): same message twice → same hash.
+  String get contentHash => sha256
+      .convert(
+        utf8.encode(
+          '${channel.name}|$sender|${receivedAt.millisecondsSinceEpoch}|'
+          '${subject ?? ''}|$body',
+        ),
+      )
+      .toString();
+}
+
+enum IngestOutcome {
+  /// Already stored (same hash, or same text from same sender minutes apart).
+  duplicate,
+
+  /// Not a configured bank sender — dropped, nothing stored.
+  notBank,
+
+  /// Stored and logged as a transaction.
+  transaction,
+
+  /// AutoPay / e-mandate alert stored as an upcoming charge.
+  upcoming,
+
+  /// Bank message the parser could not fully read → review queue.
+  needsReview,
+
+  /// OTP, promo, declined… stored for the trail, not logged.
+  nonTransaction,
+}
+
+/// raw_messages → ParserEngine → account / merchant / category → transaction.
+/// Idempotent: re-ingesting a message is a no-op.
+class IngestionService {
+  IngestionService(this._db);
+
+  final AppDatabase _db;
+  ParserEngine? _engine;
+  CategoryResolver? _categories;
+
+  /// Same SMS read twice (live + inbox) may carry slightly different times on
+  /// some OEMs; identical text from the same sender this close is one message.
+  static const duplicateWindow = Duration(minutes: 5);
+
+  /// Call after sender rules, templates or category rules change.
+  void invalidate() {
+    _engine = null;
+    _categories = null;
+  }
+
+  Future<ParserEngine> _parser() async => _engine ??= await _buildEngine();
+
+  Future<ParserEngine> _buildEngine() async {
+    final senders = await (_db.select(
+      _db.senderRules,
+    )..where((r) => r.enabled.equals(true) & r.deletedAt.isNull())).get();
+    final templates = await (_db.select(
+      _db.parserTemplates,
+    )..where((t) => t.enabled.equals(true) & t.deletedAt.isNull())).get();
+    return ParserEngine(
+      banks: builtInBanks,
+      senderRules: [
+        for (final s in senders) SenderRule(s.bankId, s.channel, s.pattern),
+      ],
+      userTemplates: [
+        for (final t in templates)
+          ParserTemplate(
+            id: t.id,
+            bankCode: t.bankId,
+            channel: t.channel,
+            kind: t.kind,
+            name: t.name,
+            pattern: t.pattern,
+            defaults: (jsonDecode(t.fieldDefaults) as Map).map(
+              (k, v) => MapEntry(k as String, v.toString()),
+            ),
+            priority: t.priority,
+          ),
+      ],
+    );
+  }
+
+  Future<IngestOutcome> ingest(IncomingMessage m) async {
+    final engine = await _parser();
+    final categories = _categories ??= await CategoryResolver.load(_db);
+
+    final result = engine.parse(
+      RawInput(
+        channel: m.channel,
+        sender: m.sender,
+        body: m.body,
+        subject: m.subject,
+        receivedAt: m.receivedAt,
+      ),
+    );
+    if (result.status == ParseStatus.notBank) return IngestOutcome.notBank;
+
+    return _db.transaction(() async {
+      if (await _isDuplicate(m)) return IngestOutcome.duplicate;
+
+      var status = switch (result.status) {
+        ParseStatus.parsed => RawMessageStatus.parsed,
+        ParseStatus.nonTransaction => RawMessageStatus.nonTransaction,
+        _ => RawMessageStatus.needsReview,
+      };
+      final fields = result.fields;
+      final isMandate = result.kind == TemplateKind.mandate;
+      if (status == RawMessageStatus.parsed &&
+          isMandate &&
+          (fields.dueDate == null || fields.amountMinor == null)) {
+        status = RawMessageStatus.needsReview;
+      }
+
+      final raw = await _db
+          .into(_db.rawMessages)
+          .insertReturning(
+            RawMessagesCompanion.insert(
+              channel: m.channel,
+              bankId: Value(result.bankCode),
+              sender: m.sender,
+              subject: Value(m.subject),
+              body: m.body,
+              receivedAt: m.receivedAt,
+              externalId: Value(m.externalId),
+              emailAccountId: Value(m.emailAccountId),
+              simSlot: Value(m.simSlot),
+              contentHash: m.contentHash,
+              status: status,
+              templateId: Value(result.templateId),
+              parseNote: Value(_note(result)),
+            ),
+          );
+
+      if (status != RawMessageStatus.parsed) {
+        return status == RawMessageStatus.nonTransaction
+            ? IngestOutcome.nonTransaction
+            : IngestOutcome.needsReview;
+      }
+
+      final merchant = await _merchantFor(fields.payee);
+      if (isMandate) {
+        await _db
+            .into(_db.upcomingCharges)
+            .insert(
+              UpcomingChargesCompanion.insert(
+                merchantId: Value(merchant?.id),
+                amountMinor: fields.amountMinor!,
+                currency: Value(fields.currency),
+                dueDate: fields.dueDate!,
+                mandateRef: Value(fields.mandateRef),
+                rawMessageId: Value(raw.id),
+                status: UpcomingChargeStatus.pending,
+              ),
+            );
+        return IngestOutcome.upcoming;
+      }
+
+      final account = await _accountFor(
+        result.bankCode!,
+        fields,
+        normalizeText([?m.subject, m.body].join(' ')),
+      );
+      final txn = await _db
+          .into(_db.transactions)
+          .insertReturning(
+            TransactionsCompanion.insert(
+              accountId: Value(account.id),
+              amountMinor: fields.amountMinor!,
+              currency: Value(fields.currency),
+              direction: fields.direction!,
+              txnType: fields.txnType ?? TxnType.other,
+              merchantId: Value(merchant?.id),
+              payeeRaw: Value(fields.payee),
+              refNo: Value(fields.ref),
+              occurredAt: fields.occurredAt ?? m.receivedAt,
+              balanceMinor: Value(fields.balanceMinor),
+              categoryId: Value(
+                categories.resolve(
+                  merchantKey: merchant?.normalizedKey,
+                  payee: fields.payee,
+                ),
+              ),
+            ),
+          );
+      await _db
+          .into(_db.transactionSources)
+          .insert(
+            TransactionSourcesCompanion.insert(
+              transactionId: txn.id,
+              rawMessageId: raw.id,
+            ),
+          );
+      return IngestOutcome.transaction;
+    });
+  }
+
+  Future<bool> _isDuplicate(IncomingMessage m) async {
+    final byHash =
+        await (_db.selectOnly(_db.rawMessages)
+              ..addColumns([_db.rawMessages.id])
+              ..where(_db.rawMessages.contentHash.equals(m.contentHash))
+              ..limit(1))
+            .getSingleOrNull();
+    if (byHash != null) return true;
+
+    final near =
+        await (_db.selectOnly(_db.rawMessages)
+              ..addColumns([_db.rawMessages.id])
+              ..where(
+                _db.rawMessages.channel.equalsValue(m.channel) &
+                    _db.rawMessages.sender.equals(m.sender) &
+                    _db.rawMessages.body.equals(m.body) &
+                    _db.rawMessages.receivedAt.isBetweenValues(
+                      m.receivedAt.subtract(duplicateWindow),
+                      m.receivedAt.add(duplicateWindow),
+                    ),
+              )
+              ..limit(1))
+            .getSingleOrNull();
+    return near != null;
+  }
+
+  String? _note(ParseResult r) {
+    if (r.status == ParseStatus.parsed) return null;
+    final missing = r.missing.isEmpty
+        ? ''
+        : ' (missing ${r.missing.join(', ')})';
+    return '${r.note ?? r.status.name}$missing';
+  }
+
+  /// (bank, last4) → account, created on first sight.
+  Future<Account> _accountFor(
+    String bankId,
+    ParsedFields f,
+    String text,
+  ) async {
+    final last4 = f.last4;
+    final existing =
+        await (_db.select(_db.accounts)
+              ..where(
+                (a) =>
+                    a.bankId.equals(bankId) &
+                    (last4 == null ? a.last4.isNull() : a.last4.equals(last4)),
+              )
+              ..limit(1))
+            .getSingleOrNull();
+    if (existing != null) return existing;
+
+    return _db
+        .into(_db.accounts)
+        .insertReturning(
+          AccountsCompanion.insert(
+            bankId: bankId,
+            type: inferAccountType(f.txnType, text),
+            last4: Value(last4),
+            autoCreated: const Value(true),
+          ),
+        );
+  }
+
+  /// Payee → merchant via alias, then normalized key; created on first sight.
+  Future<Merchant?> _merchantFor(String? payee) async {
+    if (payee == null || payee.trim().isEmpty) return null;
+    final alias = payee.trim().toLowerCase();
+    final key = merchantKey(payee);
+    if (key.isEmpty) return null;
+
+    final viaAlias =
+        await (_db.select(_db.merchants).join([
+                innerJoin(
+                  _db.merchantAliases,
+                  _db.merchantAliases.merchantId.equalsExp(_db.merchants.id),
+                ),
+              ])
+              ..where(_db.merchantAliases.alias.equals(alias))
+              ..limit(1))
+            .map((r) => r.readTable(_db.merchants))
+            .getSingleOrNull();
+    if (viaAlias != null) return viaAlias;
+
+    final merchant =
+        await (_db.select(
+          _db.merchants,
+        )..where((mm) => mm.normalizedKey.equals(key))).getSingleOrNull() ??
+        await _db
+            .into(_db.merchants)
+            .insertReturning(
+              MerchantsCompanion.insert(
+                normalizedKey: key,
+                displayName: merchantDisplayName(payee, key),
+              ),
+            );
+    await _db
+        .into(_db.merchantAliases)
+        .insert(
+          MerchantAliasesCompanion.insert(
+            alias: alias,
+            merchantId: merchant.id,
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+    return merchant;
+  }
+}
+
+/// Card alerts rarely say which kind; a limit means credit card.
+AccountType inferAccountType(TxnType? type, String text) {
+  final t = text.toLowerCase();
+  if (t.contains('credit card') ||
+      t.contains('avl limit') ||
+      t.contains('avl lmt') ||
+      t.contains('available limit')) {
+    return AccountType.creditCard;
+  }
+  if (t.contains('debit card')) return AccountType.debitCard;
+  if (type == TxnType.card) return AccountType.creditCard;
+  return AccountType.savings;
+}
+
+final _vowel = RegExp('[aeiouy]', caseSensitive: false);
+
+/// "ZEPTO MARKETPLACE PR" → "Zepto Marketplace PR"; "swiggy.upi@axb" →
+/// "Swiggy"; mixed-case names are kept. Vowel-poor words read as acronyms
+/// and stay capitals (IRCTC, DMRC, KFC).
+String merchantDisplayName(String payee, String key) {
+  final source = payee.contains('@') ? key : payee.trim();
+  if (!payee.contains('@') && source != source.toUpperCase()) return source;
+  return source
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty)
+      .map((w) {
+        final vowels = _vowel.allMatches(w).length;
+        if (w.length > 1 && vowels / w.length < 0.25) return w.toUpperCase();
+        return w[0].toUpperCase() + w.substring(1).toLowerCase();
+      })
+      .join(' ');
+}

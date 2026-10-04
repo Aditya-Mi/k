@@ -22,6 +22,9 @@ dependencies:
   path: ^1.9.1
   intl: ^0.20.3
   uuid: ^4.6.0
+  crypto: ^3.0.7
+  permission_handler: ^12.0.1
+  rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:
@@ -34,6 +37,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    # Variable font (wght 100–900, wdth 62–125). Bundled: no runtime font fetch.
+    - family: Archivo
+      fonts:
+        - asset: assets/fonts/Archivo.ttf
 
 hooks:
   user_defines:

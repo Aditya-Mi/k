@@ -44,3 +44,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Expedited background processing of incoming bank SMS (headless Flutter engine).
+    implementation("androidx.work:work-runtime-ktx:2.10.5")
+}

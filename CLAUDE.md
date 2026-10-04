@@ -18,6 +18,9 @@ Flutter (Dart 3.13) · flutter_bloc + get_it · drift + SQLite3MultipleCiphers (
 - `packages/txn_parser/` — pure Dart parser (no Flutter). Engine: sender → bank, prefilter (OTP/promo/declined), template match, normalize. Banks in `lib/src/banks/<bank>.dart`, registered in `registry.dart`.
 - `lib/data/db/` — drift tables (`tables/`), `app_database.dart`, `connection.dart` (encryption), `seed/`.
 - `lib/core/` — ids (UUIDv7), security (DB key in secure storage).
+- `lib/platform/` — `SmsBridge` (channels `k/sms`, `k/sms_events`); native side in `android/.../k/sms/`.
+- `lib/data/ingest/` — `IngestionService` (message → raw_messages → transaction), `SmsSync` (queue drain, inbox catch-up, history). `lib/data/repositories/` — read models + edits.
+- `lib/ui/` — `theme/` (KColors, KText, Bands), `widgets/`, `screens/`; `lib/app/` — app shell + `SmsController`.
 - `design/k.pen` — Pencil design (open only via Pencil MCP tools; file is encrypted). `design/screens/*.png` — exported screens. `DESIGN.md` — design system (tokens, type, components, rules) to implement in Flutter; `PRODUCT.md` — product context.
 
 ## Commands
@@ -45,5 +48,5 @@ flutter build apk --debug
 ## Status
 - Phase 1 done (setup, encrypted DB, parser + tests). Bank templates are synthetic until real samples replace them.
 - Design done ("Note Inks" direction: amounts tinted by RBI banknote band; see DESIGN.md). Flutter must use Archivo wdth≈112 + tabular figures for amounts/headings.
-- Next: Phase 2 (native SMS ingestion + transactions list).
+- Phase 2 code done (native SMS capture + headless worker, ingestion pipeline, Transactions/detail/onboarding UI); awaiting on-device test. Next: Phase 3 (review queue + learned templates + category rules).
 - Later ideas: self-account transfer linking, encrypted multi-device sync (schema already sync-ready), other currencies.
