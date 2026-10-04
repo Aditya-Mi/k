@@ -47,8 +47,7 @@ class MessageMarks extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 3),
             child: parts.length == 1
                 ? word(s, from + m.end)
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
+                : Wrap(
                     children: [
                       for (final p in parts)
                         p[0] == '/'
