@@ -27,12 +27,14 @@ final _dayShort = DateFormat('EEE d MMM');
 final _dayMonth = DateFormat('d MMM');
 final _monthYear = DateFormat('MMMM yyyy');
 final _full = DateFormat('EEE d MMM yyyy, HH:mm');
+final _fullDay = DateFormat('d MMM yyyy');
 
 String hhmm(DateTime d) => _time.format(d);
 String dayShort(DateTime d) => _dayShort.format(d);
 String dayMonth(DateTime d) => _dayMonth.format(d);
 String monthYear(DateTime d) => _monthYear.format(d);
 String fullStamp(DateTime d) => _full.format(d);
+String fullDay(DateTime d) => _fullDay.format(d);
 
 DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 

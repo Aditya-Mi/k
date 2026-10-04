@@ -7,6 +7,7 @@ import '../../../di.dart';
 import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/date_pick.dart';
 
 /// Phase 2 settings: SMS capture health only. Banks, Gmail, backup and app
 /// lock arrive in later phases.
@@ -52,12 +53,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await _refresh();
   }
 
-  Future<void> _checkNow() async {
-    setState(() => _checking = true);
+  Future<void> _checkNow() {
     final sync = getIt<SmsSync>();
+    return _run(() async => await sync.drainPending() + await sync.catchUp());
+  }
+
+  /// Backfill from a chosen day. Already-logged messages are skipped.
+  Future<void> _importOlder() async {
+    final day = await pickImportStart(context);
+    if (day == null || !mounted) return;
+    await _run(() => getIt<SmsSync>().importHistory(day));
+  }
+
+  Future<void> _run(Future<int> Function() job) async {
+    setState(() => _checking = true);
     var logged = 0;
     try {
-      logged = await sync.drainPending() + await sync.catchUp();
+      logged = await job();
     } finally {
       if (mounted) setState(() => _checking = false);
     }
@@ -141,18 +153,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: _checking || !smsOk ? null : _checkNow,
-              icon: _checking
-                  ? const SizedBox.square(
-                      dimension: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.refresh_rounded, size: 20),
-              label: const Text('Check inbox now'),
-            ),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _checking || !smsOk ? null : _checkNow,
+                icon: _checking
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh_rounded, size: 20),
+                label: const Text('Check inbox now'),
+              ),
+              OutlinedButton.icon(
+                onPressed: _checking || !smsOk ? null : _importOlder,
+                icon: const Icon(Icons.history_rounded, size: 20),
+                label: const Text('Import older messages'),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           Text(

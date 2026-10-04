@@ -5,7 +5,9 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../../data/ingest/sms_sync.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../di.dart';
+import '../../format.dart';
 import '../../theme/k_theme.dart';
+import '../../widgets/date_pick.dart';
 import 'onboarding_cubit.dart';
 
 /// First run: SMS access (incl. the sideload "restricted settings" unlock),
@@ -135,16 +137,32 @@ class _OnboardingViewState extends State<_OnboardingView> {
                         number: 3,
                         title: 'Past messages',
                         body: 'Read bank alerts already in your inbox.',
-                        action: SegmentedButton<HistoryRange>(
-                          showSelectedIcon: false,
-                          segments: [
-                            for (final h in HistoryRange.values)
-                              ButtonSegment(value: h, label: Text(h.label)),
+                        action: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final h in HistoryRange.values)
+                                  ChoiceChip(
+                                    label: Text(h.label),
+                                    selected: s.history == h,
+                                    showCheckmark: false,
+                                    onSelected: s.importing
+                                        ? null
+                                        : (_) => h == HistoryRange.custom
+                                              ? _pickDate(context, s)
+                                              : cubit.chooseHistory(h),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(switch (s.sinceAt(DateTime.now())) {
+                              null => 'Only new messages from now on',
+                              final d => 'From ${fullDay(d)}',
+                            }, style: t.meta),
                           ],
-                          selected: {s.history},
-                          onSelectionChanged: s.importing
-                              ? null
-                              : (v) => cubit.chooseHistory(v.single),
                         ),
                       ),
                       if (s.error != null) ...[
@@ -183,6 +201,12 @@ class _OnboardingViewState extends State<_OnboardingView> {
       },
     );
   }
+}
+
+Future<void> _pickDate(BuildContext context, OnboardingState s) async {
+  final cubit = context.read<OnboardingCubit>();
+  final day = await pickImportStart(context, initial: s.customSince);
+  if (day != null) cubit.chooseSince(day);
 }
 
 class _Step extends StatelessWidget {

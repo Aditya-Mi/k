@@ -7,21 +7,21 @@ import '../../../data/repositories/settings_repository.dart';
 
 /// How far back the first run reads the inbox.
 enum HistoryRange {
-  none('None', null),
-  days30('30 days', 30),
-  days90('90 days', 90),
-  year('1 year', 365);
+  none('None'),
+  thisMonth('This month'),
+  days90('90 days'),
+  custom('Pick date');
 
-  const HistoryRange(this.label, this.days);
+  const HistoryRange(this.label);
   final String label;
-  final int? days;
 }
 
 class OnboardingState extends Equatable {
   const OnboardingState({
     this.sms,
     this.battery,
-    this.history = HistoryRange.days90,
+    this.history = HistoryRange.thisMonth,
+    this.customSince,
     this.importing = false,
     this.logged = 0,
     this.done = false,
@@ -31,12 +31,23 @@ class OnboardingState extends Equatable {
   final PermissionStatus? sms;
   final PermissionStatus? battery;
   final HistoryRange history;
+
+  /// Start date when [history] is custom.
+  final DateTime? customSince;
   final bool importing;
   final int logged;
   final bool done;
   final String? error;
 
   bool get smsGranted => sms?.isGranted ?? false;
+
+  /// First day to import, or null to skip history.
+  DateTime? sinceAt(DateTime now) => switch (history) {
+    HistoryRange.none => null,
+    HistoryRange.thisMonth => DateTime(now.year, now.month),
+    HistoryRange.days90 => DateTime(now.year, now.month, now.day - 90),
+    HistoryRange.custom => customSince,
+  };
 
   /// Sideloaded on Android 13+: the system blocks the prompt outright until
   /// "Allow restricted settings" is turned on in App info.
@@ -46,6 +57,7 @@ class OnboardingState extends Equatable {
     PermissionStatus? sms,
     PermissionStatus? battery,
     HistoryRange? history,
+    DateTime? customSince,
     bool? importing,
     int? logged,
     bool? done,
@@ -54,6 +66,7 @@ class OnboardingState extends Equatable {
     sms: sms ?? this.sms,
     battery: battery ?? this.battery,
     history: history ?? this.history,
+    customSince: customSince ?? this.customSince,
     importing: importing ?? this.importing,
     logged: logged ?? this.logged,
     done: done ?? this.done,
@@ -65,6 +78,7 @@ class OnboardingState extends Equatable {
     sms,
     battery,
     history,
+    customSince,
     importing,
     logged,
     done,
@@ -98,14 +112,14 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
   void chooseHistory(HistoryRange h) => emit(state.copyWith(history: h));
 
+  void chooseSince(DateTime day) =>
+      emit(state.copyWith(history: HistoryRange.custom, customSince: day));
+
   Future<void> finish() async {
     if (!state.smsGranted || state.importing) return;
     emit(state.copyWith(importing: true, logged: 0, error: () => null));
     try {
-      final days = state.history.days;
-      final since = days == null
-          ? null
-          : DateTime.now().subtract(Duration(days: days));
+      final since = state.sinceAt(DateTime.now());
       final logged = await _sync.importHistory(
         since,
         onProgress: (n) {
