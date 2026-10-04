@@ -44,17 +44,31 @@ class MonthSummary {
 /// The signature month card: total, in/out line, spend-size ribbon and the
 /// house rosette in the month total's ink.
 class MonthNotePanel extends StatelessWidget {
-  const MonthNotePanel({super.key, required this.summary, this.syncedAt});
+  const MonthNotePanel({
+    super.key,
+    required this.summary,
+    this.syncedAt,
+    this.label,
+    this.showLeft = false,
+  });
 
   final MonthSummary summary;
   final DateTime? syncedAt;
+
+  /// Replaces the month name in the head (Summary: "So far this month",
+  /// since its top bar already names the month).
+  final String? label;
+
+  /// Adds "₹X left" (came in − spent) to the in/out line.
+  final bool showLeft;
 
   @override
   Widget build(BuildContext context) {
     final c = context.k;
     final t = context.kt;
     final s = summary;
-    final ink = c.ink(Bands.of(s.spentMinor));
+    // Nothing spent → no amount to ink; neutral like the lock screen.
+    final ink = s.spentMinor == 0 ? c.text2 : c.ink(Bands.of(s.spentMinor));
     final dominant = s.dominantBand;
 
     return Container(
@@ -86,7 +100,7 @@ class MonthNotePanel extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            monthYear(s.month),
+                            label ?? monthYear(s.month),
                             style: t.title.copyWith(color: c.text2),
                           ),
                           if (syncedAt != null) ...[
@@ -112,9 +126,14 @@ class MonthNotePanel extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        s.inMinor > 0
-                            ? 'spent so far  ·  ${inr(s.inMinor)} came in'
-                            : 'spent so far',
+                        [
+                          label != null || !_isOpen(s.month)
+                              ? 'spent'
+                              : 'spent so far',
+                          if (s.inMinor > 0) '${inr(s.inMinor)} came in',
+                          if (showLeft && s.inMinor > s.spentMinor)
+                            '${inr(s.inMinor - s.spentMinor)} left',
+                        ].join('  ·  '),
                         style: t.body.copyWith(color: c.text2),
                       ),
                       const Spacer(),
@@ -139,6 +158,11 @@ class MonthNotePanel extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static bool _isOpen(DateTime month) {
+    final now = DateTime.now();
+    return month.year == now.year && month.month == now.month;
   }
 
   String _synced(DateTime at) {

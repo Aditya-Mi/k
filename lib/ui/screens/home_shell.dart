@@ -6,9 +6,9 @@ import '../../data/repositories/ledger_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../di.dart';
 import '../theme/k_theme.dart';
-import '../widgets/common.dart';
 import 'review/review_queue_screen.dart';
 import 'subscriptions/subscriptions_screen.dart';
+import 'summary/summary_screen.dart';
 import 'transactions/transactions_cubit.dart';
 import 'transactions/transactions_screen.dart';
 
@@ -44,10 +44,7 @@ class _HomeShellState extends State<HomeShell> {
               ),
               const ReviewQueueScreen(),
               const SubscriptionsScreen(),
-              const _Later(
-                title: 'Summary',
-                body: 'Where the month went, by category.',
-              ),
+              const SummaryScreen(),
             ],
           ),
         ),
@@ -100,28 +97,5 @@ class _ReviewBadge extends StatelessWidget {
     textColor: context.k.onInk,
     label: Text(count > 99 ? '99+' : '$count'),
     child: child,
-  );
-}
-
-class _Later extends StatelessWidget {
-  const _Later({required this.title, required this.body});
-
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-        child: Text(title, style: context.kt.headline),
-      ),
-      Expanded(
-        child: Center(
-          child: EmptyState(title: 'Not built yet', body: body),
-        ),
-      ),
-    ],
   );
 }

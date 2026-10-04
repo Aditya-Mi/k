@@ -23,6 +23,17 @@ abstract final class Bands {
     '₹2,000+',
   ];
 
+  /// Row labels in "By spend size" (design 05).
+  static const rowLabels = [
+    'Under ₹20',
+    '₹20 – 49',
+    '₹50 – 99',
+    '₹100 – 199',
+    '₹200 – 499',
+    '₹500 – 1,999',
+    '₹2,000 and up',
+  ];
+
   /// Short label for the large chip: the band's lower bound.
   static const chipLabels = [
     '<20',

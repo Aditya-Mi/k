@@ -207,7 +207,7 @@ Each ink has a deepened light-theme twin (`-light` keys) that holds at least 4.9
 - **Faded Grey** (text-3): placeholders, hints and the lowest-priority meta.
 
 ### Named Rules
-**The One Job Rule.** A denomination ink appears only where it encodes the band of a specific amount: note chips, the denomination ribbon, band bars, the guilloche of the month total, and the amount mark in a message being reviewed. Never for categories, accounts, status, focus, selection or decoration.
+**The One Job Rule.** A denomination ink appears only where it encodes the band of a specific amount: note chips, the denomination ribbon, band bars, the summary calendar's day cells (the day's total), the guilloche of the month total, and the amount mark in a message being reviewed. Never for categories, accounts, status, focus, selection or decoration.
 
 **The Fill Means Out Rule.** Debit is a filled chip; credit is the same chip outlined in its band ink with a +₹ amount; pending, upcoming and unparsed amounts are the filled chip at 45% opacity. Direction is never carried by red and green.
 
@@ -301,6 +301,12 @@ The signature. A surface-2 card at about 2.07:1 holding the month and sync state
 
 ### Subscription Cycle Bar
 Under each subscription row: a rounded bar whose track length is the billing cycle (a yearly plan draws a full-width track, a monthly plan a short one) and whose fill is the time left before the next charge.
+
+### Summary Calendar
+"Day by day" on the Summary tab: the month as a Monday-first grid of 7 columns, 6dp gaps, each day a 28dp-high cell with 4dp corners (note-shaped). A day with spend is filled in the ink of that day's total band with its number in on-ink; a past day with no spend is a hairline outline; a future day sits on surface-1 with a text-3 number; today carries a 2dp text-coloured ring outside the cell. Tapping a day with spend lists that day's payments; the 6dp gaps sit inside each cell so the whole pitch is the touch target. Under it: the biggest day in meta, and a compact small→big legend of the seven inks.
+
+### Trend Chart
+"Last 6 months" on the Summary tab: one 30dp bar per month, height proportional to spend (96dp max), 6dp top / 2dp bottom corners. Closed months are outlined in text-2 (an outline, never a text-2 fill, which would read as the ₹500 band); the open month is filled in text and labelled "so far"; a closed month being viewed keeps the outline at 1.5dp in text colour. Values sit above in Archivo 11.5dp, months below; the average of closed months sits in the section head, not as a line through the labels. Tapping a bar opens that month.
 
 ### Raw Message Card
 The verbatim SMS or email, on an outlined 12dp card: sender and channel icon, channel · timestamp in meta, then the message text in text-2 Roboto. When two messages were merged into one transaction, the secondary card carries a **MERGED** stamp: outlined, slightly rotated, letterspaced capitals in text-2, like a rubber stamp on a ticket.
