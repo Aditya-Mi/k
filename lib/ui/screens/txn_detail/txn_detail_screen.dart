@@ -16,6 +16,7 @@ import '../../widgets/common.dart';
 import '../../widgets/note_chip.dart';
 import '../../widgets/raw_message_card.dart';
 import '../../widgets/rosette.dart';
+import '../../widgets/text_prompt.dart';
 
 class TxnDetailState {
   const TxnDetailState({
@@ -436,33 +437,12 @@ class _Loaded extends StatelessWidget {
     TxnDetailCubit cubit,
     TxnView txn,
   ) async {
-    final controller = TextEditingController(text: txn.payee);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rename payee'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(controller: controller, autofocus: true),
-            const SizedBox(height: 8),
-            Text('Changes every payment to them.', style: context.kt.meta),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+    final name = await promptText(
+      context,
+      title: 'Rename payee',
+      initial: txn.payee,
+      help: 'Changes every payment to them.',
     );
-    controller.dispose();
     if (name != null && name.trim().isNotEmpty) {
       await cubit.renamePayee(txn.merchantId!, name);
     }
@@ -569,31 +549,13 @@ class _Loaded extends StatelessWidget {
     TxnDetailCubit cubit,
     String? current,
   ) async {
-    final controller = TextEditingController(text: current);
-    final note = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Note'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 3,
-          minLines: 1,
-          decoration: const InputDecoration(hintText: 'Add a note'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+    final note = await promptText(
+      context,
+      title: 'Note',
+      initial: current ?? '',
+      hint: 'Add a note',
+      maxLines: 3,
     );
-    controller.dispose();
     if (note != null) await cubit.setNote(note);
   }
 

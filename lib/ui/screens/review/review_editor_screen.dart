@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:txn_parser/txn_parser.dart';
 
@@ -11,6 +10,7 @@ import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/note_chip.dart';
+import '../../widgets/text_prompt.dart';
 import 'learned_overlay.dart';
 import 'message_marks.dart';
 import 'review_editor_cubit.dart';
@@ -518,36 +518,13 @@ class _Editor extends StatelessWidget {
     String initial, {
     bool numeric = false,
   }) async {
-    final controller = TextEditingController(text: initial);
-    final r = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: numeric
-              ? const TextInputType.numberWithOptions(decimal: true)
-              : TextInputType.text,
-          inputFormatters: numeric
-              ? [FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))]
-              : null,
-          decoration: InputDecoration(prefixText: numeric ? '₹ ' : null),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
+    return promptText(
+      context,
+      title: title,
+      initial: initial,
+      action: 'Done',
+      numeric: numeric,
     );
-    controller.dispose();
-    return r;
   }
 
   Future<void> _pickDate(BuildContext context, DateTime current) async {

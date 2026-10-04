@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
 
@@ -10,6 +9,7 @@ import '../../../di.dart';
 import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/text_prompt.dart';
 
 typedef _Row = ({AccountView account, AccountBalance? balance});
 
@@ -189,39 +189,13 @@ class AccountsScreen extends StatelessWidget {
     required String hint,
     bool numeric = false,
   }) async {
-    final controller = TextEditingController(text: initial);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: numeric
-              ? const TextInputType.numberWithOptions(decimal: true)
-              : TextInputType.text,
-          inputFormatters: numeric
-              ? [FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))]
-              : null,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixText: numeric ? '₹ ' : null,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+    return promptText(
+      context,
+      title: title,
+      initial: initial,
+      hint: hint,
+      numeric: numeric,
     );
-    controller.dispose();
-    return result;
   }
 }
 
