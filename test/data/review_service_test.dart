@@ -6,6 +6,7 @@ import 'package:k/data/ingest/ingestion_service.dart';
 import 'package:k/data/repositories/ledger_models.dart';
 import 'package:k/data/repositories/ledger_repository.dart';
 import 'package:k/data/review/field_marks.dart';
+import 'package:k/data/review/learned_formats.dart';
 import 'package:k/data/review/review_service.dart';
 import 'package:txn_parser/txn_parser.dart';
 
@@ -126,6 +127,52 @@ void main() {
       expect(await db.parserTemplates.count().getSingle(), 1);
     },
   );
+
+  test('learned formats: list, pause, forget', () async {
+    final formats = LearnedFormats(db, ingest);
+    await ingest.ingest(
+      axis(
+        unknownShape('99', '1234', 'NEWMERCHANT', '88776655'),
+        DateTime(2026, 10, 3, 13),
+      ),
+    );
+    final item = (await review.watchQueue().first).single;
+    await review.save(
+      item,
+      ReviewDraft(
+        marks: prefillMarks(item.text, item.guess.fields),
+        direction: Direction.debit,
+      ),
+    );
+
+    final listed = (await formats.watch().first).single;
+    expect(listed.uses, 1);
+    expect(listed.bankName, isNotEmpty);
+    expect(
+      listed.marks
+          .firstWhere((m) => m.field == MarkField.amount)
+          .valueIn(listed.sampleText!),
+      '99',
+    );
+
+    Future<IngestOutcome> next(String ref, int day) => ingest.ingest(
+      axis(
+        unknownShape('12', '1234', 'NEWMERCHANT', ref),
+        DateTime(2026, 10, day, 8),
+      ),
+    );
+    await formats.setEnabled(listed.row.id, false);
+    expect(await next('10000001', 4), IngestOutcome.needsReview);
+    await formats.setEnabled(listed.row.id, true);
+    expect(await next('10000002', 5), IngestOutcome.transaction);
+    expect((await formats.watch().first).single.uses, 2);
+
+    await formats.forget(listed.row.id);
+    expect(await formats.watch().first, isEmpty);
+    expect(await next('10000003', 6), IngestOutcome.needsReview);
+    // Payments it logged stay.
+    expect(await ledger.watchTransactions(oct).first, hasLength(2));
+  });
 
   test('save without the amount marked still logs, but cannot learn', () async {
     await ingest.ingest(

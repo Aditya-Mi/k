@@ -65,6 +65,12 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - UI: Review tab (`review_queue_screen.dart`, empty state 03c), editor (`review_editor_screen.dart` + cubit; `message_marks.dart` renders marks with captions; long-press a word → sheet to grow/shrink the selection and pick a field; tap a mark to change/remove), learned overlay (`learned_overlay.dart`, rosette draws 600ms staggered 40ms/path, hold, fade; reduce-motion shows it drawn).
 - Category rules: detail category sheet has "Use for all <payee>" (default on) → `category_rules` merchant rule (`mr_<key>`, origin user) + re-files that merchant's non-hand-edited, non-transfer payments; ingestion cache invalidated via `LedgerRepository.onRulesChanged`. Payee rename on detail (tap the name) renames the merchant everywhere.
 
+## Phase 3 device-test fixes
+- Text dialogs crashed on close (`_dependents.isEmpty`): controller was disposed while the dialog animated out. All prompts now use `promptText` (`lib/ui/widgets/text_prompt.dart`, dialog owns its controller).
+- Review: slash-joined words (`NEFT/IN827459235/NAME`) are pressable part by part; ref trim keeps the longest digit-bearing run.
+- Learned formats screen (Settings → Message formats): sample message with what the format reads, uses count, pause (`enabled`), forget (soft delete). Service `lib/data/review/learned_formats.dart`.
+- Owner saw a right-overflow while growing a selection in Review; not reproduced — waiting on a screenshot.
+
 ## Next step: on-device check of Phase 3, then Phase 4 (subscriptions)
 1. Review tab lists unread messages with a guessed amount and reason.
 2. Open one: marks prefilled; long-press words to fix; Save & learn → overlay; similar waiting messages clear.
@@ -91,7 +97,7 @@ Then Phase 3: review queue + fix-by-selection + learned templates + category rul
 
 ## Open items
 - Balance after a manual set is "set by you", then estimated by later payments; negative balances can't be entered (overdraft) — add if needed.
-- Phase 3 gaps: no screen to list/delete learned formats yet; learning only makes transaction formats (not mandate/ignore); no undo for "Not a transaction" in review.
+- Phase 3 gaps: learning only makes transaction formats (not mandate/ignore); no undo for "Not a transaction" in review.
 - Phase 2 shortcuts: section head shows the whole list's date span (not the span in view); upcoming charges have no account last4 (not stored on `upcoming_charges`); credits with no keyword stay Uncategorized; merchant names from VPAs can be ugly ("Zeptonowcashfree") until Phase 3 renames/merges.
 - Widget tests render via `tester.runAsync` + drift streams hang on teardown — screenshot harness was deleted; if adding widget tests, close cubits/DB inside runAsync.
 - Light-theme inks ink-10/20/200 sit close; verify on device.

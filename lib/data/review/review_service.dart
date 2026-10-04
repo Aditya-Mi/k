@@ -235,7 +235,7 @@ class ReviewService {
           ParserEngine(
             banks: const [],
             senderRules: [
-              SenderRule(item.bankId, item.raw.channel, _senderKey(item.raw)),
+              SenderRule(item.bankId, item.raw.channel, senderKeyOf(item.raw)),
             ],
             userTemplates: [t],
           ).parse(
@@ -262,11 +262,11 @@ class ReviewService {
     }
     return (null, lastError);
   }
+}
 
-  /// A sender rule that matches this exact sender, for verification only.
-  String _senderKey(RawMessage raw) {
-    if (raw.channel == Channel.sms) return raw.sender;
-    final m = RegExp(r'<([^>]+)>').firstMatch(raw.sender);
-    return (m?.group(1) ?? raw.sender).trim().toLowerCase();
-  }
+/// A sender rule that matches this exact sender, for verification only.
+String senderKeyOf(RawMessage raw) {
+  if (raw.channel == Channel.sms) return raw.sender;
+  final m = RegExp(r'<([^>]+)>').firstMatch(raw.sender);
+  return (m?.group(1) ?? raw.sender).trim().toLowerCase();
 }

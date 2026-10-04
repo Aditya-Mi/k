@@ -8,6 +8,7 @@ import 'data/ingest/ingestion_service.dart';
 import 'data/ingest/sms_sync.dart';
 import 'data/ingest/transfer_linker.dart';
 import 'data/repositories/ledger_repository.dart';
+import 'data/review/learned_formats.dart';
 import 'data/review/review_service.dart';
 import 'data/repositories/settings_repository.dart';
 import 'platform/sms_bridge.dart';
@@ -35,5 +36,6 @@ Future<void> configureDependencies() async {
     ..registerLazySingleton<ReviewService>(
       () => ReviewService(db, ingestion, getIt<LedgerRepository>()),
     )
+    ..registerLazySingleton<LearnedFormats>(() => LearnedFormats(db, ingestion))
     ..registerSingleton<SmsSync>(SmsSync(bridge, ingestion, settings));
 }

@@ -8,6 +8,8 @@ import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/date_pick.dart';
+import '../../../data/review/learned_formats.dart';
+import '../review/learned_formats_screen.dart';
 
 /// Phase 2 settings: SMS capture health only. Banks, Gmail, backup and app
 /// lock arrive in later phases.
@@ -173,6 +175,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 label: const Text('Import older messages'),
               ),
             ],
+          ),
+          const SizedBox(height: 24),
+          Text('Message formats', style: t.title),
+          const SizedBox(height: 4),
+          StreamBuilder<List<LearnedFormat>>(
+            stream: getIt<LearnedFormats>().watch(),
+            builder: (context, snap) => FieldRow(
+              label: 'Learned in Review',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => const LearnedFormatsScreen(),
+                ),
+              ),
+              value: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    snap.data == null ? '…' : '${snap.data!.length}',
+                    style: t.body,
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.chevron_right_rounded, color: c.text2),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           Text(
