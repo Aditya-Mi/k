@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-04 (Phases 2–4 code done; Phases 3–4 awaiting device test).
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-04 (Phases 2–4 code done; Phase 3 device-tested; Phase 4 awaiting device test).
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -23,7 +23,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Phase 2: native SMS ingestion + Transactions list | **Code done, awaiting on-device test.** `flutter test` 21 pass, analyze clean, debug APK builds |
 | Phase 2b: self-transfer linking | **Done.** `flutter test` 28 pass. Owner tested Phase 2 on device: SMS capture works |
 | Phase 2c: account balances + owner-added transfer side + account merge | **Done.** `flutter test` 33 pass |
-| Phase 3: review queue, save & learn, category rules | **Code done, awaiting on-device test.** `flutter test` 38 pass |
+| Phase 3: review queue, save & learn, category rules | **Done.** Owner tested on device (fixes: dialog crash, slash words, learned formats screen) |
 | Phase 4: subscriptions + reminders | **Code done, awaiting on-device test.** `flutter test` 54 pass, debug APK builds |
 | Phases 5–6 | Not started: 5 Gmail + dedup, 6 summary + backup/export + app lock |
 
@@ -70,7 +70,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Text dialogs crashed on close (`_dependents.isEmpty`): controller was disposed while the dialog animated out. All prompts now use `promptText` (`lib/ui/widgets/text_prompt.dart`, dialog owns its controller).
 - Review: slash-joined words (`NEFT/IN827459235/NAME`) are pressable part by part; ref trim keeps the longest digit-bearing run.
 - Learned formats screen (Settings → Message formats): sample message with what the format reads, uses count, pause (`enabled`), forget (soft delete). Service `lib/data/review/learned_formats.dart`.
-- Owner saw a right-overflow while growing a selection in Review; not reproduced — waiting on a screenshot.
+- Right-overflow while growing a selection in Review was the slash-split Row; fixed (Wrap).
 
 ## Phase 4: subscriptions + reminders
 - Design first (new rule): `04b-subscription-detail`, `04c-subscriptions-empty`, `03e-learned-formats` added to `design/k.pen` + `design/screens/`.
@@ -83,7 +83,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 ### For the parser session
 - AutoPay / e-mandate templates must capture `payee` (merchant) and `dueDate`; alerts without a payee can't attach to a subscription.
 
-## Next step: on-device check of Phases 3 + 4, then Phase 5 (Gmail + dedup)
+## Next step: on-device check of Phase 4, then Phase 5 (Gmail + dedup)
 Phase 4 checks:
 1. Subscriptions tab: suggestions appear for merchants with 3 monthly charges (or AutoPay alerts); Track it asks for notification permission.
 2. Totals line, next charge dates, cycle bars look right; open a plan, edit amount/repeats/next charge/reminder; Not using it dims the row.
