@@ -42,7 +42,8 @@ final _directionWords = RegExp(
 );
 
 /// Narrows a selection to what the field can hold: "XX1234" → "1234",
-/// "Rs.99.00" → "99.00", "03-10-26." → "03-10-26", "SWIGGY," → "SWIGGY".
+/// "Rs.99.00" → "99.00", "03-10-26." → "03-10-26", "SWIGGY," → "SWIGGY",
+/// "NEFT/IN827459235/FOOT" → "IN827459235".
 (int, int)? trimToField(String text, MarkField field, int start, int end) {
   final s = text.substring(start, end);
   RegExpMatch? m;
@@ -58,7 +59,13 @@ final _directionWords = RegExp(
     case MarkField.balance:
       m = _number.firstMatch(s);
     case MarkField.ref:
-      m = RegExp('[A-Za-z0-9]{4,}').firstMatch(s);
+      // Longest run with a digit: "NEFT/IN827459235/FOOT" → "IN827459235".
+      final runs = RegExp('[A-Za-z0-9]{4,}').allMatches(s).toList();
+      final withDigit = runs.where((r) => r[0]!.contains(RegExp(r'\d')));
+      final pool = withDigit.isEmpty ? runs : withDigit;
+      m = pool.isEmpty
+          ? null
+          : pool.reduce((a, b) => b[0]!.length > a[0]!.length ? b : a);
     case MarkField.date:
       m = _dateShapes.firstMatch(s);
       if (m == null) {

@@ -40,6 +40,13 @@ void main() {
   });
   tearDown(() => db.close());
 
+  test('ref selection trims to the id inside a NEFT string', () {
+    const text = 'Info: NEFT/IN827459235/FOOT.view';
+    final start = text.indexOf('NEFT/');
+    final r = trimToField(text, MarkField.ref, start, text.length)!;
+    expect(text.substring(r.$1, r.$2), 'IN827459235');
+  });
+
   test('queue item: reason and prefilled marks', () async {
     await ingest.ingest(
       axis(
