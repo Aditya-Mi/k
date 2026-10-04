@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 code done; Phase 3 device-tested; Phases 4–5 awaiting device test).
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 4 device check pending; next Phase 6).
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -25,8 +25,8 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Phase 2c: account balances + owner-added transfer side + account merge | **Done.** `flutter test` 33 pass |
 | Phase 3: review queue, save & learn, category rules | **Done.** Owner tested on device (fixes: dialog crash, slash words, learned formats screen) |
 | Phase 4: subscriptions + reminders | **Code done, awaiting on-device test.** `flutter test` 54 pass, debug APK builds |
-| Phase 5: email + dedup | **Code done, awaiting on-device test.** IMAP app password + Gmail sign-in, dedup, hourly worker, Settings UI (`flutter test` 67 pass, debug APK builds) |
-| Phase 6 | Not started: summary + backup/export + app lock |
+| Phase 5: email + dedup | **Done.** Device-tested: Gmail sign-in (Testing mode, owner is a test user), email ingest, SMS+email merge, Save & learn on email, Add payment. Later checks: hourly background sync with app swiped away; 7-day Gmail expiry → re-sign-in. Owner keeps an app-password inbox on the same address as backup (content hash stops double logging) |
+| Phase 6 | **Next.** Monthly summary (design 05), Drive backup/export (`drive.file` scope already on the Cloud project), app lock (designs 07/07b) |
 
 ## Phase 2: what was built
 **Android** (`android/app/src/main/kotlin/dev/adityamittal/k/sms/`)
@@ -109,12 +109,13 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Detail message cards show emails via `readableEmail` (`lib/data/email/readable_text.dart`: HTML → lines, entities, padding collapsed). Stored body untouched.
 - Owner saved 13 email reviews with Save & learn (learned formats in `parser_templates`); they merged with their SMS.
 
-### For the parser session (email)
+### For the parser session (email) — done by the parser session
 - Axis e-statement mail (`statements@axis.bank.in`, subject "AXIS BANK : Statement for <Month> <Year>") → add an `ignore` template (app now skips it anyway since it has no amount).
 - `axis_email_txn_summary` takes the amount + direction from the subject only. The body also has `Amount Debited: INR 25.00` / `Account Number: XX0640`; a body-only fallback would survive subject changes.
 - Ask the owner for the 13 learned email formats (Settings → Message formats shows each sample) to turn into built-ins + fixtures.
 
-## Next step: on-device check of Phase 4 and Phase 5
+## Next step: Phase 6 (summary, backup/export, app lock); Phase 4 device check still pending
+Google Cloud project stays in **Testing** (owner's choice: production needs homepage + privacy policy URLs); Gmail grant expires every 7 days.
 Phase 5 checks: Settings → Email → Connect → Sign in with Google (unverified warning → Advanced → Go to k; allow Gmail read) → bank mail imports; a payment with SMS + email shows once with two sources; app password path; background hourly sync after swiping the app away.
 
 Phase 4 checks:
