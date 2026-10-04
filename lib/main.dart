@@ -13,7 +13,12 @@ import 'platform/sms_bridge.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await configureDependencies();
-  await getIt<ReminderScheduler>().init();
+  try {
+    await getIt<ReminderScheduler>().init();
+  } catch (e, s) {
+    // Reminders off for this run; the app itself must still open.
+    debugPrint('k: reminders unavailable: $e\n$s');
+  }
   final onboarded = await getIt<SettingsRepository>().getBool(
     SettingsRepository.onboardingDone,
   );
