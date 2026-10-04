@@ -14,6 +14,7 @@ import '../../widgets/txn_row.dart';
 import '../accounts/accounts_screen.dart';
 import '../settings/settings_screen.dart';
 import '../txn_detail/txn_detail_screen.dart';
+import 'add_payment_screen.dart';
 import 'transactions_cubit.dart';
 
 class TransactionsScreen extends StatefulWidget {
@@ -84,6 +85,17 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     )
                   : Text('k', style: t.wordmark),
               actions: [
+                if (!_searching)
+                  IconButton(
+                    tooltip: 'Add payment',
+                    icon: const Icon(Icons.add_rounded),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        fullscreenDialog: true,
+                        builder: (_) => const AddPaymentScreen(),
+                      ),
+                    ),
+                  ),
                 if (_searching)
                   IconButton(
                     tooltip: 'Close search',

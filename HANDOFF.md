@@ -103,6 +103,17 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Settings → Appearance → Theme (System / Light / Dark), `device.theme`, read before first frame in `main.dart`. Design 06 updated.
 - Don't upload a logo in Google Cloud Branding: a logo forces brand verification.
 
+## Add payment + email review fixes (2026-10-05)
+- Add payment (design `09-add-payment`, "+" on the Transactions app bar): Paid/Received, amount, payee, account (or "Cash or not in k" = no account), category, when, note → `IngestionService.addManual` (`origin = user`). A late SMS/email for the same account/amount/direction within ±3 days becomes that row (`_ownerAddedRow`) and now keeps the owner's payee (bank's "RAZORPAY" doesn't overwrite "Hostinger").
+- Bank email that no format reads and with no amount anywhere → `nonTransaction` ("email without an amount"), never Review; also applied to waiting items by `reprocessReview` on app start. SMS unaffected.
+- Detail message cards show emails via `readableEmail` (`lib/data/email/readable_text.dart`: HTML → lines, entities, padding collapsed). Stored body untouched.
+- Owner saved 13 email reviews with Save & learn (learned formats in `parser_templates`); they merged with their SMS.
+
+### For the parser session (email)
+- Axis e-statement mail (`statements@axis.bank.in`, subject "AXIS BANK : Statement for <Month> <Year>") → add an `ignore` template (app now skips it anyway since it has no amount).
+- `axis_email_txn_summary` takes the amount + direction from the subject only. The body also has `Amount Debited: INR 25.00` / `Account Number: XX0640`; a body-only fallback would survive subject changes.
+- Ask the owner for the 13 learned email formats (Settings → Message formats shows each sample) to turn into built-ins + fixtures.
+
 ## Next step: on-device check of Phase 4 and Phase 5
 Phase 5 checks: Settings → Email → Connect → Sign in with Google (unverified warning → Advanced → Go to k; allow Gmail read) → bank mail imports; a payment with SMS + email shows once with two sources; app password path; background hourly sync after swiping the app away.
 

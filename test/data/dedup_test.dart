@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:k/data/db/app_database.dart' hide ParserTemplate, SenderRule;
+import 'package:k/data/db/enums.dart';
 import 'package:k/data/ingest/ingestion_service.dart';
 import 'package:k/data/repositories/ledger_models.dart';
 import 'package:k/data/repositories/ledger_repository.dart';
@@ -132,4 +133,36 @@ void main() {
       IngestOutcome.needsReview,
     );
   });
+
+  test(
+    'added payment: a late SMS becomes that row, typed payee stays',
+    () async {
+      final first = DateTime(2026, 10, 1, 9);
+      await ingest.ingest(sms(10, first, ref: '1'));
+      final account = (await db.select(db.accounts).getSingle()).id;
+
+      final at = DateTime(2026, 10, 4, 14, 20);
+      final id = await ingest.addManual(
+        direction: Direction.debit,
+        amountMinor: 149900,
+        occurredAt: at,
+        accountId: account,
+        payee: 'Hostinger',
+        note: 'Razorpay checkout',
+      );
+      expect(
+        await ingest.ingest(sms(1499, at.add(const Duration(hours: 2)))),
+        IngestOutcome.transaction,
+      );
+
+      final rows = await (db.select(
+        db.transactions,
+      )..where((t) => t.amountMinor.equals(149900))).get();
+      expect(rows, hasLength(1));
+      expect(rows.single.id, id);
+      expect(rows.single.origin, TxnOrigin.message);
+      expect(rows.single.payeeRaw, 'Hostinger');
+      expect(rows.single.notes, 'Razorpay checkout');
+    },
+  );
 }

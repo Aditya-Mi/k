@@ -257,6 +257,48 @@ class IngestionService {
     return cleared;
   }
 
+  /// A payment no bank message reported (design 09), logged as added by the
+  /// owner. On a tracked account, a late SMS/email for the same amount and
+  /// direction within ±3 days becomes this row (see [_ownerAddedRow]).
+  Future<String> addManual({
+    required Direction direction,
+    required int amountMinor,
+    required DateTime occurredAt,
+    String? accountId,
+    String? payee,
+    String? categoryId,
+    String? note,
+  }) => _db.transaction(() async {
+    final categories = _categories ??= await CategoryResolver.load(_db);
+    final name = payee?.trim();
+    final merchant = await _merchantFor(name);
+    final txn = await _db
+        .into(_db.transactions)
+        .insertReturning(
+          TransactionsCompanion.insert(
+            accountId: Value(accountId),
+            amountMinor: amountMinor,
+            direction: direction,
+            txnType: TxnType.other,
+            merchantId: Value(merchant?.id),
+            payeeRaw: Value(name == null || name.isEmpty ? null : name),
+            occurredAt: occurredAt,
+            categoryId: Value(
+              categoryId ??
+                  categories.resolve(
+                    merchantKey: merchant?.normalizedKey,
+                    payee: name,
+                  ),
+            ),
+            userEdited: Value(categoryId != null),
+            notes: Value(note == null || note.trim().isEmpty ? null : note),
+            origin: const Value(TxnOrigin.user),
+          ),
+        );
+    if (accountId != null) await _transfers.autoLink(txn.id);
+    return txn.id;
+  });
+
   Future<void> markNotTransaction(String rawId) =>
       _setNonTransaction(rawId, 'marked not a transaction');
 
@@ -376,8 +418,9 @@ class IngestionService {
           origin: const Value(TxnOrigin.message),
           occurredAt: Value(occurredAt),
           txnType: Value(fields.txnType ?? added.txnType),
-          merchantId: Value(merchant?.id),
-          payeeRaw: Value(fields.payee),
+          // The payee the owner typed beats the bank's (e.g. "RAZORPAY").
+          merchantId: Value(added.merchantId ?? merchant?.id),
+          payeeRaw: Value(added.payeeRaw ?? fields.payee),
           refNo: Value(fields.ref),
           balanceMinor: Value(fields.balanceMinor),
           updatedAt: Value(DateTime.now()),
