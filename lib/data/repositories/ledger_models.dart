@@ -23,6 +23,7 @@ class AccountView extends Equatable {
     required this.type,
     this.last4,
     this.nickname,
+    this.includes = const [],
   });
 
   final String id;
@@ -31,6 +32,9 @@ class AccountView extends Equatable {
   final AccountType type;
   final String? last4;
   final String? nickname;
+
+  /// Accounts folded into this one, e.g. "card ··4192".
+  final List<String> includes;
 
   bool get isCard =>
       type == AccountType.creditCard || type == AccountType.debitCard;
@@ -56,7 +60,9 @@ class AccountView extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, bankId, bankName, type, last4, nickname];
+  List<Object?> get props => [
+    id, bankId, bankName, type, last4, nickname, includes, //
+  ];
 }
 
 class TxnView extends Equatable {

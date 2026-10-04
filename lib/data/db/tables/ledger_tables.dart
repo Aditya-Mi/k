@@ -20,6 +20,10 @@ class Accounts extends Table with SyncColumns {
   IntColumn get manualBalanceMinor => integer().nullable()();
   DateTimeColumn get manualBalanceAt => dateTime().nullable()();
 
+  /// Folded into another account (e.g. a debit card into its savings
+  /// account). Kept so messages naming this last4 still resolve; hidden.
+  TextColumn get mergedIntoId => text().nullable()();
+
   @override
   List<Set<Column>> get uniqueKeys => [
     {bankId, last4},

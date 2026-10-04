@@ -328,44 +328,69 @@ class IngestionService {
     String text,
   ) async {
     final last4 = f.last4;
-    // Some alerts name no account ("Your account is credited"). If the bank
-    // has exactly one savings/current account, it is that one.
-    if (last4 == null) {
-      final bank =
-          await (_db.select(_db.accounts)..where(
-                (a) =>
-                    a.bankId.equals(bankId) &
-                    a.deletedAt.isNull() &
-                    a.last4.isNotNull() &
-                    a.type.isInValues([
-                      AccountType.savings,
-                      AccountType.current,
-                    ]),
-              ))
-              .get();
-      if (bank.length == 1) return bank.single;
-    }
+    final type = inferAccountType(f.txnType, text);
+    // Some alerts name no account ("Your account is credited"), and a debit
+    // card spends from its savings account. If the bank has exactly one
+    // savings/current account, it is that one.
+    final soleSavings = last4 == null || type == AccountType.debitCard
+        ? await _soleSavings(bankId)
+        : null;
+    if (last4 == null && soleSavings != null) return soleSavings;
+
     final existing =
         await (_db.select(_db.accounts)
               ..where(
                 (a) =>
                     a.bankId.equals(bankId) &
+                    a.deletedAt.isNull() &
                     (last4 == null ? a.last4.isNull() : a.last4.equals(last4)),
               )
               ..limit(1))
             .getSingleOrNull();
-    if (existing != null) return existing;
+    if (existing != null) return _resolveMerged(existing);
 
-    return _db
+    final created = await _db
         .into(_db.accounts)
         .insertReturning(
           AccountsCompanion.insert(
             bankId: bankId,
-            type: inferAccountType(f.txnType, text),
+            type: type,
             last4: Value(last4),
             autoCreated: const Value(true),
+            // Remember the card's digits, but log to the savings account.
+            mergedIntoId: Value(
+              type == AccountType.debitCard ? soleSavings?.id : null,
+            ),
           ),
         );
+    return _resolveMerged(created);
+  }
+
+  Future<Account?> _soleSavings(String bankId) async {
+    final rows =
+        await (_db.select(_db.accounts)..where(
+              (a) =>
+                  a.bankId.equals(bankId) &
+                  a.deletedAt.isNull() &
+                  a.mergedIntoId.isNull() &
+                  a.last4.isNotNull() &
+                  a.type.isInValues([AccountType.savings, AccountType.current]),
+            ))
+            .get();
+    return rows.length == 1 ? rows.single : null;
+  }
+
+  /// Follows "merged into" links to the account that is shown.
+  Future<Account> _resolveMerged(Account a) async {
+    var current = a;
+    for (var hops = 0; current.mergedIntoId != null && hops < 5; hops++) {
+      final next = await (_db.select(
+        _db.accounts,
+      )..where((o) => o.id.equals(current.mergedIntoId!))).getSingleOrNull();
+      if (next == null) break;
+      current = next;
+    }
+    return current;
   }
 
   /// Payee → merchant via alias, then normalized key; created on first sight.

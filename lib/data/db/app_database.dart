@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   /// Alerts that name no account used to create a "no last4" account even when
   /// the bank had exactly one savings/current account; move those rows over.
@@ -68,6 +68,39 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  /// A debit card spends from its savings account: fold auto-created debit
+  /// card accounts into the bank's only savings/current account.
+  Future<void> _foldDebitCards() async {
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final pairs = await customSelect('''
+      SELECT c.id AS card, (
+        SELECT a.id FROM accounts a
+        WHERE a.bank_id = c.bank_id AND a.deleted_at IS NULL
+          AND a.merged_into_id IS NULL AND a.type IN ('savings', 'current')
+      ) AS target
+      FROM accounts c
+      WHERE c.type = 'debitCard' AND c.deleted_at IS NULL
+        AND c.merged_into_id IS NULL
+        AND (SELECT count(*) FROM accounts a
+             WHERE a.bank_id = c.bank_id AND a.deleted_at IS NULL
+               AND a.merged_into_id IS NULL
+               AND a.type IN ('savings', 'current')) = 1
+    ''').get();
+    for (final row in pairs) {
+      final card = row.read<String>('card');
+      final target = row.read<String>('target');
+      await customStatement(
+        'UPDATE transactions SET account_id = ?, updated_at = ? '
+        'WHERE account_id = ?',
+        [target, now, card],
+      );
+      await customStatement(
+        'UPDATE accounts SET merged_into_id = ?, updated_at = ? WHERE id = ?',
+        [target, now, card],
+      );
+    }
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
@@ -85,6 +118,10 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(accounts, accounts.manualBalanceMinor);
         await m.addColumn(accounts, accounts.manualBalanceAt);
         await _foldDigitlessAccounts();
+      }
+      if (from < 4) {
+        await m.addColumn(accounts, accounts.mergedIntoId);
+        await _foldDebitCards();
       }
     },
     beforeOpen: (details) async {

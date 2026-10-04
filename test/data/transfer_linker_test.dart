@@ -277,7 +277,52 @@ void main() {
     expect(bal.estimated, isFalse);
   });
 
-  test('schema v1 → v3 adds transfer, origin and balance columns', () async {
+  test('debit card spend lands on the sole savings account', () async {
+    await ingest.ingest(kotakIn(200, DateTime(2026, 9, 28, 11)));
+    await ingest.ingest(
+      sms(
+        'AX-KOTAKB-T',
+        'Rs.1504.00 spent via Kotak Debit Card XX4192 at WWW AMAZON IN on '
+            '01/10/2026. Avl bal Rs.18751.33 Not you?Tap '
+            'https://kotak.bank.in/KBANKT/Fraud',
+        DateTime(2026, 10, 1, 19, 45),
+      ),
+    );
+    final accounts = await ledger.watchAccounts().first;
+    expect(accounts, hasLength(1));
+    expect(accounts.single.last4, '4410');
+    expect(accounts.single.includes, ['card ··4192']);
+    final rows = await txns();
+    expect(rows.every((r) => r.account?.id == accounts.single.id), isTrue);
+    final bal = (await ledger.watchBalances().first)[accounts.single.id]!;
+    expect(bal.amountMinor, 1875133);
+  });
+
+  test('manual merge moves payments and redirects future messages', () async {
+    IncomingMessage axis7777(int rupees, DateTime at) => sms(
+      'AX-AXISBK-S',
+      'INR $rupees.00 debited\nA/c no. XX7777\n${_d(at)}, ${_t(at)}\n'
+          'UPI/P2M/2988338815${at.day}/SWIGGY\n'
+          'Not you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank',
+      at,
+    );
+    await ingest.ingest(axisOut(100, DateTime(2026, 10, 1, 9)));
+    await ingest.ingest(axis7777(50, DateTime(2026, 10, 1, 10)));
+    var accounts = await ledger.watchAccounts().first;
+    final main = accounts.firstWhere((a) => a.last4 == '0640');
+    final other = accounts.firstWhere((a) => a.last4 == '7777');
+    await ledger.mergeAccount(other.id, main.id);
+
+    accounts = await ledger.watchAccounts().first;
+    expect(accounts.single.id, main.id);
+    expect(accounts.single.includes, ['a/c ··7777']);
+    await ingest.ingest(axis7777(60, DateTime(2026, 10, 2, 10)));
+    final rows = await txns();
+    expect(rows, hasLength(3));
+    expect(rows.every((r) => r.account?.id == main.id), isTrue);
+  });
+
+  test('schema v1 → v4: transfer, origin, balance, merge', () async {
     final dir = Directory.systemTemp.createTempSync('k_mig');
     addTearDown(() => dir.deleteSync(recursive: true));
     final file = File('${dir.path}/k.db');
@@ -285,18 +330,35 @@ void main() {
     final v2 = AppDatabase(NativeDatabase(file));
     await v2.banks.count().getSingle();
     // A nameless BOB account from a digitless alert, next to the real one.
-    for (final (id, last4) in [('real', '5359'), ('orphan', null)]) {
+    for (final (id, bank, type, last4) in [
+      ('real', 'BOB', AccountType.savings, '5359'),
+      ('orphan', 'BOB', AccountType.savings, null),
+      ('ksav', 'KOTAK', AccountType.savings, '5543'),
+      ('kcard', 'KOTAK', AccountType.debitCard, '4192'),
+    ]) {
       await v2
           .into(v2.accounts)
           .insert(
             AccountsCompanion.insert(
               id: Value(id),
-              bankId: 'BOB',
-              type: AccountType.savings,
+              bankId: bank,
+              type: type,
               last4: Value(last4),
             ),
           );
     }
+    await v2
+        .into(v2.transactions)
+        .insert(
+          TransactionsCompanion.insert(
+            id: const Value('t2'),
+            accountId: const Value('kcard'),
+            amountMinor: 150400,
+            direction: Direction.debit,
+            txnType: TxnType.card,
+            occurredAt: DateTime(2026, 10, 1),
+          ),
+        );
     await v2
         .into(v2.transactions)
         .insert(
@@ -320,6 +382,7 @@ void main() {
       ..execute('ALTER TABLE transactions DROP COLUMN origin')
       ..execute('ALTER TABLE accounts DROP COLUMN manual_balance_minor')
       ..execute('ALTER TABLE accounts DROP COLUMN manual_balance_at')
+      ..execute('ALTER TABLE accounts DROP COLUMN merged_into_id')
       ..execute('PRAGMA user_version = 1')
       ..close();
 
@@ -342,6 +405,14 @@ void main() {
       upgraded.accounts,
     )..where((a) => a.id.equals('orphan'))).getSingle();
     expect(orphan.deletedAt, isNotNull);
+    final t2 = await (upgraded.select(
+      upgraded.transactions,
+    )..where((t) => t.id.equals('t2'))).getSingle();
+    expect(t2.accountId, 'ksav');
+    final card = await (upgraded.select(
+      upgraded.accounts,
+    )..where((a) => a.id.equals('kcard'))).getSingle();
+    expect(card.mergedIntoId, 'ksav');
     await upgraded.close();
   });
 }

@@ -124,12 +124,57 @@ class LedgerRepository {
           ..where(a.deletedAt.isNull())
           ..orderBy([OrderingTerm.asc(b.name), OrderingTerm.asc(a.last4)]))
         .watch()
-        .map(
-          (rows) => [
-            for (final r in rows) _account(r.readTable(a), r.readTable(b)),
-          ],
-        );
+        .map((rows) {
+          // Folded accounts are hidden; their digits show on the target.
+          final folded = <String, List<String>>{};
+          for (final r in rows) {
+            final acc = r.readTable(a);
+            if (acc.mergedIntoId == null) continue;
+            final kind =
+                acc.type == AccountType.debitCard ||
+                    acc.type == AccountType.creditCard
+                ? 'card'
+                : 'a/c';
+            folded
+                .putIfAbsent(acc.mergedIntoId!, () => [])
+                .add('$kind ··${acc.last4 ?? '?'}');
+          }
+          return [
+            for (final r in rows)
+              if (r.readTable(a).mergedIntoId == null)
+                _account(
+                  r.readTable(a),
+                  r.readTable(b),
+                  includes: folded[r.readTable(a).id] ?? const [],
+                ),
+          ];
+        });
   }
+
+  /// Folds [sourceId] into [targetId]: its payments move over and future
+  /// messages naming it are logged on the target.
+  Future<void> mergeAccount(String sourceId, String targetId) =>
+      _db.transaction(() async {
+        final now = DateTime.now();
+        await (_db.update(
+          _db.transactions,
+        )..where((t) => t.accountId.equals(sourceId))).write(
+          TransactionsCompanion(
+            accountId: Value(targetId),
+            updatedAt: Value(now),
+          ),
+        );
+        // Anything already folded into the source follows it.
+        await (_db.update(_db.accounts)..where(
+              (a) => a.mergedIntoId.equals(sourceId) | a.id.equals(sourceId),
+            ))
+            .write(
+              AccountsCompanion(
+                mergedIntoId: Value(targetId),
+                updatedAt: Value(now),
+              ),
+            );
+      });
 
   Stream<List<Category>> watchCategories() =>
       (_db.select(_db.categories)
@@ -311,12 +356,14 @@ class LedgerRepository {
     _ => t.direction == Direction.credit ? 'Money in' : 'Payment',
   };
 
-  AccountView _account(Account a, Bank b) => AccountView(
-    id: a.id,
-    bankId: b.id,
-    bankName: b.name,
-    type: a.type,
-    last4: a.last4,
-    nickname: a.nickname,
-  );
+  AccountView _account(Account a, Bank b, {List<String> includes = const []}) =>
+      AccountView(
+        id: a.id,
+        bankId: b.id,
+        bankName: b.name,
+        type: a.type,
+        last4: a.last4,
+        nickname: a.nickname,
+        includes: includes,
+      );
 }

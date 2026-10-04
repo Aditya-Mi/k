@@ -55,7 +55,7 @@ class AccountsScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
               for (final r in list)
-                _AccountRow(row: r, onTap: () => _actions(context, r)),
+                _AccountRow(row: r, onTap: () => _actions(context, r, list)),
               const SizedBox(height: 24),
               Text(
                 'Balances come from your banks\' messages. When a message has '
@@ -71,7 +71,7 @@ class AccountsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _actions(BuildContext context, _Row r) async {
+  Future<void> _actions(BuildContext context, _Row r, List<_Row> all) async {
     final isCredit = r.account.type == AccountType.creditCard;
     final choice = await showModalBottomSheet<int>(
       context: context,
@@ -89,12 +89,23 @@ class AccountsScreen extends StatelessWidget {
               title: Text(isCredit ? 'Set available limit' : 'Set balance'),
               onTap: () => Navigator.pop(context, 1),
             ),
+            if (all.length > 1)
+              ListTile(
+                leading: const Icon(Icons.call_merge_rounded),
+                title: const Text('Merge into another account'),
+                subtitle: const Text('Same money, e.g. a debit card'),
+                onTap: () => Navigator.pop(context, 2),
+              ),
           ],
         ),
       ),
     );
     if (!context.mounted || choice == null) return;
     final ledger = getIt<LedgerRepository>();
+    if (choice == 2) {
+      await _merge(context, r, all);
+      return;
+    }
     if (choice == 0) {
       final name = await _prompt(
         context,
@@ -117,6 +128,57 @@ class AccountsScreen extends StatelessWidget {
       if (minor != null) {
         await ledger.setManualBalance(r.account.id, minor, DateTime.now());
       }
+    }
+  }
+
+  Future<void> _merge(BuildContext context, _Row r, List<_Row> all) async {
+    final target = await showModalBottomSheet<AccountView>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                'Merge ${r.account.short} into',
+                style: context.kt.title,
+              ),
+            ),
+            for (final o in all)
+              if (o.account.id != r.account.id)
+                ListTile(
+                  title: Text(o.account.long),
+                  onTap: () => Navigator.pop(context, o.account),
+                ),
+          ],
+        ),
+      ),
+    );
+    if (target == null || !context.mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Merge accounts?'),
+        content: Text(
+          'Payments on ${r.account.long} move to ${target.long}, and future '
+          'messages for ${r.account.short} are logged there. This can\'t be '
+          'undone from the app yet.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Merge'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await getIt<LedgerRepository>().mergeAccount(r.account.id, target.id);
     }
   }
 
@@ -202,6 +264,11 @@ class _AccountRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(row.account.long, style: t.body),
+                  if (row.account.includes.isNotEmpty)
+                    Text(
+                      'Includes ${row.account.includes.join(', ')}',
+                      style: t.meta,
+                    ),
                   const SizedBox(height: 2),
                   Text(meta, style: t.meta),
                 ],

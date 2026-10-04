@@ -3810,6 +3810,17 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
+    'mergedIntoId',
+  );
+  @override
+  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
+    'merged_into_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3824,6 +3835,7 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     autoCreated,
     manualBalanceMinor,
     manualBalanceAt,
+    mergedIntoId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3911,6 +3923,15 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         ),
       );
     }
+    if (data.containsKey('merged_into_id')) {
+      context.handle(
+        _mergedIntoIdMeta,
+        mergedIntoId.isAcceptableOrUnknown(
+          data['merged_into_id']!,
+          _mergedIntoIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3974,6 +3995,10 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}manual_balance_at'],
       ),
+      mergedIntoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merged_into_id'],
+      ),
     );
   }
 
@@ -4004,6 +4029,10 @@ class Account extends DataClass implements Insertable<Account> {
   /// [manualBalanceAt]. Used when it is newer than any bank-reported balance.
   final int? manualBalanceMinor;
   final DateTime? manualBalanceAt;
+
+  /// Folded into another account (e.g. a debit card into its savings
+  /// account). Kept so messages naming this last4 still resolve; hidden.
+  final String? mergedIntoId;
   const Account({
     required this.id,
     required this.createdAt,
@@ -4017,6 +4046,7 @@ class Account extends DataClass implements Insertable<Account> {
     required this.autoCreated,
     this.manualBalanceMinor,
     this.manualBalanceAt,
+    this.mergedIntoId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4045,6 +4075,9 @@ class Account extends DataClass implements Insertable<Account> {
     if (!nullToAbsent || manualBalanceAt != null) {
       map['manual_balance_at'] = Variable<DateTime>(manualBalanceAt);
     }
+    if (!nullToAbsent || mergedIntoId != null) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId);
+    }
     return map;
   }
 
@@ -4072,6 +4105,9 @@ class Account extends DataClass implements Insertable<Account> {
       manualBalanceAt: manualBalanceAt == null && nullToAbsent
           ? const Value.absent()
           : Value(manualBalanceAt),
+      mergedIntoId: mergedIntoId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mergedIntoId),
     );
   }
 
@@ -4095,6 +4131,7 @@ class Account extends DataClass implements Insertable<Account> {
       autoCreated: serializer.fromJson<bool>(json['autoCreated']),
       manualBalanceMinor: serializer.fromJson<int?>(json['manualBalanceMinor']),
       manualBalanceAt: serializer.fromJson<DateTime?>(json['manualBalanceAt']),
+      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
   @override
@@ -4115,6 +4152,7 @@ class Account extends DataClass implements Insertable<Account> {
       'autoCreated': serializer.toJson<bool>(autoCreated),
       'manualBalanceMinor': serializer.toJson<int?>(manualBalanceMinor),
       'manualBalanceAt': serializer.toJson<DateTime?>(manualBalanceAt),
+      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
 
@@ -4131,6 +4169,7 @@ class Account extends DataClass implements Insertable<Account> {
     bool? autoCreated,
     Value<int?> manualBalanceMinor = const Value.absent(),
     Value<DateTime?> manualBalanceAt = const Value.absent(),
+    Value<String?> mergedIntoId = const Value.absent(),
   }) => Account(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -4148,6 +4187,7 @@ class Account extends DataClass implements Insertable<Account> {
     manualBalanceAt: manualBalanceAt.present
         ? manualBalanceAt.value
         : this.manualBalanceAt,
+    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   Account copyWithCompanion(AccountsCompanion data) {
     return Account(
@@ -4169,6 +4209,9 @@ class Account extends DataClass implements Insertable<Account> {
       manualBalanceAt: data.manualBalanceAt.present
           ? data.manualBalanceAt.value
           : this.manualBalanceAt,
+      mergedIntoId: data.mergedIntoId.present
+          ? data.mergedIntoId.value
+          : this.mergedIntoId,
     );
   }
 
@@ -4186,7 +4229,8 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('currency: $currency, ')
           ..write('autoCreated: $autoCreated, ')
           ..write('manualBalanceMinor: $manualBalanceMinor, ')
-          ..write('manualBalanceAt: $manualBalanceAt')
+          ..write('manualBalanceAt: $manualBalanceAt, ')
+          ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
   }
@@ -4205,6 +4249,7 @@ class Account extends DataClass implements Insertable<Account> {
     autoCreated,
     manualBalanceMinor,
     manualBalanceAt,
+    mergedIntoId,
   );
   @override
   bool operator ==(Object other) =>
@@ -4221,7 +4266,8 @@ class Account extends DataClass implements Insertable<Account> {
           other.currency == this.currency &&
           other.autoCreated == this.autoCreated &&
           other.manualBalanceMinor == this.manualBalanceMinor &&
-          other.manualBalanceAt == this.manualBalanceAt);
+          other.manualBalanceAt == this.manualBalanceAt &&
+          other.mergedIntoId == this.mergedIntoId);
 }
 
 class AccountsCompanion extends UpdateCompanion<Account> {
@@ -4237,6 +4283,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<bool> autoCreated;
   final Value<int?> manualBalanceMinor;
   final Value<DateTime?> manualBalanceAt;
+  final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const AccountsCompanion({
     this.id = const Value.absent(),
@@ -4251,6 +4298,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.autoCreated = const Value.absent(),
     this.manualBalanceMinor = const Value.absent(),
     this.manualBalanceAt = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AccountsCompanion.insert({
@@ -4266,6 +4314,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.autoCreated = const Value.absent(),
     this.manualBalanceMinor = const Value.absent(),
     this.manualBalanceAt = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : bankId = Value(bankId),
        type = Value(type);
@@ -4282,6 +4331,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<bool>? autoCreated,
     Expression<int>? manualBalanceMinor,
     Expression<DateTime>? manualBalanceAt,
+    Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4298,6 +4348,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (manualBalanceMinor != null)
         'manual_balance_minor': manualBalanceMinor,
       if (manualBalanceAt != null) 'manual_balance_at': manualBalanceAt,
+      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4315,6 +4366,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<bool>? autoCreated,
     Value<int?>? manualBalanceMinor,
     Value<DateTime?>? manualBalanceAt,
+    Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
     return AccountsCompanion(
@@ -4330,6 +4382,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       autoCreated: autoCreated ?? this.autoCreated,
       manualBalanceMinor: manualBalanceMinor ?? this.manualBalanceMinor,
       manualBalanceAt: manualBalanceAt ?? this.manualBalanceAt,
+      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4375,6 +4428,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (manualBalanceAt.present) {
       map['manual_balance_at'] = Variable<DateTime>(manualBalanceAt.value);
     }
+    if (mergedIntoId.present) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4396,6 +4452,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('autoCreated: $autoCreated, ')
           ..write('manualBalanceMinor: $manualBalanceMinor, ')
           ..write('manualBalanceAt: $manualBalanceAt, ')
+          ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -13251,6 +13308,7 @@ typedef $$AccountsTableCreateCompanionBuilder = AccountsCompanion Function({
   Value<bool> autoCreated,
   Value<int?> manualBalanceMinor,
   Value<DateTime?> manualBalanceAt,
+  Value<String?> mergedIntoId,
   Value<int> rowid,
 });
 typedef $$AccountsTableUpdateCompanionBuilder = AccountsCompanion Function({
@@ -13266,6 +13324,7 @@ typedef $$AccountsTableUpdateCompanionBuilder = AccountsCompanion Function({
   Value<bool> autoCreated,
   Value<int?> manualBalanceMinor,
   Value<DateTime?> manualBalanceAt,
+  Value<String?> mergedIntoId,
   Value<int> rowid,
 });
 
@@ -13371,6 +13430,11 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<DateTime> get manualBalanceAt => $composableBuilder(
     column: $table.manualBalanceAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13487,6 +13551,11 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$BanksTableOrderingComposer get bankId {
     final $$BanksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -13556,6 +13625,11 @@ class $$AccountsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get manualBalanceAt => $composableBuilder(
     column: $table.manualBalanceAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
     builder: (column) => column,
   );
 
@@ -13648,6 +13722,7 @@ class $$AccountsTableTableManager
                 Value<bool> autoCreated = const Value.absent(),
                 Value<int?> manualBalanceMinor = const Value.absent(),
                 Value<DateTime?> manualBalanceAt = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AccountsCompanion(
                 id: id,
@@ -13662,6 +13737,7 @@ class $$AccountsTableTableManager
                 autoCreated: autoCreated,
                 manualBalanceMinor: manualBalanceMinor,
                 manualBalanceAt: manualBalanceAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -13678,6 +13754,7 @@ class $$AccountsTableTableManager
                 Value<bool> autoCreated = const Value.absent(),
                 Value<int?> manualBalanceMinor = const Value.absent(),
                 Value<DateTime?> manualBalanceAt = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AccountsCompanion.insert(
                 id: id,
@@ -13692,6 +13769,7 @@ class $$AccountsTableTableManager
                 autoCreated: autoCreated,
                 manualBalanceMinor: manualBalanceMinor,
                 manualBalanceAt: manualBalanceAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

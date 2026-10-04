@@ -22,7 +22,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Design | Done. `design/k.pen`, exports in `design/screens/`, `DESIGN.md` |
 | Phase 2: native SMS ingestion + Transactions list | **Code done, awaiting on-device test.** `flutter test` 21 pass, analyze clean, debug APK builds |
 | Phase 2b: self-transfer linking | **Done.** `flutter test` 28 pass. Owner tested Phase 2 on device: SMS capture works |
-| Phase 2c: account balances + owner-added transfer side | **Done.** `flutter test` 31 pass |
+| Phase 2c: account balances + owner-added transfer side + account merge | **Done.** `flutter test` 33 pass |
 | Phases 3–6 | Not started: 3 review queue + categorization rules, 4 subscriptions + reminders, 5 Gmail + dedup, 6 summary + backup/export + app lock |
 
 ## Phase 2: what was built
@@ -51,6 +51,11 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Balances are computed, not stored (`computeBalance` in `ledger_models.dart`): newest bank-reported balance (txn `balanceMinor`) or the owner's manual figure if newer, plus later credits − debits (marked estimated). Card = available limit. Accounts screen (wallet icon on home): balance + source, Rename, Set balance/limit.
 - "Mark as self transfer" can add the missing side on another tracked account (`origin = user`, "added by you"; detail shows the other side's message). A late real SMS (same account/amount/direction within ±3 days) becomes that row. Unlink soft-deletes an added side.
 - Fixed: detail screen now uses `switchMap` (edits refresh live). Rosette now uses exact design geometry minus the 5-lobe core (owner request).
+
+## Account merge (schema v4)
+- `accounts.merged_into_id`: folded account stays (so its last4 still resolves) but is hidden; target lists "Includes card ··4192".
+- Debit card alerts log on the bank's sole savings/current account automatically (card account created already merged). v4 migration folds existing auto-created debit card accounts the same way.
+- Accounts screen → "Merge into another account" (confirm; no unmerge yet).
 
 ## Next step: on-device check of 2b/2c, then Phase 3
 Owner to run `flutter run` (or `adb install`) on the Nothing Phone 2 and check:
