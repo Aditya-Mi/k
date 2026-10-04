@@ -135,9 +135,11 @@ class IngestionService {
     return _db.transaction(() async {
       if (await _isDuplicate(m)) return IngestOutcome.duplicate;
 
+      final noMoney = _emailWithoutAmount(m.channel, result);
       var status = switch (result.status) {
         ParseStatus.parsed => RawMessageStatus.parsed,
         ParseStatus.nonTransaction => RawMessageStatus.nonTransaction,
+        _ when noMoney => RawMessageStatus.nonTransaction,
         _ => RawMessageStatus.needsReview,
       };
       final fields = result.fields;
@@ -164,7 +166,7 @@ class IngestionService {
               contentHash: m.contentHash,
               status: status,
               templateId: Value(result.templateId),
-              parseNote: Value(_note(result)),
+              parseNote: Value(noMoney ? _noAmountNote : _note(result)),
             ),
           );
 
@@ -229,6 +231,11 @@ class IngestionService {
     var cleared = 0;
     for (final raw in waiting) {
       final result = await parseRaw(raw);
+      if (_emailWithoutAmount(raw.channel, result)) {
+        await _setNonTransaction(raw.id, _noAmountNote);
+        cleared++;
+        continue;
+      }
       if (result.status != ParseStatus.parsed) continue;
       final f = result.fields;
       if (result.kind == TemplateKind.mandate &&
@@ -251,13 +258,26 @@ class IngestionService {
   }
 
   Future<void> markNotTransaction(String rawId) =>
+      _setNonTransaction(rawId, 'marked not a transaction');
+
+  Future<void> _setNonTransaction(String rawId, String note) =>
       (_db.update(_db.rawMessages)..where((r) => r.id.equals(rawId))).write(
         RawMessagesCompanion(
           status: const Value(RawMessageStatus.nonTransaction),
-          parseNote: const Value('marked not a transaction'),
+          parseNote: Value(note),
           updatedAt: Value(DateTime.now()),
         ),
       );
+
+  static const _noAmountNote = 'email without an amount';
+
+  /// Bank mail no format reads and with no amount anywhere in it (e-statements,
+  /// notices) never reaches Review. SMS still does: a short SMS with no amount
+  /// can be a format worth learning.
+  static bool _emailWithoutAmount(Channel channel, ParseResult r) =>
+      channel == Channel.email &&
+      r.status == ParseStatus.needsReview &&
+      r.fields.amountMinor == null;
 
   Future<void> _markParsed(String rawId, String? templateId) =>
       (_db.update(_db.rawMessages)..where((r) => r.id.equals(rawId))).write(

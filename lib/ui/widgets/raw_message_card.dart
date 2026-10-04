@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:txn_parser/txn_parser.dart';
 
 import '../../data/db/app_database.dart' hide ParserTemplate, SenderRule;
+import '../../data/email/readable_text.dart';
 import '../format.dart';
 import '../theme/k_theme.dart';
 
-/// The bank message verbatim. Secondary sources of a merged transaction carry
+/// The bank message verbatim (emails tidied for reading). Secondary sources of a merged transaction carry
 /// a MERGED stamp (The Struck Not Gone Rule).
 class RawMessageCard extends StatelessWidget {
   const RawMessageCard({super.key, required this.message, this.merged = false});
@@ -71,7 +72,9 @@ class RawMessageCard extends StatelessWidget {
             const SizedBox(height: 4),
           ],
           SelectableText(
-            message.body.trim(),
+            message.channel == Channel.email
+                ? readableEmail(message.body)
+                : message.body.trim(),
             style: t.body.copyWith(color: c.text2, height: 1.5),
           ),
         ],

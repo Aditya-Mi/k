@@ -33,7 +33,8 @@ IncomingMessage email(int rupees, DateTime at, {String ref = '441151550312'}) =>
     );
 
 String _two(int n) => n.toString().padLeft(2, '0');
-String _d(DateTime d) => '${_two(d.day)}-${_two(d.month)}-${_two(d.year % 100)}';
+String _d(DateTime d) =>
+    '${_two(d.day)}-${_two(d.month)}-${_two(d.year % 100)}';
 String _t(DateTime d) => '${_two(d.hour)}:${_two(d.minute)}:${_two(d.second)}';
 
 void main() {
@@ -101,5 +102,34 @@ void main() {
     final rows = await ledger.watchTransactions(oct).first;
     expect(rows, hasLength(2));
     expect(rows.where((r) => r.merged), hasLength(1));
+  });
+
+  test('bank email with no amount skips Review; SMS without one does not', () async {
+    final at = DateTime(2026, 10, 3, 22, 18);
+    expect(
+      await ingest.ingest(
+        IncomingMessage(
+          channel: Channel.email,
+          sender: 'statements@axis.bank.in',
+          subject: 'AXIS BANK : Statement for September 2026',
+          body:
+              'Dear Customer,\nYour Combined Email Statement for the month of '
+              'September 2026 is attached below.',
+          receivedAt: at,
+        ),
+      ),
+      IngestOutcome.nonTransaction,
+    );
+    expect(
+      await ingest.ingest(
+        IncomingMessage(
+          channel: Channel.sms,
+          sender: 'AX-AXISBK-S',
+          body: 'Your A/c XX0640 statement for Sep is ready. Axis Bank',
+          receivedAt: at,
+        ),
+      ),
+      IngestOutcome.needsReview,
+    );
   });
 }
