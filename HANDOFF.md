@@ -25,7 +25,8 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Phase 2c: account balances + owner-added transfer side + account merge | **Done.** `flutter test` 33 pass |
 | Phase 3: review queue, save & learn, category rules | **Done.** Owner tested on device (fixes: dialog crash, slash words, learned formats screen) |
 | Phase 4: subscriptions + reminders | **Code done, awaiting on-device test.** `flutter test` 54 pass, debug APK builds |
-| Phases 5–6 | Not started: 5 Gmail + dedup, 6 summary + backup/export + app lock |
+| Phase 5: email + dedup | **In progress.** IMAP app-password path, dedup, hourly worker, Settings UI done (`flutter test` 65 pass). Gmail sign-in waits for the owner's Google Cloud client |
+| Phase 6 | Not started: summary + backup/export + app lock |
 
 ## Phase 2: what was built
 **Android** (`android/app/src/main/kotlin/dev/adityamittal/k/sms/`)
@@ -89,7 +90,15 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - AutoPay / e-mandate templates must capture `payee` (merchant) and `dueDate`; alerts without a payee can't attach to a subscription.
 - Missing Kotak format (upcoming AutoPay, kind mandate): `AUTOPAY of Rs.195.00 to APPLE MEDIA SERVICES will be debited on 29 Sep 2026. Please ensure sufficient balance in account -Kotak` (no account digits). Executed form already parses (`kotak_sms_autopay_done`).
 
-## Next step: on-device check of Phase 4, then Phase 5 (Gmail + dedup)
+## Phase 5: email + dedup (in progress)
+- Dedup (`IngestionService._crossChannelTwin`): same account, amount, direction within `dedup.windowMinutes` (10) and the existing row has no source from this channel → this message becomes a second source (`IngestOutcome.merged`), filling missing ref/balance/payee. Same-channel repeats never merge.
+- `lib/data/email/`: `EmailSource` interface, `ImapSource` (enough_mail, TLS 993, All Mail via \All flag else INBOX, `UID n:*` / `SINCE` + `OR FROM` bank sender rules, cursor `uidValidity:lastUid`, BODY.PEEK so mail stays unread), `EmailSync` (accounts in `email_accounts`, secrets in secure storage `email.secret.<id>`, `device.email.<id>.since/error`, serialized `syncAll`, `syncIfStale`, `onLive` → notifications).
+- Background: native `email/EmailSyncWorker` (periodic 60 min, network) → headless `emailBackgroundMain`; scheduled via `k/sms` `scheduleEmailSync` on connect/disconnect and every app refresh; foreground top-up when >30 min stale.
+- UI: Settings → Email (inboxes, failed state in alert colour, sheet: new app password / check now / disconnect), `ConnectInboxScreen` (06b; Google option disabled until `googleReady`), `AppPasswordScreen` (06c). Designs 06b/06c/06d in k.pen.
+- Main manifest now declares INTERNET (release builds).
+- Next: Gmail sign-in (google_sign_in + Gmail API `gmail.readonly`, `GmailSource` behind the same interface) once the Web client ID arrives.
+
+## Next step: on-device check of Phase 4 and Phase 5 (app password)
 Phase 4 checks:
 1. Subscriptions tab: suggestions appear for merchants with 3 monthly charges (or AutoPay alerts); Track it asks for notification permission.
 2. Totals line, next charge dates, cycle bars look right; open a plan, edit amount/repeats/next charge/reminder; Not using it dims the row.

@@ -7,6 +7,7 @@ import '../../../data/subscriptions/subscription_service.dart';
 import '../../../di.dart';
 import '../../theme/k_theme.dart';
 import '../subscriptions/subscription_parts.dart';
+import 'settings_parts.dart';
 
 /// Settings → Notifications (design 06): permission, reminder timing, and
 /// on/off for the two live alerts.
@@ -143,79 +144,4 @@ class _Chevron extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       Icon(Icons.chevron_right_rounded, size: 20, color: context.k.text3);
-}
-
-/// Section label in the design 06 style.
-class SettingsHead extends StatelessWidget {
-  const SettingsHead(this.text, {super.key});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-    child: Text(
-      text,
-      style: context.kt.meta.copyWith(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-  );
-}
-
-/// Icon, title over subtitle, trailing control (design 06 items).
-class SettingsItem extends StatelessWidget {
-  const SettingsItem({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.onTap,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onTap;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.k;
-    final t = context.kt;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, size: 24, color: c.text2),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: t.body.copyWith(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: t.meta.copyWith(fontSize: 13, height: 1.35),
-                  ),
-                ],
-              ),
-            ),
-            if (trailing != null) ...[const SizedBox(width: 16), trailing!],
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/email/email_sync.dart';
 import '../data/ingest/ingestion_service.dart';
 import '../data/ingest/sms_sync.dart';
 import '../data/ingest/transfer_linker.dart';
@@ -32,6 +33,7 @@ class _KAppState extends State<KApp> {
     getIt<SubscriptionService>(),
     getIt<IngestionService>(),
     getIt<KNotifications>(),
+    getIt<EmailSync>(),
   )..start();
 
   @override

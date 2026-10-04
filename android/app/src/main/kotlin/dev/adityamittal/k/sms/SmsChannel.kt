@@ -1,6 +1,7 @@
 package dev.adityamittal.k.sms
 
 import android.content.Context
+import dev.adityamittal.k.email.EmailSyncWorker
 import android.os.Handler
 import android.os.Looper
 import io.flutter.plugin.common.BinaryMessenger
@@ -16,6 +17,7 @@ import java.util.concurrent.Executors
  * - readInbox(afterId, sinceMillis, limit) → {messages, maxId, scanned}
  * - maxInboxId → Long
  * - backgroundDone(ok) → worker engine only
+ * - scheduleEmailSync({on, intervalMinutes}) → hourly bank-mail worker
  */
 class SmsChannel(
     context: Context,
@@ -48,6 +50,14 @@ class SmsChannel(
                 )
             }
             "maxInboxId" -> io(result) { inbox.maxId() }
+            "scheduleEmailSync" -> {
+                EmailSyncWorker.schedule(
+                    ctx,
+                    call.argument<Boolean>("on") ?: false,
+                    call.longArg("intervalMinutes").takeIf { it > 0 } ?: 60L,
+                )
+                result.success(null)
+            }
             "backgroundDone" -> {
                 onBackgroundDone?.invoke(call.arguments<Boolean>() ?: true)
                 result.success(null)

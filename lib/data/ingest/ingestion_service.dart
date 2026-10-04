@@ -52,6 +52,10 @@ enum IngestOutcome {
   /// Stored and logged as a transaction.
   transaction,
 
+  /// Same payment already logged from the other channel (SMS ↔ email):
+  /// this message became a second source of that transaction.
+  merged,
+
   /// AutoPay / e-mandate alert stored as an upcoming charge.
   upcoming,
 
@@ -303,6 +307,45 @@ class IngestionService {
         : await _accountFor(bankId, fields, text);
     final occurredAt = fields.occurredAt ?? raw.receivedAt;
 
+    // The same payment from the other channel (SMS ↔ email): one row, two
+    // sources. The earlier copy keeps its fields; gaps are filled in.
+    final twin = await _crossChannelTwin(
+      raw.channel,
+      account.id,
+      fields,
+      occurredAt,
+    );
+    if (twin != null) {
+      await (_db.update(
+        _db.transactions,
+      )..where((t) => t.id.equals(twin.id))).write(
+        TransactionsCompanion(
+          refNo: twin.refNo == null && fields.ref != null
+              ? Value(fields.ref)
+              : const Value.absent(),
+          balanceMinor: twin.balanceMinor == null && fields.balanceMinor != null
+              ? Value(fields.balanceMinor)
+              : const Value.absent(),
+          merchantId: twin.merchantId == null && merchant != null
+              ? Value(merchant.id)
+              : const Value.absent(),
+          payeeRaw: twin.payeeRaw == null && fields.payee != null
+              ? Value(fields.payee)
+              : const Value.absent(),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      await _db
+          .into(_db.transactionSources)
+          .insert(
+            TransactionSourcesCompanion.insert(
+              transactionId: twin.id,
+              rawMessageId: raw.id,
+            ),
+          );
+      return IngestOutcome.merged;
+    }
+
     // A late bank message for a side the owner added: it becomes that row.
     final added = await _ownerAddedRow(account.id, fields, occurredAt);
     if (added != null) {
@@ -365,6 +408,62 @@ class IngestionService {
         );
     await _transfers.autoLink(txn.id);
     return IngestOutcome.transaction;
+  }
+
+  /// Cross-channel duplicate window (setting `dedup.windowMinutes`).
+  Future<Duration> _dedupWindow() async {
+    final row = await (_db.select(
+      _db.appSettings,
+    )..where((s) => s.key.equals('dedup.windowMinutes'))).getSingleOrNull();
+    return Duration(minutes: int.tryParse(row?.value ?? '') ?? 10);
+  }
+
+  /// A row on the same account, amount and direction within the window that
+  /// came only from the other channel. Same-channel repeats are separate
+  /// payments (two ₹100 UPIs a minute apart are real).
+  Future<Transaction?> _crossChannelTwin(
+    Channel channel,
+    String accountId,
+    ParsedFields f,
+    DateTime at,
+  ) async {
+    final window = await _dedupWindow();
+    final t = _db.transactions;
+    final src = _db.transactionSources;
+    final raw = _db.rawMessages;
+    final rows =
+        await (_db.select(t).join([
+              innerJoin(src, src.transactionId.equalsExp(t.id)),
+              innerJoin(raw, raw.id.equalsExp(src.rawMessageId)),
+            ])..where(
+              t.deletedAt.isNull() &
+                  t.accountId.equals(accountId) &
+                  t.amountMinor.equals(f.amountMinor!) &
+                  t.direction.equalsValue(f.direction!) &
+                  t.occurredAt.isBetweenValues(
+                    at.subtract(window),
+                    at.add(window),
+                  ),
+            ))
+            .get();
+    final channels = <String, Set<Channel>>{};
+    final byId = <String, Transaction>{};
+    for (final r in rows) {
+      final txn = r.readTable(t);
+      byId[txn.id] = txn;
+      (channels[txn.id] ??= {}).add(r.readTable(raw).channel);
+    }
+    Transaction? best;
+    for (final MapEntry(key: id, value: seen) in channels.entries) {
+      if (seen.contains(channel)) continue;
+      final c = byId[id]!;
+      if (best == null ||
+          c.occurredAt.difference(at).abs() <
+              best.occurredAt.difference(at).abs()) {
+        best = c;
+      }
+    }
+    return best;
   }
 
   /// Same account, amount and direction, added by the owner within ±3 days.

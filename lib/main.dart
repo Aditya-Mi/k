@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'app/app.dart';
 import 'app/notifications.dart';
 import 'data/db/app_database.dart';
+import 'data/email/email_sync.dart';
 import 'data/ingest/sms_sync.dart';
 import 'data/repositories/settings_repository.dart';
 import 'di.dart';
@@ -44,6 +45,33 @@ Future<void> smsBackgroundMain() async {
     ok = true;
   } catch (e, s) {
     debugPrint('k: background SMS ingest failed: $e\n$s');
+  } finally {
+    if (getIt.isRegistered<AppDatabase>()) {
+      await getIt<AppDatabase>().close();
+    }
+    await bridge.backgroundDone(ok: ok);
+  }
+}
+
+/// Headless entrypoint run hourly by the native `EmailSyncWorker`: read new
+/// bank mail from every connected inbox, then report back.
+@pragma('vm:entry-point')
+Future<void> emailBackgroundMain() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
+  final bridge = SmsBridge();
+  var ok = false;
+  try {
+    await configureDependencies();
+    try {
+      await getIt<KNotifications>().init();
+    } catch (e) {
+      debugPrint('k: notifications unavailable in background: $e');
+    }
+    await getIt<EmailSync>().syncAll();
+    ok = true;
+  } catch (e, s) {
+    debugPrint('k: background email sync failed: $e\n$s');
   } finally {
     if (getIt.isRegistered<AppDatabase>()) {
       await getIt<AppDatabase>().close();

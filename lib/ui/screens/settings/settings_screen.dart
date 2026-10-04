@@ -10,6 +10,7 @@ import '../../widgets/common.dart';
 import '../../widgets/date_pick.dart';
 import '../../../data/review/learned_formats.dart';
 import '../review/learned_formats_screen.dart';
+import 'email_settings.dart';
 import 'notification_settings.dart';
 
 /// Phase 2 settings: SMS capture health only. Banks, Gmail, backup and app
@@ -186,6 +187,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 8),
           // Design 06 items run edge to edge.
+          const EmailSettings(),
           const NotificationSettings(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

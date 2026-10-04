@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../data/email/email_sync.dart';
 import '../data/ingest/ingestion_service.dart';
 import '../data/ingest/sms_sync.dart';
 import '../data/ingest/transfer_linker.dart';
@@ -23,6 +24,7 @@ class SmsController with WidgetsBindingObserver {
     this._subscriptions,
     this._ingestion,
     this._notifications,
+    this._email,
   );
 
   final SmsSync _sync;
@@ -32,6 +34,7 @@ class SmsController with WidgetsBindingObserver {
   final SubscriptionService _subscriptions;
   final IngestionService _ingestion;
   final KNotifications _notifications;
+  final EmailSync _email;
 
   /// Null until first checked.
   final smsGranted = ValueNotifier<bool?>(null);
@@ -63,7 +66,19 @@ class SmsController with WidgetsBindingObserver {
     // The queue was captured while permission was held; drain regardless.
     await _guard(_sync.drainPending);
     if (granted) await _guard(_sync.catchUp);
+    await _refreshEmail();
     await _refreshSubscriptions();
+  }
+
+  /// Keeps the hourly worker matching the inbox list, and tops up on open.
+  Future<void> _refreshEmail() async {
+    try {
+      final on = await _email.hasAccounts;
+      await _bridge.scheduleEmailSync(on: on);
+      if (on) await _email.syncIfStale(const Duration(minutes: 30));
+    } catch (e, s) {
+      debugPrint('k: email refresh failed: $e\n$s');
+    }
   }
 
   Future<void> _refreshSubscriptions() async {

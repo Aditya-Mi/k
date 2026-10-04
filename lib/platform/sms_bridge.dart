@@ -86,4 +86,13 @@ class SmsBridge {
   /// Headless worker engine only: tells Kotlin the run finished.
   Future<void> backgroundDone({required bool ok}) =>
       _methods.invokeMethod('backgroundDone', ok);
+
+  /// Hourly bank-mail worker on/off (WorkManager periodic work).
+  Future<void> scheduleEmailSync({
+    required bool on,
+    int intervalMinutes = 60,
+  }) => _methods.invokeMethod('scheduleEmailSync', {
+    'on': on,
+    'intervalMinutes': intervalMinutes,
+  });
 }
