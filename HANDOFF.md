@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 4 device check pending; next Phase 6).
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Summary + Settings built and checked; Phase 4 device check pending; next Phase 6). Schema v5.
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -113,6 +113,11 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Axis e-statement mail (`statements@axis.bank.in`, subject "AXIS BANK : Statement for <Month> <Year>") → add an `ignore` template (app now skips it anyway since it has no amount).
 - `axis_email_txn_summary` takes the amount + direction from the subject only. The body also has `Amount Debited: INR 25.00` / `Account Number: XX0640`; a body-only fallback would survive subject changes.
 - Ask the owner for the 13 learned email formats (Settings → Message formats shows each sample) to turn into built-ins + fixtures.
+
+## Summary, Settings, ATM category (2026-10-05)
+- Summary tab built (design 05 redone with impeccable): month panel ("So far this month", "₹X left"), 6-month trend (closed months outlined, open month filled), Day by day calendar (cells inked by the day's spend band; tap → day's payments), categories, top payees, spend sizes. Data: `lib/data/summary/month_report.dart` (pure, tested). Owner checked on device.
+- Settings rebuilt to design 06: Accounts, Banks (`BankRepository`, add sender → parser cache invalidated), Email, Sync (SMS, battery, check now, read past SMS, email hourly, merge window `dedup.windowMinutes`), Notifications, Appearance, Message formats. Backup + App lock wait for Phase 6.
+- Schema v5: "Cash" category → "ATM withdrawal" (id `cat_cash` kept); `CategoryResolver` files `TxnType.atm` there first; migration re-files unedited ATM rows.
 
 ## Next step: Phase 6 (summary, backup/export, app lock); Phase 4 device check still pending
 Google Cloud project stays in **Testing** (owner's choice: production needs homepage + privacy policy URLs); Gmail grant expires every 7 days.

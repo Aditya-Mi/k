@@ -456,6 +456,7 @@ class IngestionService {
                   categories.resolve(
                     merchantKey: merchant?.normalizedKey,
                     payee: fields.payee,
+                    txnType: fields.txnType,
                   ),
             ),
             userEdited: Value(categoryId != null),

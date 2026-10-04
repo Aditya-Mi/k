@@ -15,7 +15,7 @@ const seedCategories = [
   ('cat_education', 'Education', 'school', 0xFF457B9D),
   ('cat_investments', 'Investments', 'trending_up', 0xFF588157),
   ('cat_transfers', 'Transfers', 'swap_horiz', 0xFF6C757D),
-  ('cat_cash', 'Cash', 'local_atm', 0xFF9C6644),
+  ('cat_cash', 'ATM withdrawal', 'local_atm', 0xFF9C6644),
   ('cat_income', 'Income', 'payments', 0xFF2D6A4F),
   ('cat_uncategorized', 'Uncategorized', 'help_outline', 0xFFADB5BD),
 ];

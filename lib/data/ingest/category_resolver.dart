@@ -1,7 +1,12 @@
 import '../db/app_database.dart';
 import '../db/enums.dart';
 
+import 'package:txn_parser/txn_parser.dart' show TxnType;
+
 const uncategorizedId = 'cat_uncategorized';
+
+/// "ATM withdrawal" (was "Cash"; id kept so nothing moves).
+const atmCategoryId = 'cat_cash';
 
 /// Picks a category for a payee: merchant rules first (exact merchant key),
 /// then keywords on word boundaries, longest keyword winning
@@ -39,7 +44,9 @@ class CategoryResolver {
 
   static final _nonAlnum = RegExp(r'[^a-z0-9]+');
 
-  String resolve({String? merchantKey, String? payee}) {
+  String resolve({String? merchantKey, String? payee, TxnType? txnType}) {
+    // Cash out of an ATM is its own category whatever the "payee" reads.
+    if (txnType == TxnType.atm) return atmCategoryId;
     if (merchantKey != null) {
       final hit = _merchant[merchantKey];
       if (hit != null) return hit;

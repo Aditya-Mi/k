@@ -165,4 +165,24 @@ void main() {
       expect(rows.single.notes, 'Razorpay checkout');
     },
   );
+
+  test('ATM withdrawal files under "ATM withdrawal"', () async {
+    final at = DateTime(2026, 10, 2, 18, 45);
+    await ingest.ingest(
+      IncomingMessage(
+        channel: Channel.sms,
+        sender: 'AX-AXISBK-S',
+        body:
+            'INR 2,000.00 withdrawn at ATM S1ANDL123 from A/c no. XX1234 on '
+            '02-10-26 18:44:12. Avl Bal INR 10,345.67 - Axis Bank',
+        receivedAt: at,
+      ),
+    );
+    final row = await db.select(db.transactions).getSingle();
+    expect(row.categoryId, 'cat_cash');
+    final cat = await (db.select(
+      db.categories,
+    )..where((c) => c.id.equals('cat_cash'))).getSingle();
+    expect(cat.name, 'ATM withdrawal');
+  });
 }

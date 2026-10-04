@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   /// Alerts that name no account used to create a "no last4" account even when
   /// the bank had exactly one savings/current account; move those rows over.
@@ -70,6 +70,19 @@ class AppDatabase extends _$AppDatabase {
 
   /// A debit card spends from its savings account: fold auto-created debit
   /// card accounts into the bank's only savings/current account.
+  /// v5: "Cash" becomes "ATM withdrawal" (unless the owner renamed it), and
+  /// ATM-type payments the owner hasn't filed move into it.
+  Future<void> _atmCategory() async {
+    await customStatement(
+      "UPDATE categories SET name = 'ATM withdrawal' "
+      "WHERE id = 'cat_cash' AND name = 'Cash'",
+    );
+    await customStatement(
+      "UPDATE transactions SET category_id = 'cat_cash' "
+      "WHERE txn_type = 'atm' AND user_edited = 0 AND transfer_id IS NULL",
+    );
+  }
+
   Future<void> _foldDebitCards() async {
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final pairs = await customSelect('''
@@ -123,6 +136,7 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(accounts, accounts.mergedIntoId);
         await _foldDebitCards();
       }
+      if (from < 5) await _atmCategory();
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

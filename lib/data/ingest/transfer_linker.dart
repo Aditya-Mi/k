@@ -154,6 +154,7 @@ class TransferLinker {
         category = resolver.resolve(
           merchantKey: merchant?.normalizedKey,
           payee: side.payeeRaw,
+          txnType: side.txnType,
         );
       }
       await (_db.update(
