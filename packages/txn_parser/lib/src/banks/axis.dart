@@ -90,5 +90,29 @@ final axisBank = BankDefinition(
         r'(?= (?:If|Please|Regards|Thank|Always|Warm|Note|Disclaimer|In case|Never)\b|$)',
       ),
     ),
+    ParserTemplate(
+      id: 'axis_email_txn_body',
+      bankCode: 'AXIS',
+      channel: Channel.email,
+      name: 'Account debit/credit summary, body only (email)',
+      // Same mail as axis_email_txn_summary, read from the body labels in any
+      // order, so a reworded subject still parses.
+      priority: 110,
+      pattern: rx(
+        r'^(?=.*?Amount (?<direction>Debited|Credited):? {rs}(?<amount>{amt}))'
+        r'(?=.*?Account Number:? XX(?<last4>\d{4}))'
+        r'(?=(?:.*?Date & Time:? (?<date>[\d\-]+,? [\d:]+))?)'
+        r'(?=(?:.*?Transaction Info:? (?:UPI/P2[AM]/(?<ref>\d+)/)?(?<payee>.+?)'
+        r'(?= (?:If|Please|Regards|Thank|Always|Warm|Note|Disclaimer|In case|Never)\b|$))?)',
+      ),
+    ),
+    ParserTemplate(
+      id: 'axis_email_statement',
+      bankCode: 'AXIS',
+      channel: Channel.email,
+      kind: TemplateKind.ignore,
+      name: 'Monthly e-statement (email)',
+      pattern: r'^AXIS BANK\s?: Statement for [A-Za-z]+ \d{4}',
+    ),
   ],
 );
