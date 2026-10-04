@@ -4,21 +4,41 @@ import '../../theme/k_theme.dart';
 
 /// Section label in the design 06 style.
 class SettingsHead extends StatelessWidget {
-  const SettingsHead(this.text, {super.key});
+  const SettingsHead(this.text, {super.key, this.note});
 
   final String text;
+
+  /// Right-aligned aside ("Added from messages").
+  final String? note;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-    child: Text(
-      text,
-      style: context.kt.meta.copyWith(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-      ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            text,
+            style: context.kt.meta.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        if (note != null)
+          Text(note!, style: context.kt.meta.copyWith(fontSize: 12.5)),
+      ],
     ),
   );
+}
+
+/// Trailing chevron for items that open something.
+class SettingsChevron extends StatelessWidget {
+  const SettingsChevron({super.key});
+
+  @override
+  Widget build(BuildContext context) =>
+      Icon(Icons.chevron_right_rounded, size: 20, color: context.k.text3);
 }
 
 /// Icon, title over subtitle, trailing control (design 06 items).

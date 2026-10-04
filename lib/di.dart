@@ -10,6 +10,7 @@ import 'data/email/google_auth.dart';
 import 'data/ingest/ingestion_service.dart';
 import 'data/ingest/sms_sync.dart';
 import 'data/ingest/transfer_linker.dart';
+import 'data/repositories/bank_repository.dart';
 import 'data/repositories/ledger_repository.dart';
 import 'data/review/learned_formats.dart';
 import 'data/review/review_service.dart';
@@ -44,6 +45,9 @@ Future<void> configureDependencies() async {
     ..registerSingleton<AppDatabase>(db)
     ..registerSingleton<SettingsRepository>(settings)
     ..registerSingleton<LedgerRepository>(ledger)
+    ..registerLazySingleton<BankRepository>(
+      () => BankRepository(db, onRulesChanged: ingestion.invalidate),
+    )
     ..registerSingleton<KNotifications>(notifications)
     ..registerSingleton<SubscriptionService>(subscriptions)
     ..registerSingleton<IngestionService>(ingestion)

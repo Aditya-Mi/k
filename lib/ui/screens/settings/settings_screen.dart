@@ -2,32 +2,155 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../data/ingest/sms_sync.dart';
+import '../../../data/repositories/ledger_models.dart';
+import '../../../data/repositories/ledger_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
+import '../../../data/review/learned_formats.dart';
 import '../../../di.dart';
 import '../../format.dart';
 import '../../theme/k_theme.dart';
-import '../../widgets/common.dart';
 import '../../widgets/date_pick.dart';
-import '../../../data/review/learned_formats.dart';
+import '../accounts/accounts_screen.dart';
 import '../review/learned_formats_screen.dart';
 import 'appearance_settings.dart';
+import 'bank_settings.dart';
 import 'email_settings.dart';
 import 'notification_settings.dart';
+import 'settings_parts.dart';
 
-/// Phase 2 settings: SMS capture health only. Banks, Gmail, backup and app
-/// lock arrive in later phases.
-class SettingsScreen extends StatefulWidget {
+/// Settings (design 06): accounts, banks, email, sync, notifications,
+/// appearance, message formats. Backup and app lock arrive with Phase 6.
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  Widget build(BuildContext context) {
+    final c = context.k;
+    final t = context.kt;
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Settings'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          const _AccountsSection(),
+          const BankSettings(),
+          const EmailSettings(),
+          const _SyncSection(),
+          const NotificationSettings(),
+          const AppearanceSettings(),
+          const SettingsHead('Message formats'),
+          StreamBuilder<List<LearnedFormat>>(
+            stream: getIt<LearnedFormats>().watch(),
+            builder: (context, snap) {
+              final n = snap.data?.length;
+              return SettingsItem(
+                icon: Icons.school_outlined,
+                title: 'Learned in Review',
+                subtitle: n == null
+                    ? '…'
+                    : n == 0
+                    ? 'None yet. Fixing a message in Review teaches k its format.'
+                    : '$n ${n == 1 ? 'format' : 'formats'} k reads now',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => const LearnedFormatsScreen(),
+                  ),
+                ),
+                trailing: const SettingsChevron(),
+              );
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.lock_outline_rounded, size: 16, color: c.text3),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Messages are read and stored on this phone only, in an '
+                    'encrypted database. Nothing is sent anywhere.',
+                    style: t.meta.copyWith(color: c.text3, height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+/// Accounts k has seen in messages; rename or merge on the Accounts screen.
+class _AccountsSection extends StatelessWidget {
+  const _AccountsSection();
+
+  @override
+  Widget build(BuildContext context) => StreamBuilder<List<AccountView>>(
+    stream: getIt<LedgerRepository>().watchAccounts(),
+    builder: (context, snap) {
+      final accounts = snap.data ?? const <AccountView>[];
+      void open() => Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => const AccountsScreen()));
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SettingsHead('Accounts', note: 'Added from messages'),
+          if (accounts.isEmpty)
+            const SettingsItem(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'None yet',
+              subtitle: 'Accounts appear as bank messages name them',
+            )
+          else
+            for (final a in accounts)
+              SettingsItem(
+                icon: a.isCard
+                    ? Icons.credit_card_outlined
+                    : Icons.account_balance_wallet_outlined,
+                title: a.nickname ?? a.long,
+                subtitle: [
+                  if (a.nickname != null) a.long,
+                  if (a.includes.isNotEmpty)
+                    'includes ${a.includes.join(', ')}',
+                  'tap to rename or merge',
+                ].join(' · '),
+                onTap: open,
+                trailing: const SettingsChevron(),
+              ),
+        ],
+      );
+    },
+  );
+}
+
+/// SMS capture health, catch-up and the SMS/email merge window.
+class _SyncSection extends StatefulWidget {
+  const _SyncSection();
+
+  @override
+  State<_SyncSection> createState() => _SyncSectionState();
+}
+
+class _SyncSectionState extends State<_SyncSection> {
+  final _settings = getIt<SettingsRepository>();
   PermissionStatus? _sms;
   PermissionStatus? _battery;
   bool _checking = false;
   late final AppLifecycleListener _lifecycle;
+
+  static const _dedupKey = 'dedup.windowMinutes';
 
   @override
   void initState() {
@@ -58,18 +181,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await _refresh();
   }
 
-  Future<void> _checkNow() {
-    final sync = getIt<SmsSync>();
-    return _run(() async => await sync.drainPending() + await sync.catchUp());
-  }
-
-  /// Backfill from a chosen day. Already-logged messages are skipped.
-  Future<void> _importOlder() async {
-    final day = await pickImportStart(context);
-    if (day == null || !mounted) return;
-    await _run(() => getIt<SmsSync>().importHistory(day));
-  }
-
   Future<void> _run(Future<int> Function() job) async {
     setState(() => _checking = true);
     var logged = 0;
@@ -90,149 +201,131 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _importOlder() async {
+    final day = await pickImportStart(context);
+    if (day == null || !mounted) return;
+    await _run(() => getIt<SmsSync>().importHistory(day));
+  }
+
+  Future<void> _pickWindow(int current) async {
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Treat SMS and email as one payment within',
+                  style: context.kt.title,
+                ),
+              ),
+            ),
+            for (final m in const [5, 10, 30, 60])
+              ListTile(
+                title: Text(_minutes(m)),
+                trailing: m == current ? const Icon(Icons.check_rounded) : null,
+                onTap: () => Navigator.pop(context, m),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) await _settings.set(_dedupKey, '$picked');
+  }
+
+  static String _minutes(int m) => m == 60 ? '1 hour' : '$m minutes';
+
   @override
   Widget build(BuildContext context) {
     final c = context.k;
-    final t = context.kt;
     final smsOk = _sms?.isGranted ?? false;
     final batteryOk = _battery?.isGranted ?? false;
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
+    final sync = getIt<SmsSync>();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SettingsHead('Sync'),
+        SettingsItem(
+          icon: smsOk ? Icons.sms_outlined : Icons.sms_failed_outlined,
+          iconColor: _sms == null || smsOk ? null : c.alert,
+          title: _sms == null ? 'SMS' : (smsOk ? 'SMS allowed' : 'SMS off'),
+          subtitle: smsOk
+              ? 'k reads bank SMS as they arrive'
+              : (_sms?.isPermanentlyDenied ?? false)
+              ? 'If Android shows no prompt: App info → ⋮ → Allow restricted '
+                    'settings, then Permissions → SMS → Allow.'
+              : 'Tap to allow. Payments by SMS stop until you do.',
+          subtitleColor: _sms == null || smsOk ? null : c.alert,
+          onTap: smsOk ? openAppSettings : _fixSms,
+          trailing: const SettingsChevron(),
         ),
-        title: const Text('Settings'),
-      ),
-      body: ListView(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                Text('Bank SMS', style: t.title),
-                const SizedBox(height: 4),
-                FieldRow(
-                  label: 'SMS access',
-                  onTap: smsOk ? null : _fixSms,
-                  value: Text(
-                    _sms == null ? '…' : (smsOk ? 'On' : 'Off · tap to fix'),
-                    style: t.body,
+        SettingsItem(
+          icon: Icons.battery_full_rounded,
+          title: batteryOk ? 'Battery: unrestricted' : 'Battery: limited',
+          subtitle: batteryOk
+              ? 'k can read messages while closed'
+              : 'Tap to allow, or some payments log only when you open k',
+          onTap: batteryOk
+              ? null
+              : () async {
+                  await Permission.ignoreBatteryOptimizations.request();
+                  await _refresh();
+                },
+          trailing: batteryOk ? null : const SettingsChevron(),
+        ),
+        StreamBuilder<DateTime?>(
+          stream: _settings.watchDate(SettingsRepository.smsLastSyncAt),
+          builder: (context, snap) => SettingsItem(
+            icon: Icons.refresh_rounded,
+            title: 'Check SMS now',
+            subtitle: snap.data == null
+                ? 'Never checked'
+                : 'Last checked ${dayMonth(snap.data!)}, ${hhmm(snap.data!)}',
+            onTap: _checking || !smsOk
+                ? null
+                : () => _run(
+                    () async =>
+                        await sync.drainPending() + await sync.catchUp(),
                   ),
-                ),
-                if (_sms?.isPermanentlyDenied ?? false)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      'If Android will not show the prompt: App info → ⋮ → Allow '
-                      'restricted settings, then Permissions → SMS → Allow.',
-                      style: t.meta,
-                    ),
-                  ),
-                FieldRow(
-                  label: 'Battery limits',
-                  onTap: batteryOk
-                      ? null
-                      : () async {
-                          await Permission.ignoreBatteryOptimizations.request();
-                          await _refresh();
-                        },
-                  value: Text(
-                    _battery == null
-                        ? '…'
-                        : (batteryOk ? 'Unrestricted' : 'Limited · tap to fix'),
-                    style: t.body,
-                  ),
-                ),
-                StreamBuilder<DateTime?>(
-                  stream: getIt<SettingsRepository>().watchDate(
-                    SettingsRepository.smsLastSyncAt,
-                  ),
-                  builder: (context, snap) => FieldRow(
-                    label: 'Last checked',
-                    value: Text(
-                      snap.data == null
-                          ? 'Never'
-                          : '${dayMonth(snap.data!)}, ${hhmm(snap.data!)}',
-                      style: t.body,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: _checking || !smsOk ? null : _checkNow,
-                      icon: _checking
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.refresh_rounded, size: 20),
-                      label: const Text('Check inbox now'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: _checking || !smsOk ? null : _importOlder,
-                      icon: const Icon(Icons.history_rounded, size: 20),
-                      label: const Text('Import older messages'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            trailing: _checking
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
           ),
-          const SizedBox(height: 8),
-          // Design 06 items run edge to edge.
-          const EmailSettings(),
-          const NotificationSettings(),
-          const AppearanceSettings(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 24),
-                Text('Message formats', style: t.title),
-                const SizedBox(height: 4),
-                StreamBuilder<List<LearnedFormat>>(
-                  stream: getIt<LearnedFormats>().watch(),
-                  builder: (context, snap) => FieldRow(
-                    label: 'Learned in Review',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (_) => const LearnedFormatsScreen(),
-                      ),
-                    ),
-                    value: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          snap.data == null ? '…' : '${snap.data!.length}',
-                          style: t.body,
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.chevron_right_rounded, color: c.text2),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Messages are read on this phone and stored encrypted. Nothing is '
-                  'sent anywhere.',
-                  style: t.meta.copyWith(color: c.text3),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+        SettingsItem(
+          icon: Icons.history_rounded,
+          title: 'Read past SMS',
+          subtitle: 'From a date you pick. Already logged ones are skipped.',
+          onTap: _checking || !smsOk ? null : _importOlder,
+          trailing: const SettingsChevron(),
+        ),
+        const SettingsItem(
+          icon: Icons.schedule_rounded,
+          title: 'Check email',
+          subtitle: 'Every hour, and when you open k',
+        ),
+        StreamBuilder<String?>(
+          stream: _settings.watch(_dedupKey),
+          builder: (context, snap) {
+            final m = int.tryParse(snap.data ?? '') ?? 10;
+            return SettingsItem(
+              icon: Icons.merge_rounded,
+              title: 'Treat as the same payment',
+              subtitle:
+                  'Same amount and account within ${_minutes(m)}, by SMS and email',
+              onTap: () => _pickWindow(m),
+              trailing: const SettingsChevron(),
+            );
+          },
+        ),
+      ],
     );
   }
 }
