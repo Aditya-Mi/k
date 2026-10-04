@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Phase 4 device check pending; Cash account added). Schema v6.
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Cash account added). Schema v6.
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -24,7 +24,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Phase 2b: self-transfer linking | **Done.** `flutter test` 28 pass. Owner tested Phase 2 on device: SMS capture works |
 | Phase 2c: account balances + owner-added transfer side + account merge | **Done.** `flutter test` 33 pass |
 | Phase 3: review queue, save & learn, category rules | **Done.** Owner tested on device (fixes: dialog crash, slash words, learned formats screen) |
-| Phase 4: subscriptions + reminders | **Code done, awaiting on-device test.** `flutter test` 54 pass, debug APK builds |
+| Phase 4: subscriptions + reminders | **Done** (code). Owner can't set up the device checks; don't ask again |
 | Phase 5: email + dedup | **Done.** Device-tested: Gmail sign-in (Testing mode, owner is a test user), email ingest, SMS+email merge, Save & learn on email, Add payment. Later checks: hourly background sync with app swiped away; 7-day Gmail expiry → re-sign-in. Owner keeps an app-password inbox on the same address as backup (content hash stops double logging) |
 | Phase 6 | **Code done, awaiting device test.** Summary (05), app lock (07/07b), Drive backup + export + import/restore (06e–06h). `flutter test` 79 pass, debug APK builds |
 
@@ -143,17 +143,12 @@ Owner's rule: an ATM withdrawal counts as spent (as before) and adds to cash; a 
 - `computeCashBalance`: owner's counted figure (Accounts → Set balance) or 0, plus later ATM debits on any other account (an ATM credit/deposit subtracts), plus cash credits, minus cash debits.
 - `TxnView.countsInTotals` (= not a transfer, not cash) drives month panel, Summary report and day "out" totals. So cash payments don't show in Summary categories; the withdrawal stays under "ATM withdrawal".
 - Add payment: "Cash" is an account choice (lowers cash), "Not in k" replaces "Cash or not in k". Txn row shows a cash icon; detail says "from cash, counted at the ATM".
-- Not designed in Pencil (changes to existing screens only).
+- Designs: `10-accounts` (Cash in hand row), `09b-add-payment-account-sheet` (Cash / Not in k), Cash row in `06-settings`.
 
-## Next step: Phase 6 device test; Phase 4 device check still pending
+## Next step: Phase 6 device test
 Google Cloud project stays in **Testing** (owner's choice: production needs homepage + privacy policy URLs); Gmail grant expires every 7 days.
 Phase 5 checks: Settings → Email → Connect → Sign in with Google (unverified warning → Advanced → Go to k; allow Gmail read) → bank mail imports; a payment with SMS + email shows once with two sources; app password path; background hourly sync after swiping the app away.
 
-Phase 4 checks:
-1. Subscriptions tab: suggestions appear for merchants with 3 monthly charges (or AutoPay alerts); Track it asks for notification permission.
-2. Totals line, next charge dates, cycle bars look right; open a plan, edit amount/repeats/next charge/reminder; Not using it dims the row.
-3. Set a reminder that lands soon (e.g. next charge = tomorrow, remind 1 day before) → notification at 09:00.
-4. Stop tracking removes it from the list; Not a subscription never comes back.
 
 ## Earlier device checks (Phase 2/3)
 1. Review tab lists unread messages with a guessed amount and reason.
