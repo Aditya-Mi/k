@@ -364,7 +364,7 @@ class _Editor extends StatelessWidget {
   ) async {
     final cubit = context.read<ReviewEditorCubit>();
     final text = item.text;
-    final words = RegExp(r'\S+').allMatches(text).toList();
+    final words = RegExp(r'[^\s/]+').allMatches(text).toList();
     var first = words.indexWhere((w) => w.end > start);
     var last = words.lastIndexWhere((w) => w.start < end);
     if (first < 0 || last < first) return;

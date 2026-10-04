@@ -30,21 +30,32 @@ class MessageMarks extends StatelessWidget {
     final style = t.body.copyWith(fontSize: 17, height: 1.3);
     final children = <Widget>[];
 
+    Widget word(int s, int e) => GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: () => onLongPressWord(s, e),
+      child: Text(text.substring(s, e), style: style.copyWith(color: c.text2)),
+    );
+
+    // Words split on spaces; slash-joined parts ("NEFT/IN8274/NAME") stay
+    // visually one word but each part can be pressed on its own.
     void plain(int from, int to) {
       for (final m in RegExp(r'\S+').allMatches(text.substring(from, to))) {
         final s = from + m.start;
-        final e = from + m.end;
+        final parts = RegExp(r'[^/]+|/').allMatches(m[0]!).toList();
         children.add(
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onLongPress: () => onLongPressWord(s, e),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 3),
-              child: Text(
-                text.substring(s, e),
-                style: style.copyWith(color: c.text2),
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 3),
+            child: parts.length == 1
+                ? word(s, from + m.end)
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final p in parts)
+                        p[0] == '/'
+                            ? Text('/', style: style.copyWith(color: c.text3))
+                            : word(s + p.start, s + p.end),
+                    ],
+                  ),
           ),
         );
       }
