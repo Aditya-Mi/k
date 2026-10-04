@@ -43,6 +43,27 @@ class LedgerRepository {
     return query.watch().map((rows) => rows.map(_toView).toList());
   }
 
+  /// Charges matched to subscriptions, newest first.
+  Future<List<TxnView>> chargesOf(Iterable<String> subscriptionIds) =>
+      (_txnJoin()
+            ..where(
+              _db.transactions.deletedAt.isNull() &
+                  _db.transactions.subscriptionId.isIn(subscriptionIds),
+            )
+            ..orderBy([OrderingTerm.desc(_db.transactions.occurredAt)]))
+          .get()
+          .then((rows) => rows.map(_toView).toList());
+
+  Stream<List<TxnView>> watchCharges(String subscriptionId) =>
+      (_txnJoin()
+            ..where(
+              _db.transactions.deletedAt.isNull() &
+                  _db.transactions.subscriptionId.equals(subscriptionId),
+            )
+            ..orderBy([OrderingTerm.desc(_db.transactions.occurredAt)]))
+          .watch()
+          .map((rows) => rows.map(_toView).toList());
+
   Stream<TxnDetailView?> watchDetail(String id) {
     final query = _txnJoin()..where(_db.transactions.id.equals(id));
     return query

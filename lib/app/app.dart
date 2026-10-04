@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/ingest/sms_sync.dart';
 import '../data/ingest/transfer_linker.dart';
 import '../data/repositories/settings_repository.dart';
+import '../data/subscriptions/subscription_service.dart';
 import '../di.dart';
 import '../platform/sms_bridge.dart';
 import '../ui/screens/home_shell.dart';
@@ -26,6 +27,7 @@ class _KAppState extends State<KApp> {
     getIt<SmsBridge>(),
     getIt<SettingsRepository>(),
     getIt<TransferLinker>(),
+    getIt<SubscriptionService>(),
   )..start();
 
   @override

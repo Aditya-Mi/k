@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'app/app.dart';
+import 'app/reminder_scheduler.dart';
 import 'data/db/app_database.dart';
 import 'data/ingest/sms_sync.dart';
 import 'data/repositories/settings_repository.dart';
@@ -12,6 +13,7 @@ import 'platform/sms_bridge.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await configureDependencies();
+  await getIt<ReminderScheduler>().init();
   final onboarded = await getIt<SettingsRepository>().getBool(
     SettingsRepository.onboardingDone,
   );

@@ -226,7 +226,7 @@ class _Loaded extends StatelessWidget {
                     const SizedBox(height: 24),
                     FieldRow(
                       label: 'Category',
-                      value: _CategoryButton(
+                      value: CategoryButton(
                         category: txn.category,
                         onTap: () => _pickCategory(context, cubit, txn),
                       ),
@@ -591,41 +591,5 @@ class _Loaded extends StatelessWidget {
     if (ok != true) return;
     await cubit.remove(notATransaction: notATransaction);
     if (context.mounted) Navigator.pop(context);
-  }
-}
-
-class _CategoryButton extends StatelessWidget {
-  const _CategoryButton({required this.category, required this.onTap});
-
-  final Category? category;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.k;
-    return Material(
-      color: c.surface2,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(categoryIcon(category?.icon), size: 20, color: c.text2),
-              const SizedBox(width: 10),
-              Text(
-                category?.name ?? 'Uncategorized',
-                style: context.kt.body.copyWith(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(width: 10),
-              Icon(Icons.edit_outlined, size: 16, color: c.text2),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

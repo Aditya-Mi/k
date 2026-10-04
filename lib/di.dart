@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 
+import 'app/reminder_scheduler.dart';
 import 'core/security/db_key_manager.dart';
 import 'data/db/app_database.dart';
 import 'data/db/connection.dart';
@@ -11,6 +12,7 @@ import 'data/repositories/ledger_repository.dart';
 import 'data/review/learned_formats.dart';
 import 'data/review/review_service.dart';
 import 'data/repositories/settings_repository.dart';
+import 'data/subscriptions/subscription_service.dart';
 import 'platform/sms_bridge.dart';
 
 final getIt = GetIt.instance;
@@ -22,14 +24,24 @@ Future<void> configureDependencies() async {
   final settings = SettingsRepository(db);
   final ingestion = IngestionService(db);
   final bridge = SmsBridge();
+  final ledger = LedgerRepository(db, onRulesChanged: ingestion.invalidate);
+  final reminders = ReminderScheduler();
+  late final SubscriptionService subscriptions;
+  subscriptions = SubscriptionService(
+    db,
+    ledger,
+    settings,
+    onChanged: () async =>
+        reminders.sync((await subscriptions.watch().first).active),
+  );
 
   getIt
     ..registerSingleton<DbKeyManager>(keyManager)
     ..registerSingleton<AppDatabase>(db)
     ..registerSingleton<SettingsRepository>(settings)
-    ..registerSingleton<LedgerRepository>(
-      LedgerRepository(db, onRulesChanged: ingestion.invalidate),
-    )
+    ..registerSingleton<LedgerRepository>(ledger)
+    ..registerSingleton<ReminderScheduler>(reminders)
+    ..registerSingleton<SubscriptionService>(subscriptions)
     ..registerSingleton<IngestionService>(ingestion)
     ..registerSingleton<TransferLinker>(TransferLinker(db))
     ..registerSingleton<SmsBridge>(bridge)

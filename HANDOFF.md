@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-04 (Phases 2, 2b, 2c, 3 code done; Phase 3 awaiting device test).
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-04 (Phases 2–4 code done; Phases 3–4 awaiting device test).
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -24,7 +24,8 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Phase 2b: self-transfer linking | **Done.** `flutter test` 28 pass. Owner tested Phase 2 on device: SMS capture works |
 | Phase 2c: account balances + owner-added transfer side + account merge | **Done.** `flutter test` 33 pass |
 | Phase 3: review queue, save & learn, category rules | **Code done, awaiting on-device test.** `flutter test` 38 pass |
-| Phases 4–6 | Not started: 4 subscriptions + reminders, 5 Gmail + dedup, 6 summary + backup/export + app lock |
+| Phase 4: subscriptions + reminders | **Code done, awaiting on-device test.** `flutter test` 54 pass, debug APK builds |
+| Phases 5–6 | Not started: 5 Gmail + dedup, 6 summary + backup/export + app lock |
 
 ## Phase 2: what was built
 **Android** (`android/app/src/main/kotlin/dev/adityamittal/k/sms/`)
@@ -71,7 +72,25 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Learned formats screen (Settings → Message formats): sample message with what the format reads, uses count, pause (`enabled`), forget (soft delete). Service `lib/data/review/learned_formats.dart`.
 - Owner saw a right-overflow while growing a selection in Review; not reproduced — waiting on a screenshot.
 
-## Next step: on-device check of Phase 3, then Phase 4 (subscriptions)
+## Phase 4: subscriptions + reminders
+- Design first (new rule): `04b-subscription-detail`, `04c-subscriptions-empty`, `03e-learned-formats` added to `design/k.pen` + `design/screens/`.
+- `lib/data/subscriptions/recurrence.dart` (pure): `detectRecurrence` — only charges within tolerance of the newest amount; walk back by cycle windows (monthly 26–35d, quarterly 84–98, half-yearly 174–190, yearly 355–375); a similar charge inside a cycle ends the run; min run 3 monthly / 2 otherwise. `nextCharge` keeps day-of-month (clamped). `monthlyMinor` for totals.
+- `SubscriptionService.refresh()` (after every SMS drain/catch-up in `SmsController`): expire AutoPay alerts >3 days past due → match unlinked debits of tracked merchants (within tolerance anywhere after last charge + half a cycle, or any price within ±7 days of the expected day = price change) → attach pending AutoPay alerts (sets next charge; suggests a plan if none) → detect new runs (merchant with no plan; dismissed blocks forever; stopped blocks only charges it already covered; newest charge must be within 1.5 cycles).
+- Suggested plans already link their charges (`transactions.subscription_id`); "Not a subscription" unlinks; "Stop tracking" keeps links. `priceChanged` + `lastAmountMinor` = "was" price, cleared by the next same-price charge or a manual amount edit.
+- Reminders: `lib/app/reminder_scheduler.dart` (flutter_local_notifications + timezone, inexact alarms, 09:00 N days before; rebuilt from scratch on every change; 0 = off; per-plan override, global default `subscriptions.reminderDays`). Manifest: POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED + plugin receivers; desugaring on. Notification permission asked on first "Track it". Icon `drawable/ic_stat_k`.
+- UI: Subscriptions tab (totals, suggestion cards, "Reminds N days before" → global sheet, rows with seal / price-up / unused / cycle bar), detail (rename, amount, repeats, next charge date via the cycle line, category, remind me, not using it, charges list, stop tracking). `CategoryButton` moved to `widgets/common.dart`.
+
+### For the parser session
+- AutoPay / e-mandate templates must capture `payee` (merchant) and `dueDate`; alerts without a payee can't attach to a subscription.
+
+## Next step: on-device check of Phases 3 + 4, then Phase 5 (Gmail + dedup)
+Phase 4 checks:
+1. Subscriptions tab: suggestions appear for merchants with 3 monthly charges (or AutoPay alerts); Track it asks for notification permission.
+2. Totals line, next charge dates, cycle bars look right; open a plan, edit amount/repeats/next charge/reminder; Not using it dims the row.
+3. Set a reminder that lands soon (e.g. next charge = tomorrow, remind 1 day before) → notification at 09:00.
+4. Stop tracking removes it from the list; Not a subscription never comes back.
+
+## Earlier device checks (Phase 2/3)
 1. Review tab lists unread messages with a guessed amount and reason.
 2. Open one: marks prefilled; long-press words to fix; Save & learn → overlay; similar waiting messages clear.
 3. Learned formats live in `parser_templates`; send the parser session the sample texts so built-ins can absorb them later.

@@ -6,6 +6,7 @@ Sideloaded Android app (personal use, never Play Store). Reads bank SMS + bank a
 
 ## Working rules
 - Implement directly — do NOT show diffs or wait for approval before writing files in this project (overrides the global "show plan + diffs" rule). Still confirm before destructive/irreversible actions.
+- New screens: design in Pencil (`design/k.pen`) first, export to `design/screens/`, then build in Flutter.
 - Two Claude sessions may work here at once:
   - **Main session** — design (Pencil `.pen` + `/impeccable`) and app phases (`lib/`, `android/`, `test/`).
   - **Parser session** — only `packages/txn_parser/` (templates, fixtures, tests). Must not edit `lib/` or `android/`; if a schema/app change is needed, write it down for the main session.
@@ -50,5 +51,6 @@ flutter build apk --debug
 - Design done ("Note Inks" direction: amounts tinted by RBI banknote band; see DESIGN.md). Flutter must use Archivo wdth≈112 + tabular figures for amounts/headings.
 - Phase 2 code done (native SMS capture + headless worker, ingestion pipeline, Transactions/detail/onboarding UI); awaiting on-device test. Next: Phase 3 (review queue + learned templates + category rules).
 - Phase 2b done: self-transfer linking (`TransferLinker`, schema v2). Phase 2c done: computed account balances + Accounts screen, owner-added transfer side (schema v3), account merge (v4).
-- Phase 3 code done: review queue, mark-and-learn (user templates in `parser_templates`), merchant category rules, payee rename. Next: Phase 4 (subscriptions + reminders).
+- Phase 3 code done: review queue, mark-and-learn (user templates in `parser_templates`), merchant category rules, payee rename, learned formats screen.
+- Phase 4 code done: subscription detection (`lib/data/subscriptions/`), AutoPay matching, reminders (`lib/app/reminder_scheduler.dart`). Next: Phase 5 (Gmail + dedup).
 - Later ideas: encrypted multi-device sync (schema already sync-ready), other currencies.

@@ -6,17 +6,26 @@ import 'package:permission_handler/permission_handler.dart';
 import '../data/ingest/sms_sync.dart';
 import '../data/ingest/transfer_linker.dart';
 import '../data/repositories/settings_repository.dart';
+import '../data/subscriptions/subscription_service.dart';
 import '../platform/sms_bridge.dart';
 
 /// Keeps the ledger fed while the UI runs: drains the live queue on every
 /// receiver event, and on start/resume also catches up from the inbox.
+/// Subscriptions are re-matched after every pass.
 class SmsController with WidgetsBindingObserver {
-  SmsController(this._sync, this._bridge, this._settings, this._transfers);
+  SmsController(
+    this._sync,
+    this._bridge,
+    this._settings,
+    this._transfers,
+    this._subscriptions,
+  );
 
   final SmsSync _sync;
   final TransferLinker _transfers;
   final SmsBridge _bridge;
   final SettingsRepository _settings;
+  final SubscriptionService _subscriptions;
 
   /// Null until first checked.
   final smsGranted = ValueNotifier<bool?>(null);
@@ -27,7 +36,9 @@ class SmsController with WidgetsBindingObserver {
     if (_started) return;
     _started = true;
     WidgetsBinding.instance.addObserver(this);
-    _events = _bridge.onPending.listen((_) => _guard(_sync.drainPending));
+    _events = _bridge.onPending.listen(
+      (_) => _guard(_sync.drainPending).then((_) => _refreshSubscriptions()),
+    );
     // Pairs transfers logged before linking existed (and any missed pairs).
     unawaited(_guard(_transfers.autoLinkAll).then((_) => refresh()));
   }
@@ -39,6 +50,15 @@ class SmsController with WidgetsBindingObserver {
     // The queue was captured while permission was held; drain regardless.
     await _guard(_sync.drainPending);
     if (granted) await _guard(_sync.catchUp);
+    await _refreshSubscriptions();
+  }
+
+  Future<void> _refreshSubscriptions() async {
+    try {
+      await _subscriptions.refresh();
+    } catch (e, s) {
+      debugPrint('k: subscription refresh failed: $e\n$s');
+    }
   }
 
   @override

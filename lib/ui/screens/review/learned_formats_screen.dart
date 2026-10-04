@@ -77,6 +77,7 @@ class _FormatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
       decoration: BoxDecoration(
+        color: c.surface1,
         border: Border.all(color: c.outline),
         borderRadius: BorderRadius.circular(12),
       ),

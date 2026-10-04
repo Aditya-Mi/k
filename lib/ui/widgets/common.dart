@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../data/db/app_database.dart' show Category;
 import '../theme/k_theme.dart';
 import 'rosette.dart';
 
@@ -202,6 +203,47 @@ class EmptyState extends StatelessWidget {
           ],
           if (action != null) ...[const SizedBox(height: 20), action!],
         ],
+      ),
+    );
+  }
+}
+
+/// Category with its icon on a surface-2 button; tap to change.
+class CategoryButton extends StatelessWidget {
+  const CategoryButton({
+    super.key,
+    required this.category,
+    required this.onTap,
+  });
+
+  final Category? category;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.k;
+    return Material(
+      color: c.surface2,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(categoryIcon(category?.icon), size: 20, color: c.text2),
+              const SizedBox(width: 10),
+              Text(
+                category?.name ?? 'Uncategorized',
+                style: context.kt.body.copyWith(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(width: 10),
+              Icon(Icons.edit_outlined, size: 16, color: c.text2),
+            ],
+          ),
+        ),
       ),
     );
   }

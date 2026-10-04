@@ -7,10 +7,13 @@ import 'note_chip.dart';
 
 /// Chip · payee over meta · amount. Columns never move between row states.
 class TxnRow extends StatelessWidget {
-  const TxnRow({super.key, required this.txn, this.onTap});
+  const TxnRow({super.key, required this.txn, this.onTap, this.title});
 
   final TxnView txn;
   final VoidCallback? onTap;
+
+  /// Replaces the payee (a subscription's charges list shows the date).
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +28,7 @@ class TxnRow extends StatelessWidget {
             if (txn.account != null) txn.account!.short,
             hhmm(txn.occurredAt),
           ].join(' · ');
-    final title = txn.isTransfer ? 'Self transfer' : txn.payee;
+    final title = this.title ?? (txn.isTransfer ? 'Self transfer' : txn.payee);
     return _RowShell(
       onTap: onTap,
       chip: NoteChip(

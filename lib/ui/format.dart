@@ -25,6 +25,8 @@ String inrRow(int minor, {bool plus = false}) =>
 final _time = DateFormat('HH:mm');
 final _dayShort = DateFormat('EEE d MMM');
 final _dayMonth = DateFormat('d MMM');
+final _monthShort = DateFormat('MMM');
+final _monthYearShort = DateFormat('MMM yyyy');
 final _monthYear = DateFormat('MMMM yyyy');
 final _full = DateFormat('EEE d MMM yyyy, HH:mm');
 final _fullDay = DateFormat('d MMM yyyy');
@@ -33,6 +35,10 @@ String hhmm(DateTime d) => _time.format(d);
 String dayShort(DateTime d) => _dayShort.format(d);
 String dayMonth(DateTime d) => _dayMonth.format(d);
 String monthYear(DateTime d) => _monthYear.format(d);
+
+/// "Jul", or "Jul 2025" when not this year.
+String monthShort(DateTime d, DateTime now) =>
+    d.year == now.year ? _monthShort.format(d) : _monthYearShort.format(d);
 String fullStamp(DateTime d) => _full.format(d);
 String fullDay(DateTime d) => _fullDay.format(d);
 

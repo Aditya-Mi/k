@@ -8,6 +8,7 @@ import '../../di.dart';
 import '../theme/k_theme.dart';
 import '../widgets/common.dart';
 import 'review/review_queue_screen.dart';
+import 'subscriptions/subscriptions_screen.dart';
 import 'transactions/transactions_cubit.dart';
 import 'transactions/transactions_screen.dart';
 
@@ -42,10 +43,7 @@ class _HomeShellState extends State<HomeShell> {
                 onOpenReview: () => setState(() => _tab = 1),
               ),
               const ReviewQueueScreen(),
-              const _Later(
-                title: 'Subscriptions',
-                body: 'Repeat charges and AutoPay mandates will show here.',
-              ),
+              const SubscriptionsScreen(),
               const _Later(
                 title: 'Summary',
                 body: 'Where the month went, by category.',
