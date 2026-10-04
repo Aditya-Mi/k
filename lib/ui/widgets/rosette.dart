@@ -3,77 +3,113 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// Guilloche rosette geometry (DESIGN.md "The Guilloche Rule").
-/// Three hypotrochoid bands at d·0.7, d, d·1.3 plus rings, in a 100-unit
-/// space scaled to the widget.
+/// One hypotrochoid band: x = a·cos t + d·cos(k·t), y = a·sin t − d·sin(k·t),
+/// t ∈ [0, 2π]. Draws k + 1 lobes.
 @immutable
-class RosetteSpec {
-  const RosetteSpec({
-    required this.lobes,
-    required this.dFactor,
-    this.innerRing = true,
-  });
+class Trochoid {
+  const Trochoid(this.a, this.d, this.k);
 
-  /// The house rosette: 6 lobes, used on the month panel, detail, empty
-  /// states, the drawn moment and the app icon.
-  static const house = RosetteSpec(lobes: 6, dFactor: 1.26);
+  final double a;
+  final double d;
+  final int k;
 
-  /// Deterministic per-name seal for subscriptions.
-  factory RosetteSpec.seal(String name) {
-    final h = fnv1a(name);
-    return RosetteSpec(
-      lobes: 5 + h % 5,
-      dFactor: 0.9 + ((h >> 4) % 6) * 0.18,
-      innerRing: (h >> 8).isOdd,
-    );
-  }
-
-  final int lobes;
-  final double dFactor;
-  final bool innerRing;
-
-  static const _bigR = 100.0;
-  double get _r => _bigR / lobes;
-  double get _d => _r * dFactor;
-  double get outerRadius => _bigR - _r + 1.3 * _d + 3;
-
-  /// Paths in rosette units, centred on the origin.
-  List<Path> paths() {
-    final r = _r;
-    final k = (_bigR - r) / r;
-    Path band(double d) {
-      final p = Path();
-      const steps = 900;
-      for (var i = 0; i <= steps; i++) {
-        final t = i / steps * 2 * math.pi;
-        final x = (_bigR - r) * math.cos(t) + d * math.cos(k * t);
-        final y = (_bigR - r) * math.sin(t) - d * math.sin(k * t);
-        i == 0 ? p.moveTo(x, y) : p.lineTo(x, y);
-      }
-      return p..close();
+  Path path() {
+    final p = Path();
+    const steps = 900;
+    for (var i = 0; i <= steps; i++) {
+      final t = i / steps * 2 * math.pi;
+      final x = a * math.cos(t) + d * math.cos(k * t);
+      final y = a * math.sin(t) - d * math.sin(k * t);
+      i == 0 ? p.moveTo(x, y) : p.lineTo(x, y);
     }
-
-    Path ring(double radius) =>
-        Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: radius));
-
-    return [
-      band(_d * 0.7),
-      band(_d),
-      band(_d * 1.3),
-      ring(outerRadius),
-      if (innerRing) ring(math.max(8.0, (_bigR - r) - 1.3 * _d - 3).abs()),
-    ];
+    return p..close();
   }
 
   @override
   bool operator ==(Object other) =>
-      other is RosetteSpec &&
-      other.lobes == lobes &&
-      other.dFactor == dFactor &&
-      other.innerRing == innerRing;
+      other is Trochoid && other.a == a && other.d == d && other.k == k;
 
   @override
-  int get hashCode => Object.hash(lobes, dFactor, innerRing);
+  int get hashCode => Object.hash(a, d, k);
+}
+
+/// Guilloche rosette geometry (DESIGN.md "The Guilloche Rule"): hypotrochoid
+/// bands plus rings, centred on the origin in a ±[extent] unit space that is
+/// scaled to the widget.
+@immutable
+class RosetteSpec {
+  const RosetteSpec({
+    required this.bands,
+    required this.rings,
+    required this.extent,
+  });
+
+  /// The house rosette, exactly as drawn in design/k.pen ("Guilloche"):
+  /// two 6-lobe families (a 80 and a 65), a 5-lobe core and four rings.
+  static const house = RosetteSpec(
+    bands: [
+      Trochoid(80, 22, 5),
+      Trochoid(80, 30, 5),
+      Trochoid(80, 38, 5),
+      Trochoid(65, 18, 5),
+      Trochoid(65, 26, 5),
+      Trochoid(48, 14, 4),
+    ],
+    rings: [118, 104, 44, 30],
+    extent: 120,
+  );
+
+  /// Deterministic per-name seal for subscriptions (DESIGN.md generator):
+  /// h = FNV-1a(name); lobes = 5 + h mod 5; R = 100, r = R/lobes;
+  /// d = r·(0.9 + ((h>>4) mod 6)·0.18); bands at d·0.7, d, d·1.3; outer ring
+  /// at R−r+1.3d+3; inner ring when (h>>8) is odd.
+  factory RosetteSpec.seal(String name) {
+    final h = fnv1a(name);
+    final lobes = 5 + h % 5;
+    const bigR = 100.0;
+    final r = bigR / lobes;
+    final d = r * (0.9 + ((h >> 4) % 6) * 0.18);
+    final a = bigR - r;
+    final outer = a + 1.3 * d + 3;
+    return RosetteSpec(
+      bands: [
+        for (final f in [0.7, 1.0, 1.3]) Trochoid(a, d * f, lobes - 1),
+      ],
+      rings: [outer, if ((h >> 8).isOdd) math.max(8.0, a - 1.3 * d - 3)],
+      extent: outer + 2,
+    );
+  }
+
+  final List<Trochoid> bands;
+  final List<double> rings;
+  final double extent;
+
+  /// Paths in rosette units, bands first so the drawn moment strokes them
+  /// before the rings.
+  List<Path> paths() => [
+    for (final b in bands) b.path(),
+    for (final r in rings)
+      Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: r)),
+  ];
+
+  @override
+  bool operator ==(Object other) =>
+      other is RosetteSpec &&
+      other.extent == extent &&
+      _listEq(other.bands, bands) &&
+      _listEq(other.rings, rings);
+
+  @override
+  int get hashCode =>
+      Object.hash(extent, Object.hashAll(bands), Object.hashAll(rings));
+}
+
+bool _listEq<T>(List<T> a, List<T> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }
 
 /// 32-bit FNV-1a over UTF-8.
@@ -128,7 +164,7 @@ class _RosettePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paths = _cache.putIfAbsent(spec, spec.paths);
-    final scale = (size.shortestSide / 2 - strokeWidth) / spec.outerRadius;
+    final scale = size.shortestSide / 2 / spec.extent;
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke

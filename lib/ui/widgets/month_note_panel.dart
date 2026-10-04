@@ -67,13 +67,15 @@ class MonthNotePanel extends StatelessWidget {
         aspectRatio: 2.07,
         child: LayoutBuilder(
           builder: (context, box) {
-            final rosette = box.maxHeight * 0.62;
+            // Placement from design/k.pen: 136dp in a 380×184 panel, flush
+            // with the top, 7dp in from the right — whole, clear of the ribbon.
+            final unit = box.maxHeight / 184;
+            final rosette = 136 * unit;
             return Stack(
               children: [
-                // Right third, whole, clear of the ribbon.
                 Positioned(
-                  right: 12,
-                  top: 10,
+                  right: 7 * unit,
+                  top: 0,
                   child: Rosette(size: rosette, color: ink, strokeWidth: 0.5),
                 ),
                 Padding(
