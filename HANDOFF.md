@@ -96,7 +96,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Background: native `email/EmailSyncWorker` (periodic 60 min, network) → headless `emailBackgroundMain`; scheduled via `k/sms` `scheduleEmailSync` on connect/disconnect and every app refresh; foreground top-up when >30 min stale.
 - UI: Settings → Email (inboxes, failed state in alert colour, sheet: new app password / check now / disconnect), `ConnectInboxScreen` (06b; Google option disabled until `googleReady`), `AppPasswordScreen` (06c). Designs 06b/06c/06d in k.pen.
 - Main manifest now declares INTERNET (release builds).
-- Next: Gmail sign-in (google_sign_in + Gmail API `gmail.readonly`, `GmailSource` behind the same interface) once the Web client ID arrives.
+- Next: Gmail sign-in (google_sign_in + Gmail API `gmail.readonly`, `GmailSource` behind the same interface, flip `ConnectInboxScreen.googleReady`) once the owner sends the Web client ID. Owner's Cloud steps: project "k" → enable Gmail API (+ Drive API for Phase 6) → Branding (name k) → Audience External + Publish (In production, unverified) → Data access scope `gmail.readonly` → Android client (package `dev.adityamittal.k`, debug SHA-1 `0B:F8:56:BD:8A:18:AA:D1:34:98:C7:B6:E3:54:6A:37:0E:E4:A7:5B`) → Web client "k sign-in" (its client ID is what the app needs).
 
 ## Next step: on-device check of Phase 4 and Phase 5 (app password)
 Phase 4 checks:
