@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/ingest/ingestion_service.dart';
 import '../data/ingest/sms_sync.dart';
 import '../data/ingest/transfer_linker.dart';
 import '../data/repositories/settings_repository.dart';
@@ -28,6 +29,7 @@ class _KAppState extends State<KApp> {
     getIt<SettingsRepository>(),
     getIt<TransferLinker>(),
     getIt<SubscriptionService>(),
+    getIt<IngestionService>(),
   )..start();
 
   @override

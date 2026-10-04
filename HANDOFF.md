@@ -80,8 +80,12 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Reminders: `lib/app/reminder_scheduler.dart` (flutter_local_notifications + timezone, inexact alarms, 09:00 N days before; rebuilt from scratch on every change; 0 = off; per-plan override, global default `subscriptions.reminderDays`). Manifest: POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED + plugin receivers; desugaring on. Notification permission asked on first "Track it". Icon `drawable/ic_stat_k`.
 - UI: Subscriptions tab (totals, suggestion cards, "Reminds N days before" → global sheet, rows with seal / price-up / unused / cycle bar), detail (rename, amount, repeats, next charge date via the cycle line, category, remind me, not using it, charges list, stop tracking). `CategoryButton` moved to `widgets/common.dart`.
 
+- Track from a payment (design `02c`): txn detail → "Track as subscription" sheet (repeats + next charge) → `SubscriptionService.trackFromTransaction` (reuses an open plan for the merchant, else a `manual` one). Linked txns show a "Subscription" field that opens the plan.
+- Review queue is re-read on every app start (`reprocessReview`), so parser updates clear waiting items without a reinstall.
+
 ### For the parser session
 - AutoPay / e-mandate templates must capture `payee` (merchant) and `dueDate`; alerts without a payee can't attach to a subscription.
+- Missing Kotak format (upcoming AutoPay, kind mandate): `AUTOPAY of Rs.195.00 to APPLE MEDIA SERVICES will be debited on 29 Sep 2026. Please ensure sufficient balance in account -Kotak` (no account digits). Executed form already parses (`kotak_sms_autopay_done`).
 
 ## Next step: on-device check of Phase 4, then Phase 5 (Gmail + dedup)
 Phase 4 checks:

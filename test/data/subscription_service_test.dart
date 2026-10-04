@@ -152,6 +152,28 @@ void main() {
     expect(v.priceUp, isFalse);
   });
 
+  test('track from one payment, then the next charge matches', () async {
+    final apple = await merchant('Apple Media Services');
+    final first = await debit(apple, 195, DateTime(2026, 9, 29, 6));
+    final id = await subs.trackFromTransaction(
+      first,
+      SubscriptionFrequency.monthly,
+      DateTime(2026, 10, 29),
+    );
+    var v = (await subs.watchOne(id).first)!;
+    expect(v.row.status, SubscriptionStatus.active);
+    expect(v.row.source, SubscriptionSource.manual);
+    expect(v.chargeDates, [DateTime(2026, 9, 29, 6)]);
+
+    await debit(apple, 195, DateTime(2026, 10, 29, 6));
+    await subs.refresh(now: DateTime(2026, 10, 29, 12));
+    v = (await subs.watchOne(id).first)!;
+    expect(v.chargeDates, hasLength(2));
+    expect(v.row.nextExpectedAt, DateTime(2026, 11, 29, 6));
+    // No duplicate suggestion for the same merchant.
+    expect((await subs.watch().first).suggestions, isEmpty);
+  });
+
   test('stopped plans can be suggested again from new charges', () async {
     final m = await merchant('Hotstar');
     for (final mo in [5, 6, 7]) {

@@ -431,6 +431,7 @@ class LedgerRepository {
       transferId: t.transferId,
       origin: t.origin,
       transferPartnerId: partner?.id,
+      subscriptionId: t.subscriptionId,
       partnerAccount: partnerAccount == null || partnerBank == null
           ? null
           : _account(partnerAccount, partnerBank),

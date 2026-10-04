@@ -17,6 +17,9 @@ import '../../widgets/note_chip.dart';
 import '../../widgets/raw_message_card.dart';
 import '../../widgets/rosette.dart';
 import '../../widgets/text_prompt.dart';
+import '../../../data/subscriptions/subscription_service.dart';
+import '../subscriptions/subscription_detail_screen.dart';
+import '../subscriptions/track_subscription_sheet.dart';
 
 class TxnDetailState {
   const TxnDetailState({
@@ -270,6 +273,8 @@ class _Loaded extends StatelessWidget {
                           textAlign: TextAlign.right,
                         ),
                       ),
+                    if (txn.subscriptionId != null)
+                      _SubscriptionField(id: txn.subscriptionId!),
                     FieldRow(
                       label: 'Note',
                       onTap: () => _editNote(context, cubit, txn.notes),
@@ -319,6 +324,16 @@ class _Loaded extends StatelessWidget {
                       spacing: 12,
                       runSpacing: 12,
                       children: [
+                        if (txn.isDebit &&
+                            !txn.isTransfer &&
+                            txn.merchantId != null &&
+                            txn.subscriptionId == null)
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.autorenew_rounded, size: 20),
+                            label: const Text('Track as subscription'),
+                            onPressed: () =>
+                                showTrackSubscriptionSheet(context, txn),
+                          ),
                         if (txn.isTransfer)
                           OutlinedButton.icon(
                             icon: const Icon(Icons.link_off_rounded, size: 20),
@@ -591,5 +606,45 @@ class _Loaded extends StatelessWidget {
     if (ok != true) return;
     await cubit.remove(notATransaction: notATransaction);
     if (context.mounted) Navigator.pop(context);
+  }
+}
+
+/// "Subscription · Apple Media Services ›" — opens the plan.
+class _SubscriptionField extends StatelessWidget {
+  const _SubscriptionField({required this.id});
+
+  final String id;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.kt;
+    return StreamBuilder<SubscriptionView?>(
+      stream: getIt<SubscriptionService>().watchOne(id),
+      builder: (context, snap) {
+        final sub = snap.data;
+        if (sub == null) return const SizedBox.shrink();
+        return FieldRow(
+          label: 'Subscription',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => SubscriptionDetailScreen(id: id),
+            ),
+          ),
+          value: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  sub.name,
+                  style: t.body,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: context.k.text2),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

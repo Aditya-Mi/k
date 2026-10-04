@@ -469,6 +469,74 @@ class SubscriptionService {
         );
   }
 
+  /// Owner starts tracking from one payment (history not imported, or a
+  /// plan the detector missed). Reuses the merchant's suggestion if any.
+  Future<String> trackFromTransaction(
+    String txnId,
+    SubscriptionFrequency frequency,
+    DateTime next,
+  ) async {
+    final id = await _db.transaction(() async {
+      final t = await (_db.select(
+        _db.transactions,
+      )..where((x) => x.id.equals(txnId))).getSingle();
+      final open =
+          await (_db.select(_db.subscriptions)..where(
+                (s) =>
+                    s.deletedAt.isNull() &
+                    s.merchantId.equals(t.merchantId!) &
+                    s.status.isInValues([
+                      SubscriptionStatus.suggested,
+                      SubscriptionStatus.active,
+                    ]),
+              ))
+              .getSingleOrNull();
+      final values = SubscriptionsCompanion(
+        amountMinor: Value(t.amountMinor),
+        frequency: Value(frequency),
+        intervalDays: Value(cycleDays(frequency)),
+        lastChargedAt: Value(t.occurredAt),
+        nextExpectedAt: Value(next),
+        status: const Value(SubscriptionStatus.active),
+        updatedAt: Value(DateTime.now()),
+      );
+      String subId;
+      if (open != null) {
+        await (_db.update(
+          _db.subscriptions,
+        )..where((s) => s.id.equals(open.id))).write(values);
+        subId = open.id;
+      } else {
+        final merchant = await (_db.select(
+          _db.merchants,
+        )..where((m) => m.id.equals(t.merchantId!))).getSingle();
+        subId =
+            (await _db
+                    .into(_db.subscriptions)
+                    .insertReturning(
+                      values.copyWith(
+                        merchantId: Value(t.merchantId),
+                        name: Value(merchant.displayName),
+                        source: const Value(SubscriptionSource.manual),
+                        categoryId: Value(t.categoryId),
+                      ),
+                    ))
+                .id;
+      }
+      await (_db.update(
+        _db.transactions,
+      )..where((x) => x.id.equals(txnId))).write(
+        TransactionsCompanion(
+          subscriptionId: Value(subId),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      return subId;
+    });
+    await onChanged?.call();
+    return id;
+  }
+
   // ---------------------------------------------------------------- edits
 
   /// "Track it": the suggestion becomes a plan.

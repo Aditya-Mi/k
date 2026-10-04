@@ -85,6 +85,7 @@ class TxnView extends Equatable {
     this.origin = TxnOrigin.message,
     this.transferPartnerId,
     this.partnerAccount,
+    this.subscriptionId,
   });
 
   final String id;
@@ -113,6 +114,9 @@ class TxnView extends Equatable {
   final TxnOrigin origin;
   final String? merchantId;
 
+  /// Matched to a subscription (one of its charges).
+  final String? subscriptionId;
+
   bool get isTransfer => transferId != null;
   bool get addedByUser => origin == TxnOrigin.user;
 
@@ -139,7 +143,7 @@ class TxnView extends Equatable {
     transferId,
     merchantId,
     origin,
-    transferPartnerId, partnerAccount,
+    transferPartnerId, partnerAccount, subscriptionId,
   ];
 }
 

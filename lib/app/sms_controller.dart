@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../data/ingest/ingestion_service.dart';
 import '../data/ingest/sms_sync.dart';
 import '../data/ingest/transfer_linker.dart';
 import '../data/repositories/settings_repository.dart';
@@ -19,6 +20,7 @@ class SmsController with WidgetsBindingObserver {
     this._settings,
     this._transfers,
     this._subscriptions,
+    this._ingestion,
   );
 
   final SmsSync _sync;
@@ -26,6 +28,7 @@ class SmsController with WidgetsBindingObserver {
   final SmsBridge _bridge;
   final SettingsRepository _settings;
   final SubscriptionService _subscriptions;
+  final IngestionService _ingestion;
 
   /// Null until first checked.
   final smsGranted = ValueNotifier<bool?>(null);
@@ -40,7 +43,12 @@ class SmsController with WidgetsBindingObserver {
       (_) => _guard(_sync.drainPending).then((_) => _refreshSubscriptions()),
     );
     // Pairs transfers logged before linking existed (and any missed pairs).
-    unawaited(_guard(_transfers.autoLinkAll).then((_) => refresh()));
+    // Review items get another read: a newer parser may know them now.
+    unawaited(
+      _guard(_transfers.autoLinkAll)
+          .then((_) => _guard(_ingestion.reprocessReview))
+          .then((_) => refresh()),
+    );
   }
 
   Future<void> refresh() async {
