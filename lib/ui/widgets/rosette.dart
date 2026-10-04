@@ -44,8 +44,9 @@ class RosetteSpec {
     required this.extent,
   });
 
-  /// The house rosette, exactly as drawn in design/k.pen ("Guilloche"):
-  /// two 6-lobe families (a 80 and a 65), a 5-lobe core and four rings.
+  /// The house rosette from design/k.pen ("Guilloche"): two 6-lobe families
+  /// (a 80 and a 65) and four rings. The design's 5-lobe core band
+  /// (a 48, d 14) is left out at the owner's request.
   static const house = RosetteSpec(
     bands: [
       Trochoid(80, 22, 5),
@@ -53,7 +54,6 @@ class RosetteSpec {
       Trochoid(80, 38, 5),
       Trochoid(65, 18, 5),
       Trochoid(65, 26, 5),
-      Trochoid(48, 14, 4),
     ],
     rings: [118, 104, 44, 30],
     extent: 120,
