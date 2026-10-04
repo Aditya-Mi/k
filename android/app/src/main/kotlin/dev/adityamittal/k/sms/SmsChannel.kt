@@ -1,6 +1,7 @@
 package dev.adityamittal.k.sms
 
 import android.content.Context
+import dev.adityamittal.k.backup.BackupWorker
 import dev.adityamittal.k.email.EmailSyncWorker
 import android.os.Handler
 import android.os.Looper
@@ -18,6 +19,7 @@ import java.util.concurrent.Executors
  * - maxInboxId → Long
  * - backgroundDone(ok) → worker engine only
  * - scheduleEmailSync({on, intervalMinutes}) → hourly bank-mail worker
+ * - scheduleBackup(on) → daily Drive backup worker
  */
 class SmsChannel(
     context: Context,
@@ -56,6 +58,10 @@ class SmsChannel(
                     call.argument<Boolean>("on") ?: false,
                     call.longArg("intervalMinutes").takeIf { it > 0 } ?: 60L,
                 )
+                result.success(null)
+            }
+            "scheduleBackup" -> {
+                BackupWorker.schedule(ctx, call.arguments<Boolean>() ?: false)
                 result.success(null)
             }
             "backgroundDone" -> {

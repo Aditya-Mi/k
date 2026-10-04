@@ -95,4 +95,8 @@ class SmsBridge {
     'on': on,
     'intervalMinutes': intervalMinutes,
   });
+
+  /// Daily Drive backup worker on/off (WorkManager periodic work).
+  Future<void> scheduleBackup({required bool on}) =>
+      _methods.invokeMethod('scheduleBackup', on);
 }

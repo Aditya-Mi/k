@@ -11,31 +11,35 @@ class GoogleAuth {
       '392394428908-0r9v89fum5v45fsk7fqjipfh8ag1kld4.apps.googleusercontent.com';
   static const gmailScope = 'https://www.googleapis.com/auth/gmail.readonly';
 
+  /// Drive backups: only files k itself created.
+  static const driveScope = 'https://www.googleapis.com/auth/drive.file';
+
   Future<void>? _init;
 
   Future<void> _ready() =>
       _init ??= GoogleSignIn.instance.initialize(serverClientId: webClientId);
 
-  /// Interactive: pick an account and grant Gmail read. Returns the address.
-  /// Throws [GoogleSignInException] (code `canceled` when backed out).
-  Future<String> signIn() async {
+  /// Interactive: pick an account and grant [scope] (Gmail read by
+  /// default). Returns the address. Throws [GoogleSignInException] (code
+  /// `canceled` when backed out).
+  Future<String> signIn({String scope = gmailScope}) async {
     await _ready();
     final account = await GoogleSignIn.instance.authenticate(
-      scopeHint: const [gmailScope],
+      scopeHint: [scope],
     );
-    await account.authorizationClient.authorizeScopes(const [gmailScope]);
+    await account.authorizationClient.authorizeScopes([scope]);
     return account.email.toLowerCase();
   }
 
   /// Access token for [email] without any UI (works in the background
   /// worker); null when the owner has to sign in again.
-  Future<String?> token(String email) async {
+  Future<String?> token(String email, {String scope = gmailScope}) async {
     await _ready();
     final tokens = await GoogleSignInPlatform.instance
         .clientAuthorizationTokensForScopes(
           ClientAuthorizationTokensForScopesParameters(
             request: AuthorizationRequestDetails(
-              scopes: const [gmailScope],
+              scopes: [scope],
               userId: null,
               email: email,
               promptIfUnauthorized: false,

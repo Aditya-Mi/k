@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Summary + Settings built and checked; Phase 4 device check pending; next Phase 6). Schema v5.
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Phase 4 device check pending). Schema v5.
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -26,7 +26,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Phase 3: review queue, save & learn, category rules | **Done.** Owner tested on device (fixes: dialog crash, slash words, learned formats screen) |
 | Phase 4: subscriptions + reminders | **Code done, awaiting on-device test.** `flutter test` 54 pass, debug APK builds |
 | Phase 5: email + dedup | **Done.** Device-tested: Gmail sign-in (Testing mode, owner is a test user), email ingest, SMS+email merge, Save & learn on email, Add payment. Later checks: hourly background sync with app swiped away; 7-day Gmail expiry → re-sign-in. Owner keeps an app-password inbox on the same address as backup (content hash stops double logging) |
-| Phase 6 | **Next.** Monthly summary (design 05), Drive backup/export (`drive.file` scope already on the Cloud project), app lock (designs 07/07b) |
+| Phase 6 | **Code done, awaiting device test.** Summary (05), app lock (07/07b), Drive backup + export + import/restore (06e–06h). `flutter test` 79 pass, debug APK builds |
 
 ## Phase 2: what was built
 **Android** (`android/app/src/main/kotlin/dev/adityamittal/k/sms/`)
@@ -119,7 +119,25 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Settings rebuilt to design 06: Accounts, Banks (`BankRepository`, add sender → parser cache invalidated), Email, Sync (SMS, battery, check now, read past SMS, email hourly, merge window `dedup.windowMinutes`), Notifications, Appearance, Message formats. Backup + App lock wait for Phase 6.
 - Schema v5: "Cash" category → "ATM withdrawal" (id `cat_cash` kept); `CategoryResolver` files `TxnType.atm` there first; migration re-files unedited ATM rows.
 
-## Next step: Phase 6 (summary, backup/export, app lock); Phase 4 device check still pending
+## Phase 6: app lock + backup (2026-10-05)
+**App lock** (`lib/app/app_lock.dart`, `lib/ui/screens/lock/lock_screen.dart`, Settings → Privacy): `local_auth` BiometricPrompt (fingerprint or screen lock). `MainActivity` is now `FlutterFragmentActivity`; manifest has USE_BIOMETRIC. Locks on cold start and after ≥1 min away (so share sheets / Google sign-in / file dialogs don't lock); lifecycle events during the prompt are ignored (PIN fallback is its own activity). Overlay sits in `MaterialApp.builder` above the navigator. Unlock → rosette draws (neutral) → hold → fade into home. Turning on asks the prompt once; a phone with no screen lock left opens instead of being stuck. `device.appLock`. LaunchTheme is still not AppCompat (local_auth wants it only for Android ≤8).
+
+**Backup** (`lib/data/backup/`, `lib/ui/screens/backup/`, Settings → Backup):
+- `.kbackup` (`backup_file.dart`): JSON `{header, nonce, data}`; header = format/version, meta (createdAt, schema, counts — readable before the passphrase for the restore screen) and Argon2id params+salt (19 MiB, t=2, p=1, in an isolate); data = AES-256-GCM over gzipped snapshot JSON, header bound as AAD.
+- Passphrase (owner's choice) never stored: derived key + KDF params in secure storage (`backup.key`, `backup.kdf`), so the worker backs up unattended and a file with the same salt restores without asking. Restore with a passphrase adopts that key. Changing it = new salt; older backups need the old one.
+- `snapshot.dart`: every table's raw rows (`device.*` settings excluded both ways); restore = one transaction, deferred FKs, wipe + insert columns this version knows (older backups restore; newer refused), then `notifyUpdates` all tables; `onRestored` in di re-seeds, invalidates ingestion, refreshes subscriptions, reprocesses review.
+- Drive (`drive_client.dart`): REST v3, `drive.file`, folder "k backups" (id cached `device.backup.folderId`), resumable upload, appProperties `payments`, keep 7. `GoogleAuth.signIn/token` take a scope; backup account `device.backup.account` (null = off). Removing the last Gmail inbox no longer revokes Google while backup is on.
+- Daily: native `backup/BackupWorker` (periodic 1 day, first run aimed at 03:00, KEEP, network + battery not low) → `backupBackgroundMain` → `runIfDue` (20 h gap). App refresh re-schedules and catches up if >36 h. `work/HeadlessWorker` is the shared headless-engine base (EmailSyncWorker now extends it).
+- Export sheet: CSV (`csv_export.dart`, signed rupees, formula-guarded cells, not encrypted) or backup file → `file_picker` save dialog. Import a file / tap a Drive copy → Restore screen (confirm dialog; replaces everything). New phone: Backup → "Find backups on Drive" signs in first.
+
+Phase 6 device checks:
+1. Settings → Privacy → App lock on (prompt once). Swipe away + reopen → lock screen + prompt; cancel → Unlock button; success → rosette draws, fades into home. Leave <1 min (e.g. Export save dialog) → no lock; >1 min → lock.
+2. Settings → Backup switch → passphrase → Google account (Drive consent; unverified-app warning again) → "Backed up to Drive"; Drive shows "k backups/k-…kbackup". Backup screen lists it.
+3. Next morning: Last backup ~03:xx (worker). Battery saver may delay it.
+4. Export CSV opens in Sheets; Export backup file → Import it (should say "Opens with your current backup passphrase") → Restore → data back.
+5. Wrong passphrase on a file from another salt → "That passphrase doesn't open this backup".
+
+## Next step: Phase 6 device test; Phase 4 device check still pending
 Google Cloud project stays in **Testing** (owner's choice: production needs homepage + privacy policy URLs); Gmail grant expires every 7 days.
 Phase 5 checks: Settings → Email → Connect → Sign in with Google (unverified warning → Advanced → Go to k; allow Gmail read) → bank mail imports; a payment with SMS + email shows once with two sources; app password path; background hourly sync after swiping the app away.
 

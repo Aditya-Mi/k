@@ -3,8 +3,10 @@ import 'package:get_it/get_it.dart';
 
 import 'app/notifications.dart';
 import 'core/security/db_key_manager.dart';
+import 'data/backup/backup_service.dart';
 import 'data/db/app_database.dart';
 import 'data/db/connection.dart';
+import 'data/db/seed/seeder.dart';
 import 'data/email/email_sync.dart';
 import 'data/email/google_auth.dart';
 import 'data/ingest/ingestion_service.dart';
@@ -70,5 +72,21 @@ Future<void> configureDependencies() async {
     )
     ..registerSingleton<SmsSync>(
       SmsSync(bridge, ingestion, settings, onLive: notifications.notifyNew),
+    )
+    ..registerSingleton<BackupService>(
+      BackupService(
+        db,
+        settings,
+        secure,
+        google,
+        bridge,
+        onRestored: () async {
+          // A backup from an older k lacks newer seed rows.
+          await Seeder(db).seedAll();
+          ingestion.invalidate();
+          await subscriptions.refresh();
+          await ingestion.reprocessReview();
+        },
+      ),
     );
 }

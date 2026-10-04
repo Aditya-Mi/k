@@ -13,6 +13,7 @@ import '../../widgets/date_pick.dart';
 import '../accounts/accounts_screen.dart';
 import '../review/learned_formats_screen.dart';
 import 'appearance_settings.dart';
+import 'backup_settings.dart';
 import 'bank_settings.dart';
 import 'email_settings.dart';
 import 'notification_settings.dart';
@@ -20,7 +21,7 @@ import 'privacy_settings.dart';
 import 'settings_parts.dart';
 
 /// Settings (design 06): accounts, banks, email, sync, notifications,
-/// appearance, privacy, message formats. Backup arrives with Phase 6.
+/// backup, appearance, privacy, message formats.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -45,6 +46,7 @@ class SettingsScreen extends StatelessWidget {
           const EmailSettings(),
           const _SyncSection(),
           const NotificationSettings(),
+          const BackupSettings(),
           const AppearanceSettings(),
           const PrivacySettings(),
           const SettingsHead('Message formats'),
@@ -80,7 +82,8 @@ class SettingsScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Messages are read and stored on this phone only, in an '
-                    'encrypted database. Nothing is sent anywhere.',
+                    'encrypted database. Backups are encrypted here before '
+                    'they reach your own Google Drive.',
                     style: t.meta.copyWith(color: c.text3, height: 1.4),
                   ),
                 ),

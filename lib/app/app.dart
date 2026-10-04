@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/backup/backup_service.dart';
 import '../data/email/email_sync.dart';
 import '../data/ingest/ingestion_service.dart';
 import '../data/ingest/sms_sync.dart';
@@ -45,6 +46,7 @@ class _KAppState extends State<KApp> {
     getIt<IngestionService>(),
     getIt<KNotifications>(),
     getIt<EmailSync>(),
+    getIt<BackupService>(),
   )..start();
 
   @override

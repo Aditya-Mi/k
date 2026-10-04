@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:txn_parser/txn_parser.dart' show Channel;
 
+import '../backup/backup_service.dart';
 import '../db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../db/enums.dart';
 import '../ingest/ingestion_service.dart';
@@ -182,7 +183,9 @@ class EmailSync {
                   a.authType.equalsValue(EmailAuthType.oauth),
             ))
             .get();
-    if (oauthLeft.isEmpty) {
+    // Drive backup signs in through Google too; keep its access.
+    final backupOn = await _settings.get(BackupService.account) != null;
+    if (oauthLeft.isEmpty && !backupOn) {
       try {
         await google.disconnect();
       } catch (e) {

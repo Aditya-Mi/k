@@ -22,6 +22,11 @@ String inr(int minor, {bool paise = false, bool plus = false}) {
 String inrRow(int minor, {bool plus = false}) =>
     inr(minor, paise: minor % 100 != 0, plus: plus);
 
+final _count = NumberFormat.decimalPattern('en_IN');
+
+/// Counts with Indian grouping (1,284 · 1,12,000).
+String grouped(int n) => _count.format(n);
+
 final _time = DateFormat('HH:mm');
 final _dayShort = DateFormat('EEE d MMM');
 final _dayMonth = DateFormat('d MMM');

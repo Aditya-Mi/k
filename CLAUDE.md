@@ -53,5 +53,6 @@ flutter build apk --debug
 - Phase 2b done: self-transfer linking (`TransferLinker`, schema v2). Phase 2c done: computed account balances + Accounts screen, owner-added transfer side (schema v3), account merge (v4).
 - Phase 3 code done: review queue, mark-and-learn (user templates in `parser_templates`), merchant category rules, payee rename, learned formats screen.
 - Phase 4 code done: subscription detection (`lib/data/subscriptions/`), AutoPay matching, reminders.
-- Phase 5 done: email (IMAP app password + Gmail sign-in, `lib/data/email/`), SMS/email dedup, hourly sync, Add payment, theme setting, app icon (`tool/app_icon.py`). Next: Phase 6 (summary, backup/export, app lock).
+- Phase 5 done: email (IMAP app password + Gmail sign-in, `lib/data/email/`), SMS/email dedup, hourly sync, Add payment, theme setting, app icon (`tool/app_icon.py`).
+- Phase 6 code done: summary, app lock (`lib/app/app_lock.dart`), encrypted Drive backup + export/import (`lib/data/backup/`); awaiting device test.
 - Later ideas: encrypted multi-device sync (schema already sync-ready), other currencies.

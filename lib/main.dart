@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'app/app.dart';
 import 'app/app_lock.dart';
 import 'app/notifications.dart';
+import 'data/backup/backup_service.dart';
 import 'data/db/app_database.dart';
 import 'data/email/email_sync.dart';
 import 'data/ingest/sms_sync.dart';
@@ -80,6 +81,28 @@ Future<void> emailBackgroundMain() async {
     ok = true;
   } catch (e, s) {
     debugPrint('k: background email sync failed: $e\n$s');
+  } finally {
+    if (getIt.isRegistered<AppDatabase>()) {
+      await getIt<AppDatabase>().close();
+    }
+    await bridge.backgroundDone(ok: ok);
+  }
+}
+
+/// Headless entrypoint run daily by the native `BackupWorker`: seal the
+/// database and upload it to Drive, then report back.
+@pragma('vm:entry-point')
+Future<void> backupBackgroundMain() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
+  final bridge = SmsBridge();
+  var ok = false;
+  try {
+    await configureDependencies();
+    await getIt<BackupService>().runIfDue();
+    ok = true;
+  } catch (e, s) {
+    debugPrint('k: background backup failed: $e\n$s');
   } finally {
     if (getIt.isRegistered<AppDatabase>()) {
       await getIt<AppDatabase>().close();

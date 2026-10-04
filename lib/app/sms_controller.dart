@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../data/backup/backup_service.dart';
 import '../data/email/email_sync.dart';
 import '../data/ingest/ingestion_service.dart';
 import '../data/ingest/sms_sync.dart';
@@ -25,6 +26,7 @@ class SmsController with WidgetsBindingObserver {
     this._ingestion,
     this._notifications,
     this._email,
+    this._backup,
   );
 
   final SmsSync _sync;
@@ -35,6 +37,7 @@ class SmsController with WidgetsBindingObserver {
   final IngestionService _ingestion;
   final KNotifications _notifications;
   final EmailSync _email;
+  final BackupService _backup;
 
   /// Null until first checked.
   final smsGranted = ValueNotifier<bool?>(null);
@@ -68,6 +71,16 @@ class SmsController with WidgetsBindingObserver {
     if (granted) await _guard(_sync.catchUp);
     await _refreshEmail();
     await _refreshSubscriptions();
+    await _refreshBackup();
+  }
+
+  /// Keeps the daily worker in step; catches up when it fell behind.
+  Future<void> _refreshBackup() async {
+    try {
+      await _backup.refresh();
+    } catch (e, s) {
+      debugPrint('k: backup refresh failed: $e\n$s');
+    }
   }
 
   /// Keeps the hourly worker matching the inbox list, and tops up on open.
