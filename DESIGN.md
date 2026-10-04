@@ -248,7 +248,7 @@ Flat. There are no shadows anywhere; depth is a step up the neutral surface scal
 
 ## Shapes
 
-Small, banknote-proportioned rectangles for anything inked; soft 12dp cards for containers; full pills for buttons. The note chip (24×12dp, 2dp corners) and its large form (60×28dp, 4dp corners, carrying the denomination numeral) are always 2:1 rectangles. Filter chips are 32dp high with 8dp corners. The nav indicator is a 64×32dp lozenge with 16dp corners. Bars (denomination ribbon, band bars, subscription cycle bars, category bars) have fully rounded ends.
+Small, banknote-proportioned rectangles for anything inked; soft 12dp cards for containers; full pills for buttons. The note chip (24×12dp, 2dp corners) and its large form (60×28dp, 4dp corners, carrying the band's lower bound, e.g. "500+") are always 2:1 rectangles. Filter chips are 32dp high with 8dp corners. The nav indicator is a 64×32dp lozenge with 16dp corners. Bars (denomination ribbon, band bars, subscription cycle bars, category bars) have fully rounded ends.
 
 ### Named Rules
 **The Note Proportion Rule.** An amount's ink is always shown as a note-shaped rectangle or a bar, never as a dot, circle or avatar.
@@ -264,7 +264,7 @@ Small, banknote-proportioned rectangles for anything inked; soft 12dp cards for 
 
 ### Chips
 - **Note Chip:** 24×12dp, 2dp corners. Filled in band ink for debit, 1.5dp outline in band ink for credit, filled at 45% for pending, upcoming and unparsed.
-- **Large Note Chip:** 60×28dp, 4dp corners, carrying the denomination numeral ("500") in on-ink; leads the hero amount on detail.
+- **Large Note Chip:** 60×28dp, 4dp corners, carrying the band's lower bound, e.g. "500+" ("500") in on-ink; leads the hero amount on detail.
 - **Filter Chip:** 32dp high, 8dp corners, hairline outline, text label with a trailing dropdown arrow; scrolls horizontally off the gutter.
 - **Status tags:** "Marked unused" is an outlined 8dp tag in text-3, and the whole row dims; "Price up" is an alert-badge (alert text on alert-bg) with an up arrow.
 
@@ -322,6 +322,7 @@ Not yet specified. To be authored in the Flutter build and recorded here then.
 
 ### Don't:
 - **Don't** use a denomination ink for a category, account, status, selection, focus ring or decoration.
+- **Don't** mention notes, denominations or cash in user-facing copy. Most payments are UPI; the inks are a size scale borrowed from banknote colours, not a claim about how the user paid. Name bands as spend ranges ("Under ₹20", "₹500–1,999", "₹2,000+") and the breakdown "By spend size". Note/denomination wording stays internal (token and component names, this rationale).
 - **Don't** show debit and credit as red and green; use filled versus outlined chips and +₹.
 - **Don't** colour the review count, badge or banner with alert; coral is only for a changed fact like a price rise.
 - **Don't** use gradients, glass, blur or drop shadows.

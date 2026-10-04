@@ -20,4 +20,6 @@ FIRST VIEWPORT: Top app bar (k, search, settings). Month note panel (aspect ~2.2
 FORM: Note Inks, my rank 1 (Impeccable's pick, chosen over the rolled Station Board); seed key 6a76d567. Raises kept: sticky date-span header (lexicon); row states restyle without breaking columns (split-flap); subscription bars length=cycle, fill=time left (labanotation); flat committed colour, no gradients/glass (guide map); merged/deleted rows stay struck with a stamp (ticket wallet); inks do one job only (monochrome).
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
+Copy rule (owner decision 2026-10-04): keep the inks, drop note wording in the UI. Bands are spend ranges; "By spend size"; no mention of notes or cash, since most payments are UPI.
+
 Unresolved: real bank formats pending; light theme derived from the same inks deepened for paper ground.
