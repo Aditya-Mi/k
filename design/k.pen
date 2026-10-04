@@ -6217,6 +6217,1416 @@
             },
             {
               "type": "frame",
+              "id": "qzoKo",
+              "name": "Trend",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 14,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "isjth",
+                  "name": "Head",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "end",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "j1adS",
+                      "name": "H",
+                      "fill": "$text",
+                      "content": "Last 6 months",
+                      "fontFamily": "$font-num",
+                      "fontSize": 16,
+                      "fontWeight": "600",
+                      "letterSpacing": -0.2
+                    },
+                    {
+                      "type": "text",
+                      "id": "Xgdrs",
+                      "name": "Avg",
+                      "fill": "$text-2",
+                      "content": "avg ₹44,940 a month",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 12.5,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Y79NV",
+                  "name": "Chart",
+                  "width": "fill_container",
+                  "height": 150,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "yQmBG",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Col May",
+                      "width": 63,
+                      "height": 150,
+                      "layout": "vertical",
+                      "gap": 6,
+                      "justifyContent": "end",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "pH115",
+                          "name": "V",
+                          "fill": "$text-2",
+                          "content": "₹41.2k",
+                          "fontFamily": "$font-num",
+                          "fontSize": 11.5,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": [
+                            6,
+                            6,
+                            2,
+                            2
+                          ],
+                          "id": "rQFPx",
+                          "name": "Bar",
+                          "width": 30,
+                          "height": 82,
+                          "stroke": "$text-2",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "text",
+                          "id": "g57AF",
+                          "name": "M",
+                          "fill": "$text-2",
+                          "content": "May",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "w5xm3K",
+                      "x": 63,
+                      "y": 0,
+                      "name": "Col Jun",
+                      "width": 63,
+                      "height": 150,
+                      "layout": "vertical",
+                      "gap": 6,
+                      "justifyContent": "end",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Cyuwd",
+                          "name": "V",
+                          "fill": "$text-2",
+                          "content": "₹46.8k",
+                          "fontFamily": "$font-num",
+                          "fontSize": 11.5,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": [
+                            6,
+                            6,
+                            2,
+                            2
+                          ],
+                          "id": "AvM28",
+                          "name": "Bar",
+                          "width": 30,
+                          "height": 93,
+                          "stroke": "$text-2",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "text",
+                          "id": "u8y8X9",
+                          "name": "M",
+                          "fill": "$text-2",
+                          "content": "Jun",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "f3yTAx",
+                      "x": 127,
+                      "y": 0,
+                      "name": "Col Jul",
+                      "width": 63,
+                      "height": 150,
+                      "layout": "vertical",
+                      "gap": 6,
+                      "justifyContent": "end",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "E5bnN",
+                          "name": "V",
+                          "fill": "$text-2",
+                          "content": "₹39.5k",
+                          "fontFamily": "$font-num",
+                          "fontSize": 11.5,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": [
+                            6,
+                            6,
+                            2,
+                            2
+                          ],
+                          "id": "HKduQ",
+                          "name": "Bar",
+                          "width": 30,
+                          "height": 79,
+                          "stroke": "$text-2",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "text",
+                          "id": "zm9sR",
+                          "name": "M",
+                          "fill": "$text-2",
+                          "content": "Jul",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "f4V8y",
+                      "x": 190,
+                      "y": 0,
+                      "name": "Col Aug",
+                      "width": 63,
+                      "height": 150,
+                      "layout": "vertical",
+                      "gap": 6,
+                      "justifyContent": "end",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "cmYZe",
+                          "name": "V",
+                          "fill": "$text-2",
+                          "content": "₹52.3k",
+                          "fontFamily": "$font-num",
+                          "fontSize": 11.5,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": [
+                            6,
+                            6,
+                            2,
+                            2
+                          ],
+                          "id": "QrtJj",
+                          "name": "Bar",
+                          "width": 30,
+                          "height": 104,
+                          "stroke": "$text-2",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "text",
+                          "id": "SRSfI",
+                          "name": "M",
+                          "fill": "$text-2",
+                          "content": "Aug",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "viEQC",
+                      "x": 253,
+                      "y": 0,
+                      "name": "Col Sep",
+                      "width": 63,
+                      "height": 150,
+                      "layout": "vertical",
+                      "gap": 6,
+                      "justifyContent": "end",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Iyycv",
+                          "name": "V",
+                          "fill": "$text-2",
+                          "content": "₹44.9k",
+                          "fontFamily": "$font-num",
+                          "fontSize": 11.5,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": [
+                            6,
+                            6,
+                            2,
+                            2
+                          ],
+                          "id": "a2DgI",
+                          "name": "Bar",
+                          "width": 30,
+                          "height": 89,
+                          "stroke": "$text-2",
+                          "strokeWidth": 1
+                        },
+                        {
+                          "type": "text",
+                          "id": "K7iqH",
+                          "name": "M",
+                          "fill": "$text-2",
+                          "content": "Sep",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "g95xk",
+                      "x": 317,
+                      "y": 0,
+                      "name": "Col Oct",
+                      "width": 63,
+                      "height": 150,
+                      "layout": "vertical",
+                      "gap": 6,
+                      "justifyContent": "end",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "O0sH2",
+                          "name": "V",
+                          "fill": "$text",
+                          "content": "₹48.2k",
+                          "fontFamily": "$font-num",
+                          "fontSize": 11.5,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": [
+                            6,
+                            6,
+                            2,
+                            2
+                          ],
+                          "id": "P0PHR2",
+                          "name": "Bar",
+                          "fill": "$text",
+                          "width": 30,
+                          "height": 96
+                        },
+                        {
+                          "type": "text",
+                          "id": "oRXkf",
+                          "name": "M",
+                          "fill": "$text",
+                          "content": "Oct so far",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "o4ESoh",
+              "name": "Calendar",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "P8oMU",
+                  "name": "Head",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "end",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ZKiAf",
+                      "name": "H",
+                      "fill": "$text",
+                      "content": "Day by day",
+                      "fontFamily": "$font-num",
+                      "fontSize": 16,
+                      "fontWeight": "600",
+                      "letterSpacing": -0.2
+                    },
+                    {
+                      "type": "text",
+                      "id": "hJAKh",
+                      "name": "Meta",
+                      "fill": "$text-2",
+                      "content": "8 days over ₹2,000",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 12.5,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "NUAs0",
+                  "name": "Weekdays",
+                  "width": "fill_container",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "f4jhS7",
+                      "name": "W",
+                      "fill": "$text-3",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "M",
+                      "textAlign": "center",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 11.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RXodb",
+                      "name": "W",
+                      "fill": "$text-3",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "T",
+                      "textAlign": "center",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 11.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "yPeBa",
+                      "name": "W",
+                      "fill": "$text-3",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "W",
+                      "textAlign": "center",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 11.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "cirqx",
+                      "name": "W",
+                      "fill": "$text-3",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "T",
+                      "textAlign": "center",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 11.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "dwtud",
+                      "name": "W",
+                      "fill": "$text-3",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "F",
+                      "textAlign": "center",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 11.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "LqsDj",
+                      "name": "W",
+                      "fill": "$text-3",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "S",
+                      "textAlign": "center",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 11.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ERO7c",
+                      "name": "W",
+                      "fill": "$text-3",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "S",
+                      "textAlign": "center",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 11.5,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "H49jM",
+                  "name": "Grid",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "kmT7l",
+                      "name": "Week 1",
+                      "width": "fill_container",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "gvSSd",
+                          "name": "Blank",
+                          "width": "fill_container",
+                          "height": 28
+                        },
+                        {
+                          "type": "frame",
+                          "id": "k73dpp",
+                          "name": "Blank",
+                          "width": "fill_container",
+                          "height": 28
+                        },
+                        {
+                          "type": "frame",
+                          "id": "XqxOd",
+                          "name": "Blank",
+                          "width": "fill_container",
+                          "height": 28
+                        },
+                        {
+                          "type": "frame",
+                          "id": "r2N3oH",
+                          "name": "Day 1",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-500",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "FqDSW",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "1",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "AZ0Q8",
+                          "name": "Day 2",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-200",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "FzwJJ",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "2",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "TLiZ7",
+                          "name": "Day 3",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-2000",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ZoWk5",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "3",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "TF8wr",
+                          "name": "Day 4",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-50",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "y5KE8",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "4",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "krCud",
+                      "name": "Week 2",
+                      "width": "fill_container",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "bkG9l",
+                          "name": "Day 5",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-500",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "wYSiW",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "5",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "vm28A",
+                          "name": "Day 6",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-500",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "k5vlI",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "6",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "zsBPu",
+                          "name": "Day 7",
+                          "width": "fill_container",
+                          "height": 28,
+                          "cornerRadius": 4,
+                          "stroke": "$outline",
+                          "strokeWidth": 1,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "FsZd4",
+                              "name": "N",
+                              "fill": "$text-3",
+                              "content": "7",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "l0mJo",
+                          "name": "Day 8",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-200",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Ac0Gj",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "8",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "HAIqW",
+                          "name": "Day 9",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-2000",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "CEiGp",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "9",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "W4Hyc9",
+                          "name": "Day 10",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-100",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "mMQqw",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "10",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "umDiN",
+                          "name": "Day 11",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-2000",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Z3JHu",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "11",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "FgsN9",
+                      "name": "Week 3",
+                      "width": "fill_container",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "uavlG",
+                          "name": "Day 12",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-200",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "r16dZ",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "12",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "GtPGa",
+                          "name": "Day 13",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-500",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Sfpuu",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "13",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "RXbjQ",
+                          "name": "Day 14",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-50",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "dYAZw",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "14",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "AGHX8",
+                          "name": "Day 15",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-2000",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "IEzcJ",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "15",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "s3XSNX",
+                          "name": "Day 16",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-500",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rr1ns",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "16",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "HOlET",
+                          "name": "Day 17",
+                          "width": "fill_container",
+                          "height": 28,
+                          "cornerRadius": 4,
+                          "stroke": "$outline",
+                          "strokeWidth": 1,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "qGBfI",
+                              "name": "N",
+                              "fill": "$text-3",
+                              "content": "17",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "SNU2T",
+                          "name": "Day 18",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-2000",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "oxQwl",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "18",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "cGfcf",
+                      "name": "Week 4",
+                      "width": "fill_container",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "OZQKw",
+                          "name": "Day 19",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-200",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "mK1IA",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "19",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "YX4Vq",
+                          "name": "Day 20",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-500",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "zL7ck",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "20",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "LcC3R",
+                          "name": "Day 21",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-2000",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "g4bPu",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "21",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "NYG1V",
+                          "name": "Day 22",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-200",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "wBMAG",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "22",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "oJjlm",
+                          "name": "Day 23",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-2000",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "OjFS1",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "23",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "SXyQ3",
+                          "name": "Day 24",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$ink-2000",
+                          "cornerRadius": 4,
+                          "stroke": "$text",
+                          "strokeWidth": 2,
+                          "strokeAlignment": "outer",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "MOL44",
+                              "name": "N",
+                              "fill": "$on-ink",
+                              "content": "24",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "QWEbq",
+                          "name": "Day 25",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$surface-1",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "IUjpd",
+                              "name": "N",
+                              "fill": "$text-3",
+                              "content": "25",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "EulWW",
+                      "name": "Week 5",
+                      "width": "fill_container",
+                      "gap": 6,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "uVu55",
+                          "name": "Day 26",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$surface-1",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "SpCY8",
+                              "name": "N",
+                              "fill": "$text-3",
+                              "content": "26",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "PSi8Q",
+                          "name": "Day 27",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$surface-1",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Kgree",
+                              "name": "N",
+                              "fill": "$text-3",
+                              "content": "27",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "C9NuU",
+                          "name": "Day 28",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$surface-1",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "M3fi3",
+                              "name": "N",
+                              "fill": "$text-3",
+                              "content": "28",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qcMVT",
+                          "name": "Day 29",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$surface-1",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "T2ArY",
+                              "name": "N",
+                              "fill": "$text-3",
+                              "content": "29",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "dDtgb",
+                          "name": "Day 30",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$surface-1",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "TElQr",
+                              "name": "N",
+                              "fill": "$text-3",
+                              "content": "30",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "OiexB",
+                          "name": "Day 31",
+                          "width": "fill_container",
+                          "height": 28,
+                          "fill": "$surface-1",
+                          "cornerRadius": 4,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "V0Dxi",
+                              "name": "N",
+                              "fill": "$text-3",
+                              "content": "31",
+                              "fontFamily": "$font-num",
+                              "fontSize": 11.5,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "rYYt3",
+                          "name": "Blank",
+                          "width": "fill_container",
+                          "height": 28
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "TUUR5",
+                  "name": "Foot",
+                  "width": "fill_container",
+                  "padding": [
+                    4,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Eq3l1",
+                      "name": "Biggest",
+                      "fill": "$text-2",
+                      "content": "Biggest day: Sun 11 Oct, ₹9,240",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 12.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "GfW1i",
+                      "name": "Legend",
+                      "gap": 3,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "l6KNsX",
+                          "name": "Lo",
+                          "fill": "$text-3",
+                          "content": "small",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 1,
+                          "id": "NHkwU",
+                          "name": "Chip 10",
+                          "fill": "$ink-10",
+                          "width": 12,
+                          "height": 6
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 1,
+                          "id": "sGgHI",
+                          "name": "Chip 20",
+                          "fill": "$ink-20",
+                          "width": 12,
+                          "height": 6
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 1,
+                          "id": "K3mP0",
+                          "name": "Chip 50",
+                          "fill": "$ink-50",
+                          "width": 12,
+                          "height": 6
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 1,
+                          "id": "KXge3",
+                          "name": "Chip 100",
+                          "fill": "$ink-100",
+                          "width": 12,
+                          "height": 6
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 1,
+                          "id": "WY5Jv",
+                          "name": "Chip 200",
+                          "fill": "$ink-200",
+                          "width": 12,
+                          "height": 6
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 1,
+                          "id": "Y7GUXv",
+                          "name": "Chip 500",
+                          "fill": "$ink-500",
+                          "width": 12,
+                          "height": 6
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 1,
+                          "id": "MRigD",
+                          "name": "Chip 2000",
+                          "fill": "$ink-2000",
+                          "width": 12,
+                          "height": 6
+                        },
+                        {
+                          "type": "text",
+                          "id": "wAFEA",
+                          "name": "Hi",
+                          "fill": "$text-3",
+                          "content": "big",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "w9y7uw",
               "name": "By category",
               "width": "fill_container",
@@ -6233,91 +7643,6 @@
                   "fontSize": 16,
                   "fontWeight": "600",
                   "letterSpacing": -0.2
-                },
-                {
-                  "type": "frame",
-                  "id": "v7Rrrp",
-                  "name": "Cat Transfers",
-                  "width": "fill_container",
-                  "layout": "vertical",
-                  "gap": 6,
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "KkyPV",
-                      "name": "Top",
-                      "width": "fill_container",
-                      "gap": 10,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon",
-                          "id": "wIGiq",
-                          "name": "swap_horiz",
-                          "width": 20,
-                          "height": 20,
-                          "icon": "swap_horiz",
-                          "library": "Material Symbols Rounded",
-                          "fill": "$text-2"
-                        },
-                        {
-                          "type": "text",
-                          "id": "wchgR",
-                          "name": "Name",
-                          "fill": "$text",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Transfers",
-                          "fontFamily": "$font-ui",
-                          "fontSize": 14.5,
-                          "fontWeight": "500"
-                        },
-                        {
-                          "type": "text",
-                          "id": "dSeOb",
-                          "name": "Pct",
-                          "fill": "$text-3",
-                          "content": "37%",
-                          "fontFamily": "$font-num",
-                          "fontSize": 12.5,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "K0UKpM",
-                          "name": "Amt",
-                          "fill": "$text",
-                          "content": "₹18,000",
-                          "fontFamily": "$font-num",
-                          "fontSize": 14.5,
-                          "fontWeight": "600"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "snvUz",
-                      "name": "Bar row",
-                      "width": "fill_container",
-                      "padding": [
-                        0,
-                        0,
-                        0,
-                        30
-                      ],
-                      "children": [
-                        {
-                          "type": "rectangle",
-                          "cornerRadius": 3,
-                          "id": "bNg63",
-                          "name": "Bar",
-                          "fill": "$text",
-                          "width": 350,
-                          "height": 6
-                        }
-                      ]
-                    }
-                  ]
                 },
                 {
                   "type": "frame",
@@ -6362,7 +7687,7 @@
                           "id": "OBELT",
                           "name": "Pct",
                           "fill": "$text-3",
-                          "content": "17%",
+                          "content": "26%",
                           "fontFamily": "$font-num",
                           "fontSize": 12.5,
                           "fontWeight": "normal"
@@ -6372,7 +7697,7 @@
                           "id": "XKHDt",
                           "name": "Amt",
                           "fill": "$text",
-                          "content": "₹8,420",
+                          "content": "₹12,420",
                           "fontFamily": "$font-num",
                           "fontSize": 14.5,
                           "fontWeight": "600"
@@ -6397,7 +7722,7 @@
                           "id": "mJJUr",
                           "name": "Bar",
                           "fill": "$text",
-                          "width": 164,
+                          "width": 350,
                           "height": 6
                         }
                       ]
@@ -6447,7 +7772,7 @@
                           "id": "yBd1h",
                           "name": "Pct",
                           "fill": "$text-3",
-                          "content": "14%",
+                          "content": "21%",
                           "fontFamily": "$font-num",
                           "fontSize": 12.5,
                           "fontWeight": "normal"
@@ -6457,7 +7782,7 @@
                           "id": "nV8bR",
                           "name": "Amt",
                           "fill": "$text",
-                          "content": "₹6,980",
+                          "content": "₹9,980",
                           "fontFamily": "$font-num",
                           "fontSize": 14.5,
                           "fontWeight": "600"
@@ -6482,7 +7807,7 @@
                           "id": "eqbjm",
                           "name": "Bar",
                           "fill": "$text",
-                          "width": 136,
+                          "width": 281,
                           "height": 6
                         }
                       ]
@@ -6532,7 +7857,7 @@
                           "id": "lTNc0",
                           "name": "Pct",
                           "fill": "$text-3",
-                          "content": "11%",
+                          "content": "17%",
                           "fontFamily": "$font-num",
                           "fontSize": 12.5,
                           "fontWeight": "normal"
@@ -6542,7 +7867,7 @@
                           "id": "B1fad",
                           "name": "Amt",
                           "fill": "$text",
-                          "content": "₹5,310",
+                          "content": "₹8,310",
                           "fontFamily": "$font-num",
                           "fontSize": 14.5,
                           "fontWeight": "600"
@@ -6567,7 +7892,7 @@
                           "id": "hM2HJ",
                           "name": "Bar",
                           "fill": "$text",
-                          "width": 103,
+                          "width": 234,
                           "height": 6
                         }
                       ]
@@ -6617,7 +7942,7 @@
                           "id": "ZQwJa",
                           "name": "Pct",
                           "fill": "$text-3",
-                          "content": "8%",
+                          "content": "14%",
                           "fontFamily": "$font-num",
                           "fontSize": 12.5,
                           "fontWeight": "normal"
@@ -6627,7 +7952,7 @@
                           "id": "pXJWu",
                           "name": "Amt",
                           "fill": "$text",
-                          "content": "₹3,890",
+                          "content": "₹6,890",
                           "fontFamily": "$font-num",
                           "fontSize": 14.5,
                           "fontWeight": "600"
@@ -6652,7 +7977,7 @@
                           "id": "FTaxq",
                           "name": "Bar",
                           "fill": "$text",
-                          "width": 76,
+                          "width": 194,
                           "height": 6
                         }
                       ]
@@ -6702,7 +8027,7 @@
                           "id": "ravto",
                           "name": "Pct",
                           "fill": "$text-3",
-                          "content": "5%",
+                          "content": "9%",
                           "fontFamily": "$font-num",
                           "fontSize": 12.5,
                           "fontWeight": "normal"
@@ -6712,7 +8037,7 @@
                           "id": "Da8iY",
                           "name": "Amt",
                           "fill": "$text",
-                          "content": "₹2,204",
+                          "content": "₹4,204",
                           "fontFamily": "$font-num",
                           "fontSize": 14.5,
                           "fontWeight": "600"
@@ -6737,7 +8062,92 @@
                           "id": "vvH8p",
                           "name": "Bar",
                           "fill": "$text",
-                          "width": 43,
+                          "width": 118,
+                          "height": 6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "swlQf",
+                  "name": "Cat Health",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "FePWx",
+                      "name": "Top",
+                      "width": "fill_container",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "vwCDy",
+                          "name": "medical_services",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "medical_services",
+                          "library": "Material Symbols Rounded",
+                          "fill": "$text-2"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Z6kTB",
+                          "name": "Name",
+                          "fill": "$text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Health",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 14.5,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "o3hdBn",
+                          "name": "Pct",
+                          "fill": "$text-3",
+                          "content": "6%",
+                          "fontFamily": "$font-num",
+                          "fontSize": 12.5,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "R72OI",
+                          "name": "Amt",
+                          "fill": "$text",
+                          "content": "₹2,760",
+                          "fontFamily": "$font-num",
+                          "fontSize": 14.5,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "opDfB",
+                      "name": "Bar row",
+                      "width": "fill_container",
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        30
+                      ],
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3,
+                          "id": "EaKQo",
+                          "name": "Bar",
+                          "fill": "$text",
+                          "width": 78,
                           "height": 6
                         }
                       ]
@@ -6822,92 +8232,7 @@
                           "id": "y4WS1",
                           "name": "Bar",
                           "fill": "$text",
-                          "width": 42,
-                          "height": 6
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "swlQf",
-                  "name": "Cat Health",
-                  "width": "fill_container",
-                  "layout": "vertical",
-                  "gap": 6,
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "FePWx",
-                      "name": "Top",
-                      "width": "fill_container",
-                      "gap": 10,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon",
-                          "id": "vwCDy",
-                          "name": "medical_services",
-                          "width": 20,
-                          "height": 20,
-                          "icon": "medical_services",
-                          "library": "Material Symbols Rounded",
-                          "fill": "$text-2"
-                        },
-                        {
-                          "type": "text",
-                          "id": "Z6kTB",
-                          "name": "Name",
-                          "fill": "$text",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Health",
-                          "fontFamily": "$font-ui",
-                          "fontSize": 14.5,
-                          "fontWeight": "500"
-                        },
-                        {
-                          "type": "text",
-                          "id": "o3hdBn",
-                          "name": "Pct",
-                          "fill": "$text-3",
-                          "content": "2%",
-                          "fontFamily": "$font-num",
-                          "fontSize": 12.5,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "R72OI",
-                          "name": "Amt",
-                          "fill": "$text",
-                          "content": "₹760",
-                          "fontFamily": "$font-num",
-                          "fontSize": 14.5,
-                          "fontWeight": "600"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "opDfB",
-                      "name": "Bar row",
-                      "width": "fill_container",
-                      "padding": [
-                        0,
-                        0,
-                        0,
-                        30
-                      ],
-                      "children": [
-                        {
-                          "type": "rectangle",
-                          "cornerRadius": 3,
-                          "id": "EaKQo",
-                          "name": "Bar",
-                          "fill": "$text",
-                          "width": 15,
+                          "width": 60,
                           "height": 6
                         }
                       ]
@@ -6957,7 +8282,7 @@
                           "id": "e0fdk",
                           "name": "Pct",
                           "fill": "$text-3",
-                          "content": "1%",
+                          "content": "3%",
                           "fontFamily": "$font-num",
                           "fontSize": 12.5,
                           "fontWeight": "normal"
@@ -6967,7 +8292,7 @@
                           "id": "K5ftKa",
                           "name": "Amt",
                           "fill": "$text",
-                          "content": "₹500",
+                          "content": "₹1,500",
                           "fontFamily": "$font-num",
                           "fontSize": 14.5,
                           "fontWeight": "600"
@@ -6992,10 +8317,343 @@
                           "id": "TdW9f",
                           "name": "Bar",
                           "fill": "$text",
-                          "width": 10,
+                          "width": 42,
                           "height": 6
                         }
                       ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "YsAwQ",
+              "name": "Top payees",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "pXmDr",
+                  "name": "Head",
+                  "width": "fill_container",
+                  "padding": [
+                    0,
+                    0,
+                    6,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "end",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "aRFm7",
+                      "name": "H",
+                      "fill": "$text",
+                      "content": "Top payees",
+                      "fontFamily": "$font-num",
+                      "fontSize": 16,
+                      "fontWeight": "600",
+                      "letterSpacing": -0.2
+                    },
+                    {
+                      "type": "text",
+                      "id": "ZjZr2",
+                      "name": "Meta",
+                      "fill": "$text-2",
+                      "content": "53 payees",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 12.5,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ZFGaf",
+                  "name": "Payee IRCTC",
+                  "width": "fill_container",
+                  "stroke": "$outline",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    10,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "kYqQC",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "L29YQ",
+                          "name": "Name",
+                          "fill": "$text",
+                          "content": "IRCTC",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 15,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "TEH4c",
+                          "name": "Meta",
+                          "fill": "$text-2",
+                          "content": "2 payments · Travel",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12.5,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "fXQli",
+                      "name": "Amt",
+                      "fill": "$text",
+                      "content": "₹9,240",
+                      "fontFamily": "$font-num",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "e0anfB",
+                  "name": "Payee Amazon",
+                  "width": "fill_container",
+                  "stroke": "$outline",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    10,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "uHQca",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "weo2b",
+                          "name": "Name",
+                          "fill": "$text",
+                          "content": "Amazon",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 15,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "t0YvY9",
+                          "name": "Meta",
+                          "fill": "$text-2",
+                          "content": "5 payments · Shopping",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12.5,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "q2ZqP",
+                      "name": "Amt",
+                      "fill": "$text",
+                      "content": "₹6,450",
+                      "fontFamily": "$font-num",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BZmBu",
+                  "name": "Payee Swiggy",
+                  "width": "fill_container",
+                  "stroke": "$outline",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    10,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ZVTKH",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "VfzTF",
+                          "name": "Name",
+                          "fill": "$text",
+                          "content": "Swiggy",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 15,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "m3nMsO",
+                          "name": "Meta",
+                          "fill": "$text-2",
+                          "content": "14 payments · Food & dining",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12.5,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "L0Xveo",
+                      "name": "Amt",
+                      "fill": "$text",
+                      "content": "₹4,120",
+                      "fontFamily": "$font-num",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "akCJo",
+                  "name": "Payee Airtel",
+                  "width": "fill_container",
+                  "stroke": "$outline",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    10,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "m4Vpgu",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lyjHP",
+                          "name": "Name",
+                          "fill": "$text",
+                          "content": "Airtel",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 15,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "LDhXM",
+                          "name": "Meta",
+                          "fill": "$text-2",
+                          "content": "1 payment · Bills & utilities",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12.5,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "KyE1P",
+                      "name": "Amt",
+                      "fill": "$text",
+                      "content": "₹2,999",
+                      "fontFamily": "$font-num",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "E5xRt",
+                  "name": "Payee Zepto",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "padding": [
+                    10,
+                    0
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "H718WF",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "w3oyr",
+                          "name": "Name",
+                          "fill": "$text",
+                          "content": "Zepto",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 15,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "adPNh",
+                          "name": "Meta",
+                          "fill": "$text-2",
+                          "content": "9 payments · Groceries",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 12.5,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "ZzOYb",
+                      "name": "Amt",
+                      "fill": "$text",
+                      "content": "₹2,480",
+                      "fontFamily": "$font-num",
+                      "fontSize": 16,
+                      "fontWeight": "600"
                     }
                   ]
                 }
@@ -8517,6 +10175,219 @@
                 },
                 {
                   "type": "frame",
+                  "id": "QAB1l",
+                  "name": "Item SMS allowed",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "padding": [
+                    12,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "J13aS",
+                      "name": "sms",
+                      "width": 24,
+                      "height": 24,
+                      "icon": "sms",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-2"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "q0fo5",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lmIRo",
+                          "name": "T",
+                          "fill": "$text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "SMS allowed",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 15.5,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "rGHdB",
+                          "name": "S",
+                          "fill": "$text-2",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "k reads bank SMS as they arrive",
+                          "lineHeight": 1.35,
+                          "fontFamily": "$font-ui",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "icon",
+                      "id": "vpO2K",
+                      "name": "chev",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "chevron_right",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-3"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "DX3cv",
+                  "name": "Item Battery",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "padding": [
+                    12,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "Uku0A",
+                      "name": "battery_full",
+                      "width": 24,
+                      "height": 24,
+                      "icon": "battery_full",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-2"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "cAZPK",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Pv3cq",
+                          "name": "T",
+                          "fill": "$text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Battery: unrestricted",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 15.5,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "B9jec",
+                          "name": "S",
+                          "fill": "$text-2",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "k can read messages while closed",
+                          "lineHeight": 1.35,
+                          "fontFamily": "$font-ui",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "icon",
+                      "id": "s8GdH",
+                      "x": 372,
+                      "y": 21,
+                      "name": "chev",
+                      "enabled": false,
+                      "width": 20,
+                      "height": 20,
+                      "icon": "chevron_right",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-3"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "eKcaB",
+                  "name": "Item Check SMS now",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "padding": [
+                    12,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "Y3quXU",
+                      "name": "refresh",
+                      "width": 24,
+                      "height": 24,
+                      "icon": "refresh",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-2"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ulQW7",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "E5Alwx",
+                          "name": "T",
+                          "fill": "$text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Check SMS now",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 15.5,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "R87Yd",
+                          "name": "S",
+                          "fill": "$text-2",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Last checked 5 Oct, 14:32",
+                          "lineHeight": 1.35,
+                          "fontFamily": "$font-ui",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "icon",
+                      "id": "jISNz",
+                      "x": 372,
+                      "y": 21,
+                      "name": "chev",
+                      "enabled": false,
+                      "width": 20,
+                      "height": 20,
+                      "icon": "chevron_right",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-3"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
                   "id": "CAxEo",
                   "name": "Item Check email",
                   "width": "fill_container",
@@ -8564,7 +10435,7 @@
                           "fill": "$text-2",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Every hour",
+                          "content": "Every hour, and when you open k",
                           "lineHeight": 1.35,
                           "fontFamily": "$font-ui",
                           "fontSize": 13,
@@ -8575,7 +10446,10 @@
                     {
                       "type": "icon",
                       "id": "SmpGj",
+                      "x": 372,
+                      "y": 21,
                       "name": "chev",
+                      "enabled": false,
                       "width": 20,
                       "height": 20,
                       "icon": "chevron_right",
@@ -8602,7 +10476,7 @@
                       "name": "sms",
                       "width": 24,
                       "height": 24,
-                      "icon": "sms",
+                      "icon": "history",
                       "library": "Material Symbols Rounded",
                       "fill": "$text-2"
                     },
@@ -8621,7 +10495,7 @@
                           "fill": "$text",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Read past SMS from",
+                          "content": "Read past SMS",
                           "fontFamily": "$font-ui",
                           "fontSize": 15.5,
                           "fontWeight": "500"
@@ -8633,7 +10507,7 @@
                           "fill": "$text-2",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "1 Apr 2026",
+                          "content": "From a date you pick. Already logged ones are skipped.",
                           "lineHeight": 1.35,
                           "fontFamily": "$font-ui",
                           "fontSize": 13,
@@ -8702,7 +10576,7 @@
                           "fill": "$text-2",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Same amount and card within 10 minutes",
+                          "content": "Same amount and account within 10 minutes, by SMS and email",
                           "lineHeight": 1.35,
                           "fontFamily": "$font-ui",
                           "fontSize": 13,
