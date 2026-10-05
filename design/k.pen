@@ -1,5 +1,5 @@
 {
-  "version": "2.14",
+  "version": "2.20",
   "children": [
     {
       "type": "frame",
@@ -1962,6 +1962,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -2035,6 +2036,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -2070,6 +2072,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -2105,6 +2108,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -2140,6 +2144,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -2678,6 +2683,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -2745,6 +2751,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -2804,6 +2811,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -2871,6 +2879,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -2930,6 +2939,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -2997,6 +3007,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -3061,6 +3072,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -3112,6 +3124,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -3209,6 +3222,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -3244,6 +3258,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -3279,6 +3294,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -3314,6 +3330,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -3349,6 +3366,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -3505,6 +3523,7 @@
           "strokeWidth": {
             "top": 1
           },
+          "strokeLinejoin": "round",
           "gap": 8,
           "padding": [
             12,
@@ -8380,6 +8399,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "gap": 12,
                   "padding": [
                     10,
@@ -8438,6 +8458,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "gap": 12,
                   "padding": [
                     10,
@@ -8496,6 +8517,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "gap": 12,
                   "padding": [
                     10,
@@ -8554,6 +8576,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "gap": 12,
                   "padding": [
                     10,
@@ -9672,6 +9695,74 @@
                     {
                       "type": "icon",
                       "id": "z87b7k",
+                      "name": "chev",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "chevron_right",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-3"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "saDRz",
+                  "name": "Item Cash",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "padding": [
+                    12,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "Y1xUEB",
+                      "name": "payments",
+                      "width": 24,
+                      "height": 24,
+                      "icon": "payments",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-2"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Nuxmv",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "QZirl",
+                          "name": "T",
+                          "fill": "$text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Cash in hand",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 15.5,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "LkxPu",
+                          "name": "S",
+                          "fill": "$text-2",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "ATM withdrawals add, cash payments you log subtract",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "icon",
+                      "id": "bhnfs",
                       "name": "chev",
                       "width": 20,
                       "height": 20,
@@ -15178,6 +15269,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -15232,6 +15324,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -15286,6 +15379,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -15330,6 +15424,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -15403,6 +15498,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -15456,6 +15552,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "gap": 16,
                   "padding": [
                     12,
@@ -16278,6 +16375,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -16345,6 +16443,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -16404,6 +16503,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -16471,6 +16571,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -16530,6 +16631,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -16597,6 +16699,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -16833,6 +16936,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -16900,6 +17004,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -16959,6 +17064,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -17026,6 +17132,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -17085,6 +17192,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -17152,6 +17260,7 @@
                               "strokeWidth": {
                                 "bottom": 2
                               },
+                              "strokeLinejoin": "round",
                               "padding": [
                                 1,
                                 3
@@ -17673,6 +17782,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -17746,6 +17856,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -17781,6 +17892,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -17819,6 +17931,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -17854,6 +17967,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -18585,6 +18699,7 @@
                 "top": 1,
                 "bottom": 1
               },
+              "strokeLinejoin": "round",
               "justifyContent": "space_between",
               "alignItems": "center",
               "children": [
@@ -18943,6 +19058,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -18997,6 +19113,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -19051,6 +19168,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -19105,6 +19223,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -19159,6 +19278,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -19230,6 +19350,7 @@
           "strokeWidth": {
             "top": 1
           },
+          "strokeLinejoin": "round",
           "gap": 8,
           "padding": [
             12,
@@ -19588,6 +19709,7 @@
                 "top": 1,
                 "bottom": 1
               },
+              "strokeLinejoin": "round",
               "justifyContent": "space_between",
               "alignItems": "center",
               "children": [
@@ -19985,6 +20107,7 @@
           "strokeWidth": {
             "top": 1
           },
+          "strokeLinejoin": "round",
           "gap": 8,
           "padding": [
             12,
@@ -20915,6 +21038,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -20969,6 +21093,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -21023,6 +21148,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -21077,6 +21203,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -21131,6 +21258,7 @@
                   "strokeWidth": {
                     "bottom": 1
                   },
+                  "strokeLinejoin": "round",
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
@@ -21202,6 +21330,7 @@
           "strokeWidth": {
             "top": 1
           },
+          "strokeLinejoin": "round",
           "gap": 8,
           "padding": [
             12,
@@ -21271,6 +21400,3334 @@
                   "fontFamily": "$font-ui",
                   "fontSize": 15,
                   "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "CdzPr",
+      "x": 9912,
+      "y": 240,
+      "name": "06e Backup",
+      "clip": true,
+      "width": 412,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "qjkY9",
+          "type": "ref",
+          "ref": "ys8A3",
+          "name": "Status Bar"
+        },
+        {
+          "type": "frame",
+          "id": "HgVag",
+          "name": "Top App Bar",
+          "width": "fill_container",
+          "height": 64,
+          "gap": 4,
+          "padding": [
+            0,
+            4
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "NwA7H",
+              "name": "Nav",
+              "width": 48,
+              "height": 48,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "qidWy",
+                  "name": "arrow_back",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "arrow_back",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "NE3Hl",
+              "name": "Title",
+              "fill": "$text",
+              "content": "Backup",
+              "fontFamily": "$font-num",
+              "fontSize": 22,
+              "fontWeight": "600",
+              "letterSpacing": -0.2
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "C7cKD",
+          "name": "Body",
+          "width": "fill_container",
+          "layout": "vertical",
+          "padding": [
+            0,
+            0,
+            16,
+            0
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "gcMSk",
+              "name": "Sec head",
+              "width": "fill_container",
+              "padding": [
+                16,
+                20,
+                4,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "d8mGi",
+                  "name": "H",
+                  "fill": "$text-2",
+                  "content": "Google Drive",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "T05vfn",
+              "name": "Item Daily backup",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "Ic84y",
+                  "name": "cloud_upload",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "cloud_upload",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "G3iP4C",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "T4MnI",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Daily backup",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "gPEZW",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "you@gmail.com · overnight · keeps the last 7",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "TtYzK",
+                  "name": "Switch",
+                  "width": 52,
+                  "height": 32,
+                  "fill": "$text",
+                  "cornerRadius": 16,
+                  "padding": [
+                    0,
+                    4
+                  ],
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "K23k9U",
+                      "name": "Knob",
+                      "fill": "$bg",
+                      "width": 24,
+                      "height": 24
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "FFe9m",
+              "name": "Item Last backup 03:02 today",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "mq6yN",
+                  "name": "check_circle",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "check_circle",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "Mu8vF",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "QYyF7",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Last backup 03:02 today",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "XOnhP",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "1,284 payments · 418 KB",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "hbcNJ",
+              "name": "Back up now row",
+              "width": "fill_container",
+              "padding": [
+                4,
+                20,
+                8,
+                60
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "qNudQ",
+                  "name": "Back up now",
+                  "height": 40,
+                  "cornerRadius": 20,
+                  "stroke": "$outline",
+                  "strokeWidth": 1,
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "tZMFo",
+                      "name": "backup",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "backup",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RokVW",
+                      "name": "L",
+                      "fill": "$text",
+                      "content": "Back up now",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "g3Ws2",
+              "name": "Sec head",
+              "width": "fill_container",
+              "padding": [
+                16,
+                20,
+                4,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "GmHkH",
+                  "name": "H",
+                  "fill": "$text-2",
+                  "content": "On Drive",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Jasuq",
+              "name": "Item Today, 03:02",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "Xc8bN",
+                  "name": "history",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "history",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "IGX8Y",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "J9ePh",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Today, 03:02",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "cBtoD",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "1,284 payments · 418 KB",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "SPM54",
+                  "name": "chev",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "chevron_right",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-3"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "D5mCh",
+              "name": "Item Yesterday, 03:01",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "TXR5u",
+                  "name": "history",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "history",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "d5BsKl",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "owuS7",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Yesterday, 03:01",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "VrwPP",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "1,279 payments · 417 KB",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "c8tE4j",
+                  "name": "chev",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "chevron_right",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-3"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ioqvj",
+              "name": "Item Sat 3 Oct, 03:04",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "v9eWOL",
+                  "name": "history",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "history",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "AWjbS",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Jrqjf",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Sat 3 Oct, 03:04",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "E9GEF6",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "1,270 payments · 415 KB",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "wEsF6",
+                  "name": "chev",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "chevron_right",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-3"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wvvqJ",
+              "name": "Item 4 older",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "Ju2O8",
+                  "name": "more_horiz",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "more_horiz",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-3"
+                },
+                {
+                  "type": "frame",
+                  "id": "fLHUd",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "JkWpS",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "4 older",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "v3RnxS",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Back to Tue 29 Sep",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "ZDD7Q",
+                  "name": "chev",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "chevron_right",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-3"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "OMGEZ",
+              "name": "Sec head",
+              "width": "fill_container",
+              "padding": [
+                16,
+                20,
+                4,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BMtNw",
+                  "name": "H",
+                  "fill": "$text-2",
+                  "content": "Passphrase",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ImMsG",
+              "name": "Item Change passphrase",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "JbnOf",
+                  "name": "key",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "key",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "oXqrR",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "f1mSt",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Change passphrase",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "STBoy",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "New backups use the new one. Older ones still need the old one.",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "T49Vo",
+                  "name": "chev",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "chevron_right",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-3"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "TDdLQ",
+              "name": "Sec head",
+              "width": "fill_container",
+              "padding": [
+                16,
+                20,
+                4,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "FbYTt",
+                  "name": "H",
+                  "fill": "$text-2",
+                  "content": "From a file",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "I9Mmj",
+              "name": "Item Import a backup file",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "g5fCB",
+                  "name": "upload_file",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "upload_file",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "F3yNt",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "aR0wR",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Import a backup file",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "nCFue",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "A .kbackup file from Export or another phone",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "w28FWH",
+                  "name": "chev",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "chevron_right",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-3"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ug5cm",
+              "name": "Note",
+              "width": "fill_container",
+              "gap": 10,
+              "padding": [
+                20,
+                20,
+                0,
+                20
+              ],
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "kOcA5",
+                  "name": "lock",
+                  "width": 16,
+                  "height": 16,
+                  "icon": "lock",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-3"
+                },
+                {
+                  "type": "text",
+                  "id": "EJ5E1",
+                  "name": "N",
+                  "fill": "$text-3",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Backups are encrypted on this phone with your passphrase before they reach Drive. Without the passphrase nobody can open them, not even k.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font-ui",
+                  "fontSize": 12.5,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "vbyW1",
+      "x": 10384,
+      "y": 240,
+      "name": "06f Backup passphrase",
+      "clip": true,
+      "width": 412,
+      "height": 915,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "yqOGG",
+          "type": "ref",
+          "ref": "ys8A3",
+          "name": "Status Bar"
+        },
+        {
+          "type": "frame",
+          "id": "K1Cdf",
+          "name": "Top App Bar",
+          "width": "fill_container",
+          "height": 64,
+          "gap": 4,
+          "padding": [
+            0,
+            4
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "k2ai8P",
+              "name": "Nav",
+              "width": 48,
+              "height": 48,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "YHgio",
+                  "name": "arrow_back",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "arrow_back",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "G3dX1",
+              "name": "Title",
+              "fill": "$text",
+              "content": "Backup passphrase",
+              "fontFamily": "$font-num",
+              "fontSize": 22,
+              "fontWeight": "600",
+              "letterSpacing": -0.2
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "z7pKb7",
+          "name": "Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            8,
+            16,
+            16,
+            16
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "Y1W2a6",
+              "name": "Input Passphrase",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Qnnur",
+                  "name": "Label",
+                  "fill": "$text-2",
+                  "content": "Passphrase",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 12.5,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "Y5ybz",
+                  "name": "Box",
+                  "width": "fill_container",
+                  "height": 52,
+                  "cornerRadius": 8,
+                  "stroke": "$outline",
+                  "strokeWidth": 1,
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "KdWMr",
+                      "name": "Value",
+                      "fill": "$text",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "••••••••••••••••••",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "icon",
+                      "id": "Ay0yC",
+                      "name": "visibility_off",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "visibility_off",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "JyX7d",
+              "name": "Input Confirm",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "cES61",
+                  "name": "Label",
+                  "fill": "$text-2",
+                  "content": "Type it again",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 12.5,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "o68w61",
+                  "name": "Box",
+                  "width": "fill_container",
+                  "height": 52,
+                  "cornerRadius": 8,
+                  "stroke": "$outline",
+                  "strokeWidth": 1,
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "c3t01b",
+                      "name": "Value",
+                      "fill": "$text-3",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Same passphrase",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "icon",
+                      "id": "wJ27p",
+                      "name": "visibility",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "visibility",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "RWbGE",
+              "name": "Tips",
+              "width": "fill_container",
+              "fill": "$surface-1",
+              "cornerRadius": 12,
+              "stroke": "$outline",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "L3w3p",
+                  "name": "H",
+                  "fill": "$text",
+                  "content": "Pick one you'll remember",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "xWSBB",
+                  "name": "Step 1",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "mFQ3v",
+                      "name": "N",
+                      "fill": "$text-3",
+                      "content": "•",
+                      "fontFamily": "$font-num",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "t0wKz",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "At least 4 words or 12 characters. A short sentence works well.",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "i7CcX",
+                  "name": "Step 2",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "d0TzV",
+                      "name": "N",
+                      "fill": "$text-3",
+                      "content": "•",
+                      "fontFamily": "$font-num",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ed4cR",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "k keeps it on this phone so daily backups run on their own.",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ijTeK",
+                  "name": "Step 3",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "v5Vtq",
+                      "name": "N",
+                      "fill": "$text-3",
+                      "content": "•",
+                      "fontFamily": "$font-num",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "sQ7iv",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "On a new phone you type it once to restore.",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "pR2bb",
+              "name": "Note",
+              "fill": "$alert",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "If you forget it, your Drive backups can't be opened. Not by you, not by k, not by Google. You can set a new one later; older backups still need the old one.",
+              "lineHeight": 1.35,
+              "fontFamily": "$font-ui",
+              "fontSize": 12.5,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "B9kZyi",
+          "name": "Action Bar",
+          "width": "fill_container",
+          "fill": "$surface-1",
+          "stroke": "$outline",
+          "strokeWidth": {
+            "top": 1
+          },
+          "strokeLinejoin": "round",
+          "gap": 8,
+          "padding": [
+            12,
+            16,
+            20,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Ytg1d",
+              "x": 16,
+              "y": 12,
+              "name": "Not a transaction",
+              "enabled": false,
+              "height": 48,
+              "cornerRadius": 24,
+              "stroke": "$outline",
+              "strokeWidth": 1,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Kxo7H",
+                  "name": "L",
+                  "fill": "$text",
+                  "content": "Not a transaction",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 14,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "W3O0al",
+              "name": "Save",
+              "width": "fill_container",
+              "height": 48,
+              "fill": "$text",
+              "cornerRadius": 24,
+              "gap": 8,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "udWFu",
+                  "name": "check",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "cloud_upload",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$bg"
+                },
+                {
+                  "type": "text",
+                  "id": "m9WIc",
+                  "name": "L",
+                  "fill": "$bg",
+                  "content": "Turn on backup",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "sC7kc",
+      "x": 10856,
+      "y": 240,
+      "name": "06g Restore a backup",
+      "clip": true,
+      "width": 412,
+      "height": 915,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "LjzZD",
+          "type": "ref",
+          "ref": "ys8A3",
+          "name": "Status Bar"
+        },
+        {
+          "type": "frame",
+          "id": "qIEwC",
+          "name": "Top App Bar",
+          "width": "fill_container",
+          "height": 64,
+          "gap": 4,
+          "padding": [
+            0,
+            4
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "U7an0",
+              "name": "Nav",
+              "width": 48,
+              "height": 48,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "rChpW",
+                  "name": "arrow_back",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "arrow_back",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "x9v6Ii",
+              "name": "Title",
+              "fill": "$text",
+              "content": "Restore",
+              "fontFamily": "$font-num",
+              "fontSize": 22,
+              "fontWeight": "600",
+              "letterSpacing": -0.2
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "O7rXa",
+          "name": "Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            8,
+            16,
+            16,
+            16
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "ccwG1",
+              "name": "Backup card",
+              "width": "fill_container",
+              "fill": "$surface-1",
+              "cornerRadius": 12,
+              "stroke": "$outline",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ag6uu",
+                  "name": "H",
+                  "fill": "$text",
+                  "content": "Today, 03:02 · from Drive",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "XexYM",
+                  "name": "Row Payments",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "oyN9x",
+                      "name": "L",
+                      "fill": "$text-2",
+                      "content": "Payments",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ucOYp",
+                      "name": "V",
+                      "fill": "$text",
+                      "content": "1,284",
+                      "fontFamily": "$font-num",
+                      "fontSize": 13.5,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "l90mda",
+                  "name": "Row Accounts",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Bx0eH",
+                      "name": "L",
+                      "fill": "$text-2",
+                      "content": "Accounts",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "jmNam",
+                      "name": "V",
+                      "fill": "$text",
+                      "content": "6",
+                      "fontFamily": "$font-num",
+                      "fontSize": 13.5,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "n1Y2Y",
+                  "name": "Row Subscriptions",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "r734K",
+                      "name": "L",
+                      "fill": "$text-2",
+                      "content": "Subscriptions",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Wx6cp",
+                      "name": "V",
+                      "fill": "$text",
+                      "content": "4",
+                      "fontFamily": "$font-num",
+                      "fontSize": 13.5,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "HXcu1",
+                  "name": "Row Learned formats",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "zQMiZ",
+                      "name": "L",
+                      "fill": "$text-2",
+                      "content": "Learned formats",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "T13B1",
+                      "name": "V",
+                      "fill": "$text",
+                      "content": "13",
+                      "fontFamily": "$font-num",
+                      "fontSize": 13.5,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "k3J3NX",
+              "name": "Input Gmail address",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "PoiKq",
+                  "name": "Label",
+                  "fill": "$text-2",
+                  "content": "Passphrase for this backup",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 12.5,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "W3B5QE",
+                  "name": "Box",
+                  "width": "fill_container",
+                  "height": 52,
+                  "cornerRadius": 8,
+                  "stroke": "$outline",
+                  "strokeWidth": 1,
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Y4Pxh",
+                      "name": "Value",
+                      "fill": "$text",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "••••••••••••••••••",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "FuqUP",
+              "name": "Note",
+              "fill": "$text-2",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Restoring replaces every payment, account, subscription and setting on this phone with the backup's. Email inboxes need signing in again.",
+              "lineHeight": 1.35,
+              "fontFamily": "$font-ui",
+              "fontSize": 12.5,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "lJ9J7",
+          "name": "Action Bar",
+          "width": "fill_container",
+          "fill": "$surface-1",
+          "stroke": "$outline",
+          "strokeWidth": {
+            "top": 1
+          },
+          "strokeLinejoin": "round",
+          "gap": 8,
+          "padding": [
+            12,
+            16,
+            20,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "GtsyL",
+              "x": 16,
+              "y": 12,
+              "name": "Not a transaction",
+              "enabled": false,
+              "height": 48,
+              "cornerRadius": 24,
+              "stroke": "$outline",
+              "strokeWidth": 1,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "U9jHIW",
+                  "name": "L",
+                  "fill": "$text",
+                  "content": "Not a transaction",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 14,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "U6cJp9",
+              "name": "Save",
+              "width": "fill_container",
+              "height": 48,
+              "fill": "$text",
+              "cornerRadius": 24,
+              "gap": 8,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "jdaLS",
+                  "name": "check",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "settings_backup_restore",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$bg"
+                },
+                {
+                  "type": "text",
+                  "id": "Z2Ym2",
+                  "name": "L",
+                  "fill": "$bg",
+                  "content": "Restore",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "xYL8C",
+      "x": 11328,
+      "y": 240,
+      "name": "06h Export (sheet)",
+      "clip": true,
+      "width": 412,
+      "height": 915,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "r9JXpb",
+          "type": "ref",
+          "ref": "ys8A3",
+          "name": "Status Bar"
+        },
+        {
+          "type": "frame",
+          "id": "OrXD8",
+          "name": "Section Backup",
+          "width": "fill_container",
+          "layout": "vertical",
+          "padding": [
+            8,
+            0
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "B5lDo",
+              "name": "Sec head",
+              "width": "fill_container",
+              "padding": [
+                8,
+                20,
+                4,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "iNbZB",
+                  "name": "H",
+                  "fill": "$text-2",
+                  "content": "Backup",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "rQjq0",
+              "name": "Item Google Drive backup",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "BeDrW",
+                  "name": "cloud_upload",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "cloud_upload",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "I9jJvC",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "EQTGQ",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Google Drive backup",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "bpGbN",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Daily, encrypted · last 03:02 today · keeps 7",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "FeL9s",
+                  "name": "chev",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "chevron_right",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-3"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "mti0R",
+              "name": "Item Export",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "YKvKX",
+                  "name": "download",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "download",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "HF0Y6",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "FP2al",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Export",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "V8oWH",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "CSV or encrypted backup file",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "zdVwi",
+                  "name": "chev",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "chevron_right",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Ly6eW",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Scrim",
+          "width": 412,
+          "height": 915,
+          "fill": "#0000008C",
+          "layout": "none"
+        },
+        {
+          "type": "frame",
+          "id": "X7nuv",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 652,
+          "name": "Sheet",
+          "width": 412,
+          "fill": "$surface-1",
+          "cornerRadius": [
+            28,
+            28,
+            0,
+            0
+          ],
+          "layout": "vertical",
+          "gap": 4,
+          "padding": [
+            12,
+            0,
+            24,
+            0
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "sxSUI",
+              "name": "Handle row",
+              "width": "fill_container",
+              "padding": [
+                0,
+                0,
+                8,
+                0
+              ],
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 2,
+                  "id": "IEiQQ",
+                  "name": "Handle",
+                  "fill": "$text-3",
+                  "width": 32,
+                  "height": 4
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "lCdjW",
+              "name": "Head",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 2,
+              "padding": [
+                0,
+                20,
+                8,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "YtWz5",
+                  "name": "H",
+                  "fill": "$text",
+                  "content": "Export",
+                  "fontFamily": "$font-num",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "b8TjF",
+                  "name": "Err",
+                  "fill": "$text-2",
+                  "content": "Saved to a folder you pick",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "RjCU6",
+              "name": "Item Payments as CSV",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "gmnTb",
+                  "name": "table_view",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "table_view",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "OnRJH",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RtvsP",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Payments as CSV",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YPM14",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Every payment: date, payee, amount, account, category, note. Not encrypted: anyone with the file can read it.",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "M5MljK",
+              "name": "Item Backup file",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "bFgof",
+                  "name": "lock",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "lock",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "YZVZm",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "U5RvB",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Backup file",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Uadd8",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Everything, encrypted with your backup passphrase. Import it in Settings → Backup on any phone.",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "WnUyx",
+      "x": 11800,
+      "y": 240,
+      "name": "09b Add payment — account sheet",
+      "clip": true,
+      "width": 412,
+      "height": 915,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "DY6H4",
+          "type": "ref",
+          "ref": "ys8A3",
+          "name": "Status Bar"
+        },
+        {
+          "type": "frame",
+          "id": "c5w8mW",
+          "name": "Top App Bar",
+          "width": "fill_container",
+          "height": 64,
+          "gap": 4,
+          "padding": [
+            0,
+            4
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "A8eEef",
+              "name": "Close",
+              "width": 48,
+              "height": 48,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "M4icFn",
+                  "name": "close",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "close",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "N5ipuE",
+              "name": "Title",
+              "fill": "$text",
+              "content": "Add payment",
+              "fontFamily": "$font-num",
+              "fontSize": 22,
+              "fontWeight": "600",
+              "letterSpacing": -0.2
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "eQJ18",
+          "name": "Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            8,
+            16,
+            16,
+            16
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "sZnft",
+              "name": "Hero",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "gXk6i",
+                  "name": "Direction",
+                  "height": 40,
+                  "cornerRadius": 20,
+                  "stroke": "$outline",
+                  "strokeWidth": 1,
+                  "gap": 2,
+                  "padding": 3,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "vHwIL",
+                      "name": "Seg Paid",
+                      "height": 34,
+                      "fill": "$surface-3",
+                      "cornerRadius": 17,
+                      "gap": 6,
+                      "padding": [
+                        0,
+                        18
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "o7HYRa",
+                          "name": "check",
+                          "width": 18,
+                          "height": 18,
+                          "icon": "check",
+                          "library": "Material Symbols Rounded",
+                          "fill": "$text"
+                        },
+                        {
+                          "type": "text",
+                          "id": "a9GY5N",
+                          "name": "L",
+                          "fill": "$text",
+                          "content": "Paid",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 14,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "DgWdm",
+                      "name": "Seg Received",
+                      "height": 34,
+                      "cornerRadius": 17,
+                      "gap": 6,
+                      "padding": [
+                        0,
+                        18
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "mCwcA",
+                          "name": "L",
+                          "fill": "$text-2",
+                          "content": "Received",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 14,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "KGzom",
+                  "name": "Amount",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "cq5h6",
+                      "name": "Value",
+                      "fill": "$text",
+                      "content": "₹11,000",
+                      "fontFamily": "$font-num",
+                      "fontSize": 44,
+                      "fontWeight": "600",
+                      "letterSpacing": -0.6
+                    },
+                    {
+                      "type": "icon",
+                      "id": "x3NWMs",
+                      "name": "edit",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "edit",
+                      "library": "Material Symbols Rounded",
+                      "fill": "$text-2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "s90GqU",
+              "name": "Fields",
+              "width": "fill_container",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "d6fBXL",
+                  "name": "Field Payee",
+                  "width": "fill_container",
+                  "height": 52,
+                  "stroke": "$outline",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeLinejoin": "round",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "v4FzD3",
+                      "name": "Label",
+                      "fill": "$text-2",
+                      "content": "Payee",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "i50E5",
+                      "name": "Value",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lBxDu",
+                          "name": "V",
+                          "fill": "$text",
+                          "content": "Landlord",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 14,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "O4vLn",
+                          "name": "edit",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "edit",
+                          "library": "Material Symbols Rounded",
+                          "fill": "$text-2"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "SJz14",
+                  "name": "Field Account",
+                  "width": "fill_container",
+                  "height": 52,
+                  "stroke": "$outline",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeLinejoin": "round",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "S9Alie",
+                      "name": "Label",
+                      "fill": "$text-2",
+                      "content": "Account",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "K2Cz90",
+                      "name": "Value",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "g8AdSJ",
+                          "name": "V",
+                          "fill": "$text",
+                          "content": "Cash",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 14,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "K26na",
+                          "name": "edit",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "edit",
+                          "library": "Material Symbols Rounded",
+                          "fill": "$text-2"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Gx3ur",
+                  "name": "Field Category",
+                  "width": "fill_container",
+                  "height": 52,
+                  "stroke": "$outline",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeLinejoin": "round",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "lTvcX",
+                      "name": "Label",
+                      "fill": "$text-2",
+                      "content": "Category",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "eGIPo",
+                      "name": "Value",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "WMPOb",
+                          "name": "V",
+                          "fill": "$text",
+                          "content": "Bills",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 14,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "V8HYT",
+                          "name": "edit",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "edit",
+                          "library": "Material Symbols Rounded",
+                          "fill": "$text-2"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "eos5y",
+                  "name": "Field When",
+                  "width": "fill_container",
+                  "height": 52,
+                  "stroke": "$outline",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeLinejoin": "round",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "eQuVK",
+                      "name": "Label",
+                      "fill": "$text-2",
+                      "content": "When",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "l3Iup",
+                      "name": "Value",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ULjM2",
+                          "name": "V",
+                          "fill": "$text",
+                          "content": "Sun 4 Oct, 14:20",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 14,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "nXQQO",
+                          "name": "edit",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "edit",
+                          "library": "Material Symbols Rounded",
+                          "fill": "$text-2"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "O6zoX2",
+                  "name": "Field Note",
+                  "width": "fill_container",
+                  "height": 52,
+                  "stroke": "$outline",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "strokeLinejoin": "round",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "e4a93",
+                      "name": "Label",
+                      "fill": "$text-2",
+                      "content": "Note",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "HyfTt",
+                      "name": "Value",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ErUKN",
+                          "name": "V",
+                          "fill": "$text",
+                          "content": "October rent",
+                          "fontFamily": "$font-ui",
+                          "fontSize": 14,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "icon",
+                          "id": "TEIQk",
+                          "name": "edit",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "edit",
+                          "library": "Material Symbols Rounded",
+                          "fill": "$text-2"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "wEQRK",
+              "name": "How it matches",
+              "fill": "$text-3",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "For payments your bank sent no SMS or email about. If one turns up later for the same account and amount, k merges it into this row.",
+              "lineHeight": 1.35,
+              "fontFamily": "$font-ui",
+              "fontSize": 12.5,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "GTprv",
+          "name": "Action Bar",
+          "width": "fill_container",
+          "fill": "$surface-1",
+          "stroke": "$outline",
+          "strokeWidth": {
+            "top": 1
+          },
+          "strokeLinejoin": "round",
+          "gap": 8,
+          "padding": [
+            12,
+            16,
+            20,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "U9E0z",
+              "x": 16,
+              "y": 12,
+              "name": "Not a transaction",
+              "enabled": false,
+              "height": 48,
+              "cornerRadius": 24,
+              "stroke": "$outline",
+              "strokeWidth": 1,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "LPRMo",
+                  "name": "L",
+                  "fill": "$text",
+                  "content": "Not a transaction",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 14,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "zOL3J",
+              "name": "Save",
+              "width": "fill_container",
+              "height": 48,
+              "fill": "$text",
+              "cornerRadius": 24,
+              "gap": 8,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "wiIjP",
+                  "name": "check",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "check",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$bg"
+                },
+                {
+                  "type": "text",
+                  "id": "lkU32",
+                  "name": "L",
+                  "fill": "$bg",
+                  "content": "Save payment",
+                  "fontFamily": "$font-ui",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Bu6FN",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Scrim",
+          "width": 412,
+          "height": 915,
+          "fill": "#0000008C",
+          "layout": "none"
+        },
+        {
+          "type": "frame",
+          "id": "GwZlz",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 508,
+          "name": "Sheet",
+          "width": 412,
+          "fill": "$surface-1",
+          "cornerRadius": [
+            28,
+            28,
+            0,
+            0
+          ],
+          "layout": "vertical",
+          "gap": 4,
+          "padding": [
+            12,
+            0,
+            24,
+            0
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "b1r2pK",
+              "name": "Handle row",
+              "width": "fill_container",
+              "padding": [
+                0,
+                0,
+                8,
+                0
+              ],
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 2,
+                  "id": "a5PrAb",
+                  "name": "Handle",
+                  "fill": "$text-3",
+                  "width": 32,
+                  "height": 4
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "mlpbs",
+              "name": "Head",
+              "width": "fill_container",
+              "padding": [
+                0,
+                20,
+                8,
+                20
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "yLR2P",
+                  "name": "H",
+                  "fill": "$text",
+                  "content": "Account",
+                  "fontFamily": "$font-num",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "w6BEzi",
+              "name": "Row Axis ··1234",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "lPKWq",
+                  "name": "account_balance_wallet",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "account_balance_wallet",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "BuAMW",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "XMVDZ",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Axis ··1234",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "q3nM6",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Axis Bank ··1234",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "S0Wau",
+              "name": "Row Axis card ··5678",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "EphOV",
+                  "name": "credit_card",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "credit_card",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "T5Dmrw",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "cxEyO",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Axis card ··5678",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "T4ct1V",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Axis Bank credit card ··5678",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "CZCgq",
+              "name": "Row Kotak ··4410",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "R1bESa",
+                  "name": "account_balance_wallet",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "account_balance_wallet",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "hX8MT",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "YHeap",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Kotak ··4410",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ml9mS",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Kotak Mahindra Bank ··4410",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "xa7Wa",
+              "name": "Row Cash",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "Lp2uD",
+                  "name": "payments",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "payments",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "V3zmq2",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "FeQ3A",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Cash",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "r5W1J",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Changes cash in hand; already counted at the ATM",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "bHnjd",
+                  "name": "check",
+                  "width": 22,
+                  "height": 22,
+                  "icon": "check",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wuUE6",
+              "name": "Row Not in k",
+              "width": "fill_container",
+              "gap": 16,
+              "padding": [
+                12,
+                20
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "z4pIf8",
+                  "name": "help",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "help",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text-2"
+                },
+                {
+                  "type": "frame",
+                  "id": "F1Hpt9",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ahecE",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Not in k",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15.5,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "text",
+                      "id": "T7XA11",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Not counted in any balance",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Xs38P",
+      "x": 12272,
+      "y": 240,
+      "name": "10 Accounts",
+      "clip": true,
+      "width": 412,
+      "height": 915,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "uOP6x",
+          "type": "ref",
+          "ref": "ys8A3",
+          "name": "Status Bar"
+        },
+        {
+          "type": "frame",
+          "id": "mWmG4",
+          "name": "Top App Bar",
+          "width": "fill_container",
+          "height": 64,
+          "gap": 4,
+          "padding": [
+            0,
+            4
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "aWWOB",
+              "name": "Nav",
+              "width": 48,
+              "height": 48,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "SjDOp",
+                  "name": "arrow_back",
+                  "width": 24,
+                  "height": 24,
+                  "icon": "arrow_back",
+                  "library": "Material Symbols Rounded",
+                  "fill": "$text"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "UMB6Q",
+              "name": "Title",
+              "fill": "$text",
+              "content": "Accounts",
+              "fontFamily": "$font-num",
+              "fontSize": 22,
+              "fontWeight": "600",
+              "letterSpacing": -0.2
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "y9tBe6",
+          "name": "Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "padding": [
+            0,
+            16,
+            16,
+            16
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "P5gsen",
+              "name": "Row Axis Bank ··1234",
+              "width": "fill_container",
+              "stroke": "$outline",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeLinejoin": "round",
+              "gap": 14,
+              "padding": [
+                14,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "MpGta",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Q8juJ",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Axis Bank ··1234",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "K0afs",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Balance · bank, 5 Oct, 09:12",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "DM8lq",
+                  "name": "Amount",
+                  "fill": "$text",
+                  "content": "₹42,318.40",
+                  "fontFamily": "$font-num",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "GMmcT",
+              "name": "Row Axis Bank credit card ··5678",
+              "width": "fill_container",
+              "stroke": "$outline",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeLinejoin": "round",
+              "gap": 14,
+              "padding": [
+                14,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "L4bLj",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "nWUcz",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Axis Bank credit card ··5678",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "HV4UD",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Available limit · estimated from 2 payments since 3 Oct, 18:40",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "xeCO3",
+                  "name": "Amount",
+                  "fill": "$text-2",
+                  "content": "₹85,420.50",
+                  "fontFamily": "$font-num",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "X4GjR",
+              "name": "Row Kotak Mahindra Bank ··4410",
+              "width": "fill_container",
+              "stroke": "$outline",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeLinejoin": "round",
+              "gap": 14,
+              "padding": [
+                14,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "H7kRk",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "lWIpH",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Kotak Mahindra Bank ··4410",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "DFGAn",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Balance · bank, 4 Oct, 21:03",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "bzyEv",
+                  "name": "Amount",
+                  "fill": "$text",
+                  "content": "₹18,751.33",
+                  "fontFamily": "$font-num",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "GiLJn",
+              "name": "Row Cash in hand",
+              "width": "fill_container",
+              "stroke": "$outline",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeLinejoin": "round",
+              "gap": 14,
+              "padding": [
+                14,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "CQwNU",
+                  "name": "Text",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "k8ejk",
+                      "name": "T",
+                      "fill": "$text",
+                      "content": "Cash in hand",
+                      "fontFamily": "$font-ui",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "c6AICB",
+                      "name": "S",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Counted by you 1 Oct, 21:10, then ATM and cash payments",
+                      "lineHeight": 1.35,
+                      "fontFamily": "$font-ui",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "GZ6I6",
+                  "name": "Amount",
+                  "fill": "$text-2",
+                  "content": "₹3,400.00",
+                  "fontFamily": "$font-num",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ZGxmU",
+              "name": "Note wrap",
+              "width": "fill_container",
+              "padding": [
+                24,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "jptlF",
+                  "name": "Note",
+                  "fill": "$text-3",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Balances come from your banks' messages. When a message has none, k adds up the payments since the last figure it saw, so the number is marked estimated. Set it yourself any time. Cash goes up with ATM withdrawals and down with cash payments you add; set it after counting your wallet.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font-ui",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
                 }
               ]
             }
