@@ -193,12 +193,6 @@ Repo goes public; `design/k.pen` untracked (`*.pen` ignored; stays local, still 
 - Setup the owner does once: make the repo public, create the gist (file `k-update.json`, content `{}`), add a PAT with gist scope as `GIST_TOKEN`, the four `K_*` secrets and the two vars. Then Release with bump `none` → 1.0.0.
 - 1.0.0 crashed on start (R8, see Gotchas); **1.0.1** (build 2) is the first working release. Device-tested on 1.0.1: SMS logged with app swiped away + notification, app lock, Drive backup now, import of a backup file, Settings → About update check. Still to check: Gmail sign-in/hourly email worker, overnight backup worker, an in-app update install (Play Protect may block it).
 
-## Second tester (2026-10-05)
-Initial development is done. The owner tests on their phone, and a friend installs releases on theirs (different Google account, different banks). Fixes and enhancements ship as releases.
-- Google Cloud project is in **Testing**: each tester's Gmail address must be added under OAuth consent screen → Test users, or Gmail sign-in and Drive backup fail.
-- Install steps for a new phone: Play Protect scanning off to install from the browser → App info → ⋮ → Allow restricted settings (SMS) → Battery Unrestricted.
-- The friend's banks that k doesn't know arrive as "New sender" in Review; samples they share (masked) feed the parser session.
-
 ## Parser session task: bank catalogue, second guess, wallets (from `transaction_sms_parser`)
 Owner wants all three. Source: [`transaction_sms_parser`](https://github.com/MabudAlam/transaction_sms_parser) (pub.dev 0.0.1, MIT, pure Dart, 2 commits, keyword heuristics: `TransactionEngine.getTransactionInfo(msg)` → account/transaction/balance, no confidence score). Not a replacement for our templates: it guesses and never says "unsure", can't learn, SMS only. Use it as data + a fallback, never to auto-log.
 
