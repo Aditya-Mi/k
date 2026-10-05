@@ -56,7 +56,7 @@ void main() {
                   AccountsCompanion.insert(
                     bankId: 'KOTAK',
                     type: AccountType.savings,
-                    last4: const Value('4410'),
+                    last4: const Value('5555'),
                   ),
                 ))
             .id;
@@ -75,7 +75,7 @@ void main() {
     expect(s.name, 'Spotify');
     expect(s.row.frequency, SubscriptionFrequency.monthly);
     expect(s.chargeDates, hasLength(3));
-    expect(s.account?.last4, '4410');
+    expect(s.account?.last4, '5555');
     expect(s.row.nextExpectedAt, DateTime(2026, 11, 2, 9));
 
     await subs.track(s.id);

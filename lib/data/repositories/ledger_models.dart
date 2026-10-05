@@ -33,7 +33,7 @@ class AccountView extends Equatable {
   final String? last4;
   final String? nickname;
 
-  /// Accounts folded into this one, e.g. "card ··4192".
+  /// Accounts folded into this one, e.g. "card ··4444".
   final List<String> includes;
 
   bool get isCard =>
@@ -131,7 +131,7 @@ class TxnView extends Equatable {
   bool get countsInTotals => !isTransfer && !isCash;
   bool get addedByUser => origin == TxnOrigin.user;
 
-  /// "Axis ··0640 → Kotak ··4410"; an untracked side reads "own account".
+  /// "Axis ··1111 → Kotak ··5555"; an untracked side reads "own account".
   String get transferRoute {
     const other = 'own account';
     final mine = account?.short ?? 'this account';

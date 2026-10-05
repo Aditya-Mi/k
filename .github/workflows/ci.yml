@@ -1,0 +1,44 @@
+name: CI
+
+# Every push and PR: analyze and run both test suites (app + txn_parser).
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['design/**', '**.md']
+  pull_request:
+    paths-ignore: ['design/**', '**.md']
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.47.6
+
+jobs:
+  test:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Dependencies
+        run: |
+          flutter pub get
+          (cd packages/txn_parser && dart pub get)
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: App tests
+        run: flutter test
+
+      - name: Parser tests
+        working-directory: packages/txn_parser
+        run: dart test

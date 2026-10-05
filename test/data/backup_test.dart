@@ -26,7 +26,7 @@ void main() {
           AccountsCompanion.insert(
             bankId: 'AXIS',
             type: AccountType.savings,
-            last4: const Value('0640'),
+            last4: const Value('1111'),
           ),
         );
     await a

@@ -28,11 +28,25 @@ android {
         versionName = flutter.versionName
     }
 
+    // CI signs releases with the key from repo secrets (K_KEYSTORE etc.). It is
+    // the same key the phone's install was signed with, so updates install
+    // over it and Google sign-in (matched by SHA-1) keeps working. Local
+    // release builds fall back to the debug key.
+    val ciKeystore = System.getenv("K_KEYSTORE")
+    signingConfigs {
+        if (ciKeystore != null) {
+            create("ci") {
+                storeFile = file(ciKeystore)
+                storePassword = System.getenv("K_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("K_KEY_ALIAS")
+                keyPassword = System.getenv("K_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (ciKeystore != null) "ci" else "debug")
         }
     }
 }
@@ -50,5 +64,7 @@ flutter {
 dependencies {
     // Expedited background processing of incoming bank SMS (headless Flutter engine).
     implementation("androidx.work:work-runtime-ktx:2.10.5")
+    // FileProvider: hands a downloaded update APK to the installer.
+    implementation("androidx.core:core-ktx:1.13.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

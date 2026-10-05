@@ -52,3 +52,14 @@ k.iml
 
 # Impeccable review scratch
 .impeccable/review/
+
+# Design source stays local (Pencil); exported PNGs in design/screens are public
+*.pen
+
+# Signing material and local secrets (CI reads these from repo secrets)
+*.jks
+*.keystore
+key.properties
+/android/local.properties
+.env
+/android/.kotlin/

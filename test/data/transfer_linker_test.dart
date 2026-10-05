@@ -20,27 +20,27 @@ IncomingMessage sms(String sender, String body, DateTime at) => IncomingMessage(
   receivedAt: at,
 );
 
-/// Axis UPI debit of [rupees] from XX0640.
+/// Axis UPI debit of [rupees] from XX1111.
 IncomingMessage axisOut(
   int rupees,
   DateTime at, {
   String payee = 'RAHUL SHARMA',
 }) => sms(
   'AX-AXISBK-S',
-  'INR $rupees.00 debited\nA/c no. XX0640\n'
+  'INR $rupees.00 debited\nA/c no. XX1111\n'
       '${_d(at)}, ${_t(at)}\nUPI/P2A/16617958${at.minute}428/$payee\n'
       'Not you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank',
   at,
 );
 
-/// Kotak UPI credit of [rupees] into 4410.
+/// Kotak UPI credit of [rupees] into 5555.
 IncomingMessage kotakIn(
   int rupees,
   DateTime at, {
   String from = 'RAHUL SHARMA',
 }) => sms(
   'JD-KOTAKB-S',
-  'Received Rs.$rupees.00 in your Kotak Bank AC 4410 from $from on '
+  'Received Rs.$rupees.00 in your Kotak Bank AC 5555 from $from on '
       '${_d(at)}.UPI Ref:1234567890${at.minute.toString().padLeft(2, '0')}',
   at,
 );
@@ -83,9 +83,9 @@ void main() {
     expect(rows.first.transferId, rows.last.transferId);
     expect(rows.every((r) => r.category?.id == transfersCategoryId), isTrue);
     final out = rows.firstWhere((r) => r.isDebit);
-    expect(out.transferRoute, 'Axis ··0640 → Kotak ··4410');
+    expect(out.transferRoute, 'Axis ··1111 → Kotak ··5555');
     final into = rows.firstWhere((r) => !r.isDebit);
-    expect(into.transferRoute, 'Axis ··0640 → Kotak ··4410');
+    expect(into.transferRoute, 'Axis ··1111 → Kotak ··5555');
     expect(into.transferPartnerId, out.id);
 
     final summary = summarize(oct.from, rows);
@@ -148,7 +148,7 @@ void main() {
     expect(rows.where((r) => r.isTransfer), hasLength(3));
     final loneView = rows.firstWhere((r) => r.id == lone.id);
     expect(loneView.transferPartnerId, isNull);
-    expect(loneView.transferRoute, 'Axis ··0640 → own account');
+    expect(loneView.transferRoute, 'Axis ··1111 → own account');
   });
 
   test('backfill pairs rows logged before linking existed', () async {
@@ -169,7 +169,7 @@ void main() {
       await ingest.ingest(
         sms(
           'JD-BOBSMS-S',
-          ' Rs.25.00 Dr. from A/C XXXXXX5359 and Cr. to rameshk01@ybl. '
+          ' Rs.25.00 Dr. from A/C XXXXXX3333 and Cr. to guptastores@ybl. '
               'Ref:315894910199. AvlBal:Rs18361.03(2026:10:01 10:22:47). '
               'Not you? Call 18005700/5000-BOB',
           DateTime(2026, 10, 1, 10, 23),
@@ -191,7 +191,7 @@ void main() {
       expect(added.transferId, out.transferId == null ? isNotNull : anything);
       expect(
         rows.firstWhere((r) => r.id == out.id).transferRoute,
-        'Axis ··0640 → BOB ··5359',
+        'Axis ··1111 → BOB ··3333',
       );
       expect(summarize(oct.from, rows).spentMinor, 2500);
 
@@ -238,7 +238,7 @@ void main() {
     await ingest.ingest(
       sms(
         'AX-KOTAKB-T',
-        'Rs.1504.00 spent via Kotak Debit Card XX4192 at WWW AMAZON IN on '
+        'Rs.1504.00 spent via Kotak Debit Card XX4444 at WWW AMAZON IN on '
             '01/10/2026. Avl bal Rs.18751.33 Not you?Tap '
             'https://kotak.bank.in/KBANKT/Fraud',
         DateTime(2026, 10, 1, 19, 45),
@@ -286,7 +286,7 @@ void main() {
     await ingest.ingest(
       sms(
         'AX-KOTAKB-T',
-        'Rs.1504.00 spent via Kotak Debit Card XX4192 at WWW AMAZON IN on '
+        'Rs.1504.00 spent via Kotak Debit Card XX4444 at WWW AMAZON IN on '
             '01/10/2026. Avl bal Rs.18751.33 Not you?Tap '
             'https://kotak.bank.in/KBANKT/Fraud',
         DateTime(2026, 10, 1, 19, 45),
@@ -296,8 +296,8 @@ void main() {
         .where((a) => !a.isCash)
         .toList();
     expect(accounts, hasLength(1));
-    expect(accounts.single.last4, '4410');
-    expect(accounts.single.includes, ['card ··4192']);
+    expect(accounts.single.last4, '5555');
+    expect(accounts.single.includes, ['card ··4444']);
     final rows = await txns();
     expect(rows.every((r) => r.account?.id == accounts.single.id), isTrue);
     final bal = (await ledger.watchBalances().first)[accounts.single.id]!;
@@ -317,7 +317,7 @@ void main() {
     var accounts = (await ledger.watchAccounts().first)
         .where((a) => !a.isCash)
         .toList();
-    final main = accounts.firstWhere((a) => a.last4 == '0640');
+    final main = accounts.firstWhere((a) => a.last4 == '1111');
     final other = accounts.firstWhere((a) => a.last4 == '7777');
     await ledger.mergeAccount(other.id, main.id);
 
@@ -341,10 +341,10 @@ void main() {
     await v2.banks.count().getSingle();
     // A nameless BOB account from a digitless alert, next to the real one.
     for (final (id, bank, type, last4) in [
-      ('real', 'BOB', AccountType.savings, '5359'),
+      ('real', 'BOB', AccountType.savings, '3333'),
       ('orphan', 'BOB', AccountType.savings, null),
-      ('ksav', 'KOTAK', AccountType.savings, '5543'),
-      ('kcard', 'KOTAK', AccountType.debitCard, '4192'),
+      ('ksav', 'KOTAK', AccountType.savings, '2222'),
+      ('kcard', 'KOTAK', AccountType.debitCard, '4444'),
     ]) {
       await v2
           .into(v2.accounts)

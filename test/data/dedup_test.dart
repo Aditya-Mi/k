@@ -14,7 +14,7 @@ IncomingMessage sms(int rupees, DateTime at, {String ref = '441151550312'}) =>
       channel: Channel.sms,
       sender: 'AX-AXISBK-S',
       body:
-          'INR $rupees.00 debited\nA/c no. XX0640\n'
+          'INR $rupees.00 debited\nA/c no. XX1111\n'
           '${_d(at)}, ${_t(at)}\nUPI/P2M/$ref/RAMESH KUMAR\n'
           'Not you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank',
       receivedAt: at,
@@ -24,10 +24,10 @@ IncomingMessage email(int rupees, DateTime at, {String ref = '441151550312'}) =>
     IncomingMessage(
       channel: Channel.email,
       sender: 'Axis Bank <alerts@axis.bank.in>',
-      subject: 'INR $rupees.00 was debited from your A/c no. XX0640',
+      subject: 'INR $rupees.00 was debited from your A/c no. XX1111',
       body:
           '${_d(at)}\nDear Customer,\n\nHere\'s the summary of your '
-          'transaction:\n\n\nAccount Number:\nXX0640\n\nDate & Time:\n'
+          'transaction:\n\n\nAccount Number:\nXX1111\n\nDate & Time:\n'
           '${_d(at)}, ${_t(at)} IST\n\nTransaction Info:\n'
           'UPI/P2M/$ref/RAMESH KUMAR\n\nRegards,\nAxis Bank Ltd.\n',
       receivedAt: at.add(const Duration(minutes: 1)),
@@ -126,7 +126,7 @@ void main() {
         IncomingMessage(
           channel: Channel.sms,
           sender: 'AX-AXISBK-S',
-          body: 'Your A/c XX0640 statement for Sep is ready. Axis Bank',
+          body: 'Your A/c XX1111 statement for Sep is ready. Axis Bank',
           receivedAt: at,
         ),
       ),

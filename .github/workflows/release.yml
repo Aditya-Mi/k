@@ -1,0 +1,227 @@
+name: Release
+
+# Run by hand from main (Actions → Release → Run workflow). One run does it
+# all, in this order, so a failure never leaves a half release:
+#   next version → analyze + tests → signed APK → signing-key check
+#   → commit pubspec + tag → GitHub release → update gist.
+#
+# Versioning: semver x.y.z in pubspec.yaml is the source of truth.
+# versionCode = x·10000 + y·100 + z (1.2.3 → 10203), so it rises with every
+# version and is the same for anyone who builds that version. Parts stay
+# 0–99. "none" releases the version already in pubspec (the first release,
+# 1.0.0).
+#
+# Needs (Settings → Secrets and variables → Actions):
+#   secrets  K_KEYSTORE_BASE64, K_KEYSTORE_PASSWORD, K_KEY_ALIAS,
+#            K_KEY_PASSWORD   the key the installed app is signed with
+#            GIST_TOKEN       fine-grained or classic PAT with the gist scope
+#   vars     UPDATE_GIST_ID   id of the gist holding k-update.json
+#            SIGNING_CERT_SHA256  that key's certificate SHA-256 (hex)
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version to bump
+        type: choice
+        options: [patch, minor, major, none]
+        default: patch
+      notes:
+        description: What changed (shown in the app's update dialog)
+        type: string
+        required: true
+      required:
+        description: Required update (no "Later" in the app)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: 3.47.6
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release from main only
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Run Release from main."
+          exit 1
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check settings
+        env:
+          GIST_ID: ${{ vars.UPDATE_GIST_ID }}
+          CERT: ${{ vars.SIGNING_CERT_SHA256 }}
+          KEYSTORE: ${{ secrets.K_KEYSTORE_BASE64 }}
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+        run: |
+          missing=""
+          [ -n "$GIST_ID" ]    || missing="$missing vars.UPDATE_GIST_ID"
+          [ -n "$CERT" ]       || missing="$missing vars.SIGNING_CERT_SHA256"
+          [ -n "$KEYSTORE" ]   || missing="$missing secrets.K_KEYSTORE_BASE64"
+          [ -n "$GIST_TOKEN" ] || missing="$missing secrets.GIST_TOKEN"
+          if [ -n "$missing" ]; then
+            echo "::error::Not set:$missing"
+            exit 1
+          fi
+
+      - name: Next version
+        id: v
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          current=$(sed -nE 's/^version: *([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' pubspec.yaml)
+          IFS=. read -r major minor patch <<< "$current"
+          case "$BUMP" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+            none) ;;
+          esac
+          for part in "$major" "$minor" "$patch"; do
+            if [ "$part" -gt 99 ]; then
+              echo "::error::Version parts must stay 0–99 (versionCode scheme)."
+              exit 1
+            fi
+          done
+          next="$major.$minor.$patch"
+          code=$((major * 10000 + minor * 100 + patch))
+          if git rev-parse -q --verify "refs/tags/v$next" >/dev/null; then
+            echo "::error::v$next is already released. Pick a bump."
+            exit 1
+          fi
+          sed -i -E "s/^version: .*/version: $next+$code/" pubspec.yaml
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "$current -> $next (versionCode $code)"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Dependencies
+        run: |
+          flutter pub get
+          (cd packages/txn_parser && dart pub get)
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Tests
+        run: |
+          flutter test
+          (cd packages/txn_parser && dart test)
+
+      - name: Signing key
+        env:
+          KEYSTORE: ${{ secrets.K_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/k.keystore"
+          echo "K_KEYSTORE=$RUNNER_TEMP/k.keystore" >> "$GITHUB_ENV"
+
+      - name: Build APK
+        env:
+          K_KEYSTORE_PASSWORD: ${{ secrets.K_KEYSTORE_PASSWORD }}
+          K_KEY_ALIAS: ${{ secrets.K_KEY_ALIAS }}
+          K_KEY_PASSWORD: ${{ secrets.K_KEY_PASSWORD }}
+          MANIFEST_URL: https://gist.githubusercontent.com/${{ github.repository_owner }}/${{ vars.UPDATE_GIST_ID }}/raw/k-update.json
+        run: |
+          flutter build apk --release \
+            --build-name=${{ steps.v.outputs.version }} \
+            --build-number=${{ steps.v.outputs.code }} \
+            --target-platform android-arm64 \
+            --dart-define=UPDATE_MANIFEST_URL="$MANIFEST_URL"
+
+      # A release signed with any other key can't install over the app on
+      # the phone (and breaks Google sign-in). Stop before publishing it.
+      - name: Check signing certificate
+        env:
+          EXPECTED: ${{ vars.SIGNING_CERT_SHA256 }}
+        run: |
+          apksigner="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner"
+          got=$("$apksigner" verify --print-certs build/app/outputs/flutter-apk/app-release.apk \
+            | sed -nE 's/.*certificate SHA-256 digest: *//p' | head -n1 | tr -d ': ' | tr 'A-F' 'a-f')
+          want=$(echo "$EXPECTED" | tr -d ': ' | tr 'A-F' 'a-f')
+          echo "signed with $got"
+          if [ "$got" != "$want" ]; then
+            echo "::error::APK is signed with a different key than SIGNING_CERT_SHA256."
+            exit 1
+          fi
+
+      - name: Package
+        id: apk
+        run: |
+          name="k-${{ steps.v.outputs.version }}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$name" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "size=$(stat -c %s "$name")" >> "$GITHUB_OUTPUT"
+
+      - name: Commit version and tag
+        env:
+          NOTES: ${{ inputs.notes }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml
+          git diff --cached --quiet || git commit -m "Release v$VERSION"
+          git tag -a "v$VERSION" -m "$NOTES"
+          git push --atomic origin HEAD:main "v$VERSION"
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ inputs.notes }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          gh release create "v$VERSION" "${{ steps.apk.outputs.name }}" \
+            --title "k $VERSION" --notes "$NOTES"
+
+      # The app reads this file to offer the update. A required release
+      # raises min_version_code; otherwise the previous minimum is kept.
+      - name: Update gist
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ vars.UPDATE_GIST_ID }}
+          NOTES: ${{ inputs.notes }}
+          REQUIRED: ${{ inputs.required }}
+          VERSION: ${{ steps.v.outputs.version }}
+          CODE: ${{ steps.v.outputs.code }}
+          SHA: ${{ steps.apk.outputs.sha256 }}
+          SIZE: ${{ steps.apk.outputs.size }}
+          APK_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/v${{ steps.v.outputs.version }}/${{ steps.apk.outputs.name }}
+        run: |
+          api="https://api.github.com/gists/$GIST_ID"
+          auth=(-H "Authorization: Bearer $GIST_TOKEN" -H "Accept: application/vnd.github+json")
+          previous=$(curl -fsS "${auth[@]}" "$api" \
+            | jq -r '.files["k-update.json"].content // "{}"' \
+            | jq -r '.min_version_code // 0')
+          if [ "$REQUIRED" = "true" ]; then min="$CODE"; else min="$previous"; fi
+          manifest=$(jq -n \
+            --arg version "$VERSION" --argjson code "$CODE" --arg url "$APK_URL" \
+            --arg sha "$SHA" --argjson size "$SIZE" --arg notes "$NOTES" \
+            --argjson min "$min" \
+            '{version: $version, version_code: $code, apk_url: $url, sha256: $sha,
+              size_bytes: $size, notes: $notes, min_version_code: $min}')
+          echo "$manifest"
+          jq -n --arg content "$manifest" '{files: {"k-update.json": {content: $content}}}' \
+            | curl -fsS -X PATCH "${auth[@]}" "$api" -d @- > /dev/null

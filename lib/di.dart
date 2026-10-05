@@ -18,7 +18,9 @@ import 'data/review/learned_formats.dart';
 import 'data/review/review_service.dart';
 import 'data/repositories/settings_repository.dart';
 import 'data/subscriptions/subscription_service.dart';
+import 'data/update/update_service.dart';
 import 'platform/sms_bridge.dart';
+import 'platform/update_bridge.dart';
 
 final getIt = GetIt.instance;
 
@@ -55,6 +57,13 @@ Future<void> configureDependencies() async {
     ..registerSingleton<IngestionService>(ingestion)
     ..registerSingleton<TransferLinker>(TransferLinker(db))
     ..registerSingleton<SmsBridge>(bridge)
+    ..registerLazySingleton<UpdateBridge>(UpdateBridge.new)
+    // Set by the release workflow (--dart-define); empty in local builds.
+    ..registerLazySingleton<UpdateService>(
+      () => UpdateService(
+        manifestUrl: const String.fromEnvironment('UPDATE_MANIFEST_URL'),
+      ),
+    )
     ..registerLazySingleton<ReviewService>(
       () => ReviewService(
         db,

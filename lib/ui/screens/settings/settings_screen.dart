@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../app/updates.dart';
+
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../data/ingest/sms_sync.dart';
@@ -97,6 +100,7 @@ class SettingsScreen extends StatelessWidget {
               );
             },
           ),
+          const AboutSettings(),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
             child: Row(

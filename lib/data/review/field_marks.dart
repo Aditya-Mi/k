@@ -55,7 +55,7 @@ final _directionWords = RegExp(
       final all = RegExp(r'\d{4}').allMatches(s).toList();
       if (all.isEmpty) return null;
       final last = all.last;
-      // Last four digits of the run ("XXXXXX5359" → "5359").
+      // Last four digits of the run ("XXXXXX3333" → "3333").
       final runEnd = last.end;
       return (start + runEnd - 4, start + runEnd);
     case MarkField.amount:

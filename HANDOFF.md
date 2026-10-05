@@ -46,7 +46,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 ## Phase 2b: self transfers
 - Schema v2: `transactions.transfer_id` (shared by both sides; alone when the other account isn't tracked) + `auto_transfer_off` (user unlinked → never auto-link again). Migration in `app_database.dart` `onUpgrade`.
 - `lib/data/ingest/transfer_linker.dart`: auto rule = debit + credit, same amount/currency, different own accounts, within 30 min (owner-approved), closest wins. Runs per ingested txn and as `autoLinkAll()` backfill on app start. Linked rows get category `cat_transfers` unless user-edited; unlink re-resolves category.
-- UI: row title "Self transfer", meta "Axis ··0640 → Kotak ··4410 · time", swap icon; excluded from month spent/in/spend count and day "out" totals. Detail: "Self transfer" field, "Not a self transfer" (unlink) or "Mark as self transfer" (pick same-amount opposite row on another account within ±3 days, or "account not in k").
+- UI: row title "Self transfer", meta "Axis ··1111 → Kotak ··5555 · time", swap icon; excluded from month spent/in/spend count and day "out" totals. Detail: "Self transfer" field, "Not a self transfer" (unlink) or "Mark as self transfer" (pick same-amount opposite row on another account within ±3 days, or "account not in k").
 
 ## Phase 2c: balances + missing transfer side
 - Schema v3: `transactions.origin` (`message`|`user`), `accounts.manual_balance_minor/_at`. Migration also folds "no last4" accounts into the bank's only savings/current account (BOB UPI credits name no account).
@@ -56,7 +56,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 - Fixed: detail screen now uses `switchMap` (edits refresh live). Rosette now uses exact design geometry minus the 5-lobe core (owner request).
 
 ## Account merge (schema v4)
-- `accounts.merged_into_id`: folded account stays (so its last4 still resolves) but is hidden; target lists "Includes card ··4192".
+- `accounts.merged_into_id`: folded account stays (so its last4 still resolves) but is hidden; target lists "Includes card ··4444".
 - Debit card alerts log on the bank's sole savings/current account automatically (card account created already merged). v4 migration folds existing auto-created debit card accounts the same way.
 - Accounts screen → "Merge into another account" (confirm; no unmerge yet).
 
@@ -111,7 +111,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 
 ### For the parser session (email) — done by the parser session
 - Axis e-statement mail (`statements@axis.bank.in`, subject "AXIS BANK : Statement for <Month> <Year>") → add an `ignore` template (app now skips it anyway since it has no amount).
-- `axis_email_txn_summary` takes the amount + direction from the subject only. The body also has `Amount Debited: INR 25.00` / `Account Number: XX0640`; a body-only fallback would survive subject changes.
+- `axis_email_txn_summary` takes the amount + direction from the subject only. The body also has `Amount Debited: INR 25.00` / `Account Number: XX1111`; a body-only fallback would survive subject changes.
 - Ask the owner for the 13 learned email formats (Settings → Message formats shows each sample) to turn into built-ins + fixtures.
 
 ## Summary, Settings, ATM category (2026-10-05)
@@ -182,6 +182,16 @@ Device checks:
 ### For the parser session
 - Banks learned from unknown senders (Settings → Banks, Message formats samples) are candidates for built-in `BankDefinition`s; use the same code as the app's id (`bankCodeFor`, e.g. `HDFC`) so the seeded row lands on the owner's.
 - Skip formats the owner teaches are `ignore` templates in `parser_templates`; recurring ones are worth built-in ignore templates.
+
+## Releases + in-app updates (2026-10-05)
+Repo goes public; `design/k.pen` untracked (`*.pen` ignored; stays local, still in old history by owner's choice). Real account digits masked everywhere (parser fixtures `4b4dadf`; app tests/docs/designs: 0640→1111, 5543→2222, 5359→3333, 4192→4444, 4410→5555).
+- **Versioning:** semver in `pubspec.yaml`; versionCode = x·10000 + y·100 + z (`versionCodeOf`), parts 0–99. First release **1.0.0** (code 10000; pubspec `1.0.0+10000`). Fixes Baka's problems: build number was always 1 (pubspec `+1`, no `--build-number`), a tag/pubspec mismatch only warned, the gist was edited by hand, and in the other Flutter repo a tag pushed with GITHUB_TOKEN never triggers the tag workflow. Here one workflow does everything.
+- `.github/workflows/ci.yml`: push/PR → analyze, app tests, parser tests.
+- `.github/workflows/release.yml` (manual, main only): bump (patch/minor/major/none) + notes + required → version/code → analyze + both test suites → signed release APK (`--dart-define=UPDATE_MANIFEST_URL=<raw gist>`) → apksigner cert must equal `vars.SIGNING_CERT_SHA256` → commit pubspec + annotated tag, atomic push → `gh release create` with `k-x.y.z.apk` → PATCH gist `k-update.json` `{version, version_code, apk_url, sha256, size_bytes, notes, min_version_code}` (required release raises min; else previous min kept).
+- Signing: `build.gradle.kts` uses `K_KEYSTORE`/`K_KEYSTORE_PASSWORD`/`K_KEY_ALIAS`/`K_KEY_PASSWORD` env in CI, else the debug key. Owner chose to reuse the Mac's `~/.android/debug.keystore` (alias androiddebugkey, password android; SHA-256 A5:F5:A7:DF:2A:45:28:5E:7F:2D:6C:31:91:25:46:87:3C:F9:1E:49:AF:16:55:1F:37:50:D9:FC:28:1A:79:69) so releases install over the current install and Gmail sign-in (debug SHA-1) keeps working.
+- App: `lib/data/update/update_service.dart` (fetch manifest with cache-bust, compare version codes, download to cache/updates, SHA-256 check), `lib/platform/update_bridge.dart` + `android/.../update/UpdateChannel.kt` (`k/update`: appVersion, canInstall, openInstallSettings, install via FileProvider `${applicationId}.updates`), `REQUEST_INSTALL_PACKAGES`. `lib/app/updates.dart`: launch check after unlock (once per launch; "Later" skips that version via `device.update.skipped` unless required), dialog (design `11-update-available`), Settings → About (design 06: version, last check, Check for updates). Local builds have no manifest URL → no checks.
+- Setup the owner does once: make the repo public, create the gist (file `k-update.json`, content `{}`), add a PAT with gist scope as `GIST_TOKEN`, the four `K_*` secrets and the two vars. Then Release with bump `none` → 1.0.0.
+- Release builds were never device-tested before this: check app lock, SMS worker, email worker, backup worker, Gmail sign-in on 1.0.0. Back up before installing it.
 
 ## Parser session task: bank catalogue, second guess, wallets (from `transaction_sms_parser`)
 Owner wants all three. Source: [`transaction_sms_parser`](https://github.com/MabudAlam/transaction_sms_parser) (pub.dev 0.0.1, MIT, pure Dart, 2 commits, keyword heuristics: `TransactionEngine.getTransactionInfo(msg)` → account/transaction/balance, no confidence score). Not a replacement for our templates: it guesses and never says "unsure", can't learn, SMS only. Use it as data + a fallback, never to auto-log.

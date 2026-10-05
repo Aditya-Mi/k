@@ -22,7 +22,7 @@ Flutter (Dart 3.13) · flutter_bloc + get_it · drift + SQLite3MultipleCiphers (
 - `lib/platform/` — `SmsBridge` (channels `k/sms`, `k/sms_events`); native side in `android/.../k/sms/`.
 - `lib/data/ingest/` — `IngestionService` (message → raw_messages → transaction), `SmsSync` (queue drain, inbox catch-up, history). `lib/data/repositories/` — read models + edits.
 - `lib/ui/` — `theme/` (KColors, KText, Bands), `widgets/`, `screens/`; `lib/app/` — app shell + `SmsController`.
-- `design/k.pen` — Pencil design (open only via Pencil MCP tools; file is encrypted). `design/screens/*.png` — exported screens. `DESIGN.md` — design system (tokens, type, components, rules) to implement in Flutter; `PRODUCT.md` — product context.
+- `design/k.pen` — Pencil design, local only (gitignored; open only via Pencil MCP tools; file is encrypted). `design/screens/*.png` — exported screens. `DESIGN.md` — design system (tokens, type, components, rules) to implement in Flutter; `PRODUCT.md` — product context.
 
 ## Commands
 ```
@@ -56,4 +56,5 @@ flutter build apk --debug
 - Phase 5 done: email (IMAP app password + Gmail sign-in, `lib/data/email/`), SMS/email dedup, hourly sync, Add payment, theme setting, app icon (`tool/app_icon.py`).
 - Phase 6 code done: summary, app lock (`lib/app/app_lock.dart`), encrypted Drive backup + export/import (`lib/data/backup/`); Cash account (schema v6: ATM adds, logged cash spends subtract, not double-counted); same-name payees merge (v7); custom categories (v8); awaiting device test.
 - Unknown-sender learning (SMS from a bank k lacks → Review → name the bank once), AutoPay/skip learning, review undo, sync-problem banners, overdrawn balances: code done, awaiting device test.
+- Releases: GitHub Actions `release.yml` (manual) builds, tags, publishes and updates the update gist; the app updates itself from it. Versions semver, versionCode x·10000+y·100+z.
 - Later ideas: encrypted multi-device sync (schema already sync-ready), other currencies.

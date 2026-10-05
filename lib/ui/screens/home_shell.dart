@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app/sms_controller.dart';
+import '../../app/updates.dart';
 import '../../data/repositories/ledger_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../di.dart';
@@ -24,6 +25,15 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // The dialog sits under the lock overlay until k is unlocked.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => checkForUpdateOnLaunch(context),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
