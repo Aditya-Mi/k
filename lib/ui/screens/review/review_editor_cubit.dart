@@ -3,6 +3,7 @@ import 'package:txn_parser/txn_parser.dart';
 
 import '../../../data/db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../../../data/db/enums.dart';
+import '../../../data/repositories/bank_repository.dart';
 import '../../../data/repositories/ledger_models.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../data/review/field_marks.dart';
@@ -14,6 +15,10 @@ class ReviewEditorState {
     this.index = 0,
     this.marks = const [],
     this.direction = Direction.debit,
+    this.kind = TemplateKind.transaction,
+    this.bank,
+    this.dueDate,
+    this.banks = const [],
     this.amountMinor,
     this.payee,
     this.ref,
@@ -33,6 +38,12 @@ class ReviewEditorState {
   final int index;
   final List<FieldMark> marks;
   final Direction direction;
+  final TemplateKind kind;
+
+  /// Unknown sender only: which bank the owner said it is.
+  final BankChoice? bank;
+  final DateTime? dueDate;
+  final List<BankView> banks;
 
   /// Typed overrides (null → from marks).
   final int? amountMinor;
@@ -53,9 +64,14 @@ class ReviewEditorState {
 
   ReviewItem? get item => index < queue.length ? queue[index] : null;
 
+  bool get isMandate => kind == TemplateKind.mandate;
+
   ReviewDraft get draft => ReviewDraft(
     marks: marks,
     direction: direction,
+    kind: kind,
+    bank: bank,
+    dueDate: dueDate,
     amountMinor: amountMinor,
     accountId: accountId,
     payee: payee,
@@ -70,6 +86,10 @@ class ReviewEditorState {
     int? index,
     List<FieldMark>? marks,
     Direction? direction,
+    TemplateKind? kind,
+    BankChoice? Function()? bank,
+    DateTime? Function()? dueDate,
+    List<BankView>? banks,
     int? Function()? amountMinor,
     String? Function()? payee,
     String? Function()? ref,
@@ -89,6 +109,10 @@ class ReviewEditorState {
     index: index ?? this.index,
     marks: marks ?? this.marks,
     direction: direction ?? this.direction,
+    kind: kind ?? this.kind,
+    bank: bank != null ? bank() : this.bank,
+    dueDate: dueDate != null ? dueDate() : this.dueDate,
+    banks: banks ?? this.banks,
     amountMinor: amountMinor != null ? amountMinor() : this.amountMinor,
     payee: payee != null ? payee() : this.payee,
     ref: ref != null ? ref() : this.ref,
@@ -106,19 +130,25 @@ class ReviewEditorState {
 }
 
 class ReviewEditorCubit extends Cubit<ReviewEditorState> {
-  ReviewEditorCubit(this._review, this._ledger, {required String startRawId})
-    : super(const ReviewEditorState()) {
+  ReviewEditorCubit(
+    this._review,
+    this._ledger,
+    this._banks, {
+    required String startRawId,
+  }) : super(const ReviewEditorState()) {
     _load(startRawId);
   }
 
   final ReviewService _review;
   final LedgerRepository _ledger;
+  final BankRepository _banks;
 
   Future<void> _load(String? rawId) async {
     final queue = await _review.watchQueue().first;
     final accounts = await _ledger.watchAccounts().first;
     final categories = await _ledger.watchCategories().first;
     final banks = await _ledger.bankNames();
+    final bankViews = await _banks.watchBanks().first;
     if (isClosed) return;
     var index = queue.indexWhere((i) => i.raw.id == rawId);
     if (index < 0) {
@@ -129,6 +159,7 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
         accounts: accounts,
         categories: categories,
         bankNames: banks,
+        banks: bankViews,
         loaded: true,
         lastResult: () => state.lastResult,
       ),
@@ -142,17 +173,23 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
         accounts: state.accounts,
         categories: state.categories,
         bankNames: state.bankNames,
+        banks: state.banks,
       );
     }
     final item = queue[index];
+    final mandate = item.guess.kind == TemplateKind.mandate;
+    var marks = prefillMarks(item.text, item.guess.fields);
+    if (mandate) marks = _swapDate(marks, toDue: true);
     return ReviewEditorState(
       queue: queue,
       index: index,
-      marks: prefillMarks(item.text, item.guess.fields),
+      marks: marks,
       direction: item.guess.fields.direction ?? Direction.debit,
+      kind: mandate ? TemplateKind.mandate : TemplateKind.transaction,
       accounts: state.accounts,
       categories: state.categories,
       bankNames: state.bankNames,
+      banks: state.banks,
       learn: state.learn,
     );
   }
@@ -163,13 +200,16 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
   /// savings account when the message names none.
   String accountLabel() {
     final item = state.item!;
+    final bankId = chosenBankId();
     if (state.accountId != null) {
       final a = state.accounts
           .where((a) => a.id == state.accountId)
           .firstOrNull;
       if (a != null) return a.long;
     }
-    final bankAccounts = state.accounts.where((a) => a.bankId == item.bankId);
+    final bankAccounts = state.accounts.where(
+      (a) => bankId != null && a.bankId == bankId,
+    );
     final last4 = fields().last4;
     if (last4 != null) {
       final hit = bankAccounts.where((a) => a.last4 == last4).firstOrNull;
@@ -191,15 +231,58 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
     return '${_bankName(item)} · no account number';
   }
 
-  List<AccountView> bankAccounts() =>
-      state.accounts.where((a) => a.bankId == state.item?.bankId).toList();
+  List<AccountView> bankAccounts() {
+    final bankId = chosenBankId();
+    return state.accounts.where((a) => a.bankId == bankId).toList();
+  }
 
-  String _bankName(ReviewItem item) =>
-      state.bankNames[item.bankId] ?? item.bankId;
+  /// The message's bank, or the one the owner picked for an unknown sender
+  /// (null while unpicked or when it is a new bank).
+  String? chosenBankId() => state.item?.bankId ?? state.bank?.id;
 
-  /// "Axis", "Kotak", "BOB".
+  String _bankName(ReviewItem item) {
+    final id = chosenBankId();
+    if (id != null) return state.bankNames[id] ?? id;
+    return state.bank?.newName ?? 'this bank';
+  }
+
+  /// "Axis", "Kotak", "BOB"; "HDFC" for a new "HDFC Bank".
   String bankShort() =>
-      bankShortName(state.item!.bankId, _bankName(state.item!));
+      bankShortName(chosenBankId() ?? '', _bankName(state.item!));
+
+  /// Full name of the picked bank, for the Bank row (null = not picked).
+  String? bankLabel() {
+    final b = state.bank;
+    if (b == null) return null;
+    return b.newName ?? state.bankNames[b.id] ?? b.id;
+  }
+
+  void setBank(BankChoice b) =>
+      emit(state.copyWith(bank: () => b, accountId: () => null));
+
+  /// Payment ↔ AutoPay alert. A DATE mark becomes DUE ON (and back).
+  void setKind(TemplateKind kind) {
+    if (kind == state.kind) return;
+    emit(
+      state.copyWith(
+        kind: kind,
+        marks: _swapDate(state.marks, toDue: kind == TemplateKind.mandate),
+        dueDate: () => null,
+      ),
+    );
+  }
+
+  static List<FieldMark> _swapDate(
+    List<FieldMark> marks, {
+    required bool toDue,
+  }) {
+    final from = toDue ? MarkField.date : MarkField.dueDate;
+    final to = toDue ? MarkField.dueDate : MarkField.date;
+    return [
+      for (final m in marks)
+        m.field == from ? FieldMark(to, m.start, m.end) : m,
+    ];
+  }
 
   /// Marks [start, end) as [field] after trimming to what the field holds.
   /// Returns false when the selection can't be that field.
@@ -221,6 +304,7 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
         payee: field == MarkField.payee ? () => null : null,
         ref: field == MarkField.ref ? () => null : null,
         occurredAt: field == MarkField.date ? () => null : null,
+        dueDate: field == MarkField.dueDate ? () => null : null,
         accountId: field == MarkField.account ? () => null : null,
       ),
     );
@@ -235,6 +319,7 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
   void setPayee(String v) => emit(state.copyWith(payee: () => v));
   void setRef(String v) => emit(state.copyWith(ref: () => v));
   void setDate(DateTime d) => emit(state.copyWith(occurredAt: () => d));
+  void setDueDate(DateTime d) => emit(state.copyWith(dueDate: () => d));
   void setAccount(String? id) => emit(state.copyWith(accountId: () => id));
 
   /// After "New category" in the picker.
@@ -256,11 +341,7 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
       emit(
         state.copyWith(
           saving: false,
-          lastResult: () => (
-            result: result,
-            fields: parsed,
-            bank: bankShortName(item.bankId, _bankName(item)),
-          ),
+          lastResult: () => (result: result, fields: parsed, bank: bankShort()),
         ),
       );
       await _load(null);
@@ -270,11 +351,20 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
     }
   }
 
-  Future<void> notATransaction() async {
+  Future<ReviewUndo?> notATransaction({bool skipSimilar = false}) async {
     final item = state.item;
-    if (item == null) return;
-    await _review.notATransaction(item);
+    if (item == null) return null;
+    final undo = await _review.notATransaction(item, skipSimilar: skipSimilar);
     await _load(null);
+    return undo;
+  }
+
+  Future<ReviewUndo?> notABank() async {
+    final item = state.item;
+    if (item == null) return null;
+    final undo = await _review.notABank(item);
+    await _load(null);
+    return undo;
   }
 
   void consumeResult() => emit(state.copyWith(lastResult: () => null));

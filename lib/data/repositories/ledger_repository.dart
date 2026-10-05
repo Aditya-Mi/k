@@ -139,6 +139,46 @@ class LedgerRepository {
     });
   }
 
+  /// An account the owner adds before any message names it (design 10c).
+  /// Messages for this bank and last 4 then land on it. Returns null when
+  /// the bank already has a live account with those digits.
+  Future<String?> addAccount({
+    required String bankId,
+    required AccountType type,
+    String? last4,
+    String? nickname,
+    int? balanceMinor,
+  }) => _db.transaction(() async {
+    final digits = last4?.trim();
+    final name = nickname?.trim();
+    final now = DateTime.now();
+    final existing = digits == null || digits.isEmpty
+        ? null
+        : await (_db.select(
+                _db.accounts,
+              )..where((a) => a.bankId.equals(bankId) & a.last4.equals(digits)))
+              .getSingleOrNull();
+    if (existing != null && existing.deletedAt == null) return null;
+    final row = AccountsCompanion(
+      bankId: Value(bankId),
+      type: Value(type),
+      last4: Value(digits == null || digits.isEmpty ? null : digits),
+      nickname: Value(name == null || name.isEmpty ? null : name),
+      autoCreated: const Value(false),
+      manualBalanceMinor: Value(balanceMinor),
+      manualBalanceAt: Value(balanceMinor == null ? null : now),
+      mergedIntoId: const Value(null),
+      updatedAt: Value(now),
+    );
+    if (existing != null) {
+      // A removed account with these digits (unique per bank) comes back.
+      await (_db.update(_db.accounts)..where((a) => a.id.equals(existing.id)))
+          .write(row.copyWith(deletedAt: const Value(null)));
+      return existing.id;
+    }
+    return (await _db.into(_db.accounts).insertReturning(row)).id;
+  });
+
   Future<void> renameAccount(String id, String? nickname) =>
       (_db.update(_db.accounts)..where((a) => a.id.equals(id))).write(
         AccountsCompanion(

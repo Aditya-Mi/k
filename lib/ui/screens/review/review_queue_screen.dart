@@ -48,8 +48,9 @@ class ReviewQueueScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                   child: Text(
-                    "Bank messages k couldn't read. Fix one and k learns that "
-                    'format for next time.',
+                    "Bank messages k couldn't read, and payments from senders "
+                    "it doesn't know yet. Fix one and k learns it for next "
+                    'time.',
                     style: t.body.copyWith(color: c.text2),
                   ),
                 ),

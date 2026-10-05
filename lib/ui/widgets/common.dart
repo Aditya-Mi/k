@@ -100,12 +100,21 @@ class NoticeBanner extends StatelessWidget {
     required this.text,
     required this.action,
     required this.onTap,
+    this.detail,
+    this.problem = false,
   });
 
   final IconData icon;
   final String text;
+
+  /// Second line in meta (design 01c).
+  final String? detail;
   final String action;
   final VoidCallback onTap;
+
+  /// Something stopped working (SMS off, inbox failing): the icon takes the
+  /// alert colour, as in Settings (06d). The review banner stays neutral.
+  final bool problem;
 
   @override
   Widget build(BuildContext context) {
@@ -124,9 +133,23 @@ class NoticeBanner extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: c.text2),
+              Icon(icon, size: 20, color: problem ? c.alert : c.text2),
               const SizedBox(width: 14),
-              Expanded(child: Text(text, style: t.body)),
+              Expanded(
+                child: detail == null
+                    ? Text(text, style: t.body)
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            text,
+                            style: t.body.copyWith(fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(detail!, style: t.meta),
+                        ],
+                      ),
+              ),
               TextButton(onPressed: onTap, child: Text(action)),
             ],
           ),
@@ -267,6 +290,47 @@ class CategoryButton extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Outlined 8dp select: label (or "Choose") and a dropdown arrow.
+class SelectButton extends StatelessWidget {
+  const SelectButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+  });
+
+  final String? label;
+  final IconData? icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.k;
+    final t = context.kt;
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.only(left: 16, right: 8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 18, color: c.text2),
+            const SizedBox(width: 8),
+          ],
+          Text(
+            label ?? 'Choose',
+            style: t.body.copyWith(color: label == null ? c.text2 : c.text),
+          ),
+          Icon(Icons.arrow_drop_down_rounded, color: c.text2),
+        ],
       ),
     );
   }

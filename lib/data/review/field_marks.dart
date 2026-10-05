@@ -9,7 +9,10 @@ enum MarkField {
   payee(Fields.payee, 'PAYEE'),
   ref(Fields.ref, 'REF'),
   date(Fields.date, 'DATE'),
-  balance(Fields.balance, 'BALANCE');
+  balance(Fields.balance, 'BALANCE'),
+
+  /// AutoPay alerts only: the day the charge will be taken.
+  dueDate(Fields.dueDate, 'DUE ON');
 
   const MarkField(this.group, this.caption);
 
@@ -67,6 +70,7 @@ final _directionWords = RegExp(
           ? null
           : pool.reduce((a, b) => b[0]!.length > a[0]!.length ? b : a);
     case MarkField.date:
+    case MarkField.dueDate:
       m = _dateShapes.firstMatch(s);
       if (m == null) {
         final t = _trimPunct(s);

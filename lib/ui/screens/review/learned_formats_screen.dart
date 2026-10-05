@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:txn_parser/txn_parser.dart' show Channel;
+import 'package:txn_parser/txn_parser.dart' show Channel, TemplateKind;
 
 import '../../../data/review/learned_formats.dart';
 import '../../../di.dart';
@@ -74,6 +74,11 @@ class _FormatCard extends StatelessWidget {
     final row = format.row;
     final isSms = row.channel == Channel.sms;
     final uses = format.uses;
+    final what = switch (row.kind) {
+      TemplateKind.ignore => 'skips',
+      TemplateKind.mandate => 'AutoPay alert · read',
+      TemplateKind.transaction => 'read',
+    };
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
       decoration: BoxDecoration(
@@ -103,7 +108,7 @@ class _FormatCard extends StatelessWidget {
                     ),
                     Text(
                       '${format.bankName} · learned ${dayMonth(row.createdAt)}'
-                      ' · read $uses ${uses == 1 ? 'message' : 'messages'}',
+                      ' · $what $uses ${uses == 1 ? 'message' : 'messages'}',
                       style: t.meta,
                     ),
                   ],

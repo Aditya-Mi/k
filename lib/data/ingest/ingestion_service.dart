@@ -6,8 +6,10 @@ import 'package:txn_parser/txn_parser.dart';
 
 import '../db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../db/enums.dart';
+import '../repositories/bank_repository.dart' show isWalletBank;
 import 'category_resolver.dart';
 import 'transfer_linker.dart';
+import 'unknown_sender.dart';
 
 /// A bank message as it enters the app, from any channel.
 class IncomingMessage {
@@ -46,7 +48,8 @@ enum IngestOutcome {
   /// Already stored (same hash, or same text from same sender minutes apart).
   duplicate,
 
-  /// Not a configured bank sender — dropped, nothing stored.
+  /// Not a configured bank sender and not payment-like — dropped, nothing
+  /// stored.
   notBank,
 
   /// Stored and logged as a transaction.
@@ -69,12 +72,16 @@ enum IngestOutcome {
 /// raw_messages → ParserEngine → account / merchant / category → transaction.
 /// Idempotent: re-ingesting a message is a no-op.
 class IngestionService {
-  IngestionService(this._db) : _transfers = TransferLinker(_db);
+  IngestionService(this._db)
+    : _transfers = TransferLinker(_db),
+      blocked = BlockedSenders(_db);
 
   final AppDatabase _db;
   final TransferLinker _transfers;
+  final BlockedSenders blocked;
   ParserEngine? _engine;
   CategoryResolver? _categories;
+  Set<String>? _blocked;
 
   /// Same SMS read twice (live + inbox) may carry slightly different times on
   /// some OEMs; identical text from the same sender this close is one message.
@@ -84,6 +91,7 @@ class IngestionService {
   void invalidate() {
     _engine = null;
     _categories = null;
+    _blocked = null;
   }
 
   Future<ParserEngine> _parser() async => _engine ??= await _buildEngine();
@@ -130,7 +138,7 @@ class IngestionService {
         receivedAt: m.receivedAt,
       ),
     );
-    if (result.status == ParseStatus.notBank) return IngestOutcome.notBank;
+    if (result.status == ParseStatus.notBank) return _ingestUnknown(m);
 
     return _db.transaction(() async {
       if (await _isDuplicate(m)) return IngestOutcome.duplicate;
@@ -186,6 +194,44 @@ class IngestionService {
     });
   }
 
+  /// An SMS from a sender no bank rule knows. If it reads like a payment it
+  /// waits in Review with no bank, so the owner can say which bank it is
+  /// (design 03f); senders marked "Not a bank" are dropped.
+  Future<IngestOutcome> _ingestUnknown(IncomingMessage m) async {
+    final probe = probeUnknown(_input(m));
+    if (probe == null) return IngestOutcome.notBank;
+    final blocked = _blocked ??= await this.blocked.load();
+    if (blocked.contains(senderCore(m.sender))) return IngestOutcome.notBank;
+    return _db.transaction(() async {
+      if (await _isDuplicate(m)) return IngestOutcome.duplicate;
+      await _db
+          .into(_db.rawMessages)
+          .insert(
+            RawMessagesCompanion.insert(
+              channel: m.channel,
+              sender: m.sender,
+              subject: Value(m.subject),
+              body: m.body,
+              receivedAt: m.receivedAt,
+              externalId: Value(m.externalId),
+              simSlot: Value(m.simSlot),
+              contentHash: m.contentHash,
+              status: RawMessageStatus.needsReview,
+              parseNote: const Value(unknownSenderNote),
+            ),
+          );
+      return IngestOutcome.needsReview;
+    });
+  }
+
+  RawInput _input(IncomingMessage m) => RawInput(
+    channel: m.channel,
+    sender: m.sender,
+    body: m.body,
+    subject: m.subject,
+    receivedAt: m.receivedAt,
+  );
+
   /// Parses a stored message with the current formats (review prefill,
   /// re-checks after learning).
   Future<ParseResult> parseRaw(RawMessage raw) async => (await _parser()).parse(
@@ -198,10 +244,13 @@ class IngestionService {
     ),
   );
 
-  /// Logs a review-queue message from fields the owner confirmed.
+  /// Logs a review-queue message from fields the owner confirmed: a payment,
+  /// or an AutoPay alert ([TemplateKind.mandate]) that becomes an upcoming
+  /// charge.
   Future<void> logReviewed(
     RawMessage raw,
     ParsedFields fields, {
+    TemplateKind kind = TemplateKind.transaction,
     String? accountId,
     String? categoryId,
     String? templateId,
@@ -209,7 +258,7 @@ class IngestionService {
     await _log(
       raw,
       raw.bankId!,
-      TemplateKind.transaction,
+      kind,
       fields,
       normalizeText([?raw.subject, raw.body].join(' ')),
       accountId: accountId,
@@ -218,9 +267,14 @@ class IngestionService {
     await _markParsed(raw.id, templateId);
   });
 
-  /// Re-reads every review-queue message; logs the ones that now parse.
+  /// Re-reads every review-queue message; logs the ones that now parse and
+  /// skips the ones a format now marks as not a transaction. Messages from
+  /// an unknown sender pick up their bank once a sender rule names it.
   /// Returns how many left the queue.
-  Future<int> reprocessReview() async {
+  Future<int> reprocessReview() async => (await reprocessReviewIds()).length;
+
+  /// [reprocessReview], returning the ids that left the queue (for undo).
+  Future<List<String>> reprocessReviewIds() async {
     final waiting =
         await (_db.select(_db.rawMessages)..where(
               (r) =>
@@ -228,12 +282,37 @@ class IngestionService {
                   r.status.equalsValue(RawMessageStatus.needsReview),
             ))
             .get();
-    var cleared = 0;
-    for (final raw in waiting) {
+    final cleared = <String>[];
+    final blocked = _blocked ??= await this.blocked.load();
+    for (final row in waiting) {
+      var raw = row;
+      if (raw.bankId == null && blocked.contains(senderCore(raw.sender))) {
+        await _setNonTransaction(raw.id, notABankNote);
+        cleared.add(raw.id);
+        continue;
+      }
       final result = await parseRaw(raw);
+      if (result.status == ParseStatus.notBank) continue;
+      if (raw.bankId == null && result.bankCode != null) {
+        raw = raw.copyWith(bankId: Value(result.bankCode));
+        await (_db.update(
+          _db.rawMessages,
+        )..where((r) => r.id.equals(raw.id))).write(
+          RawMessagesCompanion(
+            bankId: Value(result.bankCode),
+            parseNote: Value(_note(result)),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+      }
       if (_emailWithoutAmount(raw.channel, result)) {
         await _setNonTransaction(raw.id, _noAmountNote);
-        cleared++;
+        cleared.add(raw.id);
+        continue;
+      }
+      if (result.status == ParseStatus.nonTransaction) {
+        await _setNonTransaction(raw.id, result.note ?? 'not a transaction');
+        cleared.add(raw.id);
         continue;
       }
       if (result.status != ParseStatus.parsed) continue;
@@ -252,9 +331,78 @@ class IngestionService {
         );
         await _markParsed(raw.id, result.templateId);
       });
-      cleared++;
+      cleared.add(raw.id);
     }
     return cleared;
+  }
+
+  /// The owner said which bank an unknown sender is: every waiting message
+  /// from that sender takes the bank.
+  Future<void> assignBank(String sender, String bankId) async {
+    final core = senderCore(sender);
+    final waiting =
+        await (_db.select(_db.rawMessages)..where(
+              (r) =>
+                  r.deletedAt.isNull() &
+                  r.bankId.isNull() &
+                  r.status.equalsValue(RawMessageStatus.needsReview),
+            ))
+            .get();
+    for (final r in waiting.where((r) => senderCore(r.sender) == core)) {
+      await (_db.update(
+        _db.rawMessages,
+      )..where((x) => x.id.equals(r.id))).write(
+        RawMessagesCompanion(
+          bankId: Value(bankId),
+          parseNote: const Value('no template matched'),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+    }
+  }
+
+  /// "Not a bank": the sender is blocked and its waiting messages leave
+  /// Review. Returns their ids for undo.
+  Future<List<String>> markNotABank(String sender) async {
+    final core = senderCore(sender);
+    await blocked.add(core);
+    _blocked = null;
+    final waiting =
+        await (_db.select(_db.rawMessages)..where(
+              (r) =>
+                  r.deletedAt.isNull() &
+                  r.bankId.isNull() &
+                  r.status.equalsValue(RawMessageStatus.needsReview),
+            ))
+            .get();
+    final ids = [
+      for (final r in waiting)
+        if (senderCore(r.sender) == core) r.id,
+    ];
+    for (final id in ids) {
+      await _setNonTransaction(id, notABankNote);
+    }
+    return ids;
+  }
+
+  /// Undo for "Not a transaction" / "Not a bank": the messages wait in
+  /// Review again.
+  Future<void> restoreToReview(List<String> rawIds) async {
+    for (final id in rawIds) {
+      final raw = await (_db.select(
+        _db.rawMessages,
+      )..where((r) => r.id.equals(id))).getSingleOrNull();
+      if (raw == null) continue;
+      await (_db.update(_db.rawMessages)..where((r) => r.id.equals(id))).write(
+        RawMessagesCompanion(
+          status: const Value(RawMessageStatus.needsReview),
+          parseNote: Value(
+            raw.bankId == null ? unknownSenderNote : 'no template matched',
+          ),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+    }
   }
 
   /// A payment no bank message reported (design 09), logged as added by the
@@ -599,7 +747,9 @@ class IngestionService {
     String text,
   ) async {
     final last4 = f.last4;
-    final type = inferAccountType(f.txnType, text);
+    final type = isWalletBank(bankId)
+        ? AccountType.wallet
+        : inferAccountType(f.txnType, text);
     // Some alerts name no account ("Your account is credited"), and a debit
     // card spends from its savings account. If the bank has exactly one
     // savings/current account, it is that one.

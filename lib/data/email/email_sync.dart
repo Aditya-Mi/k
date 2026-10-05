@@ -83,20 +83,31 @@ class EmailSync {
     return next;
   }
 
-  Stream<List<EmailAccountView>> watch() =>
-      (_db.select(_db.emailAccounts)
-            ..where((a) => a.deletedAt.isNull())
-            ..orderBy([(a) => OrderingTerm.asc(a.createdAt)]))
-          .watch()
-          .asyncMap(
-            (rows) async => [
-              for (final r in rows)
-                EmailAccountView(
-                  r,
-                  error: _nonEmpty(await _settings.get(_errorKey(r.id))),
-                ),
-            ],
-          );
+  /// Inboxes with their last error; re-emits when an inbox or a sync result
+  /// (kept in settings) changes, so a failure shows up right away.
+  Stream<List<EmailAccountView>> watch() async* {
+    yield await _views();
+    await for (final _ in _db.tableUpdates(
+      TableUpdateQuery.onAllTables([_db.emailAccounts, _db.appSettings]),
+    )) {
+      yield await _views();
+    }
+  }
+
+  Future<List<EmailAccountView>> _views() async {
+    final rows =
+        await (_db.select(_db.emailAccounts)
+              ..where((a) => a.deletedAt.isNull())
+              ..orderBy([(a) => OrderingTerm.asc(a.createdAt)]))
+            .get();
+    return [
+      for (final r in rows)
+        EmailAccountView(
+          r,
+          error: _nonEmpty(await _settings.get(_errorKey(r.id))),
+        ),
+    ];
+  }
 
   Future<bool> get hasAccounts async =>
       (await (_db.select(

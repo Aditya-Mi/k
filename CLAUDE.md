@@ -55,4 +55,5 @@ flutter build apk --debug
 - Phase 4 code done: subscription detection (`lib/data/subscriptions/`), AutoPay matching, reminders.
 - Phase 5 done: email (IMAP app password + Gmail sign-in, `lib/data/email/`), SMS/email dedup, hourly sync, Add payment, theme setting, app icon (`tool/app_icon.py`).
 - Phase 6 code done: summary, app lock (`lib/app/app_lock.dart`), encrypted Drive backup + export/import (`lib/data/backup/`); Cash account (schema v6: ATM adds, logged cash spends subtract, not double-counted); same-name payees merge (v7); custom categories (v8); awaiting device test.
+- Unknown-sender learning (SMS from a bank k lacks → Review → name the bank once), AutoPay/skip learning, review undo, sync-problem banners, overdrawn balances: code done, awaiting device test.
 - Later ideas: encrypted multi-device sync (schema already sync-ready), other currencies.

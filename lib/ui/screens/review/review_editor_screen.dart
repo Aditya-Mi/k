@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:txn_parser/txn_parser.dart';
 
 import '../categories/category_edit_screen.dart';
+import '../../../data/repositories/bank_repository.dart';
+import '../../widgets/bank_picker.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../data/review/field_marks.dart';
 import '../../../data/review/review_service.dart';
@@ -28,6 +30,7 @@ class ReviewEditorScreen extends StatelessWidget {
     create: (_) => ReviewEditorCubit(
       getIt<ReviewService>(),
       getIt<LedgerRepository>(),
+      getIt<BankRepository>(),
       startRawId: startRawId,
     ),
     child: const _EditorView(),
@@ -65,14 +68,20 @@ class _EditorView extends StatelessWidget {
           ? ''
           : ' It also read ${r.result.cleared} more waiting '
                 '${r.result.cleared == 1 ? 'message' : 'messages'}.';
+      final autopay = r.fields.dueDate != null;
       if (r.result.learned) {
         await showLearnedOverlay(
           context,
           amountMinor: amount,
-          title: 'Learned this ${r.bank} format',
-          body:
-              '${inrRow(amount)}$who is saved. ${r.bank} messages shaped like '
-              'it will now be read on their own.$more',
+          title: autopay
+              ? 'Learned this ${r.bank} AutoPay format'
+              : 'Learned this ${r.bank} format',
+          body: autopay
+              ? '${inrRow(amount)}$who is in Upcoming for '
+                    '${dayShort(r.fields.dueDate!)}. ${r.bank} AutoPay alerts '
+                    'shaped like it will now be read on their own.$more'
+              : '${inrRow(amount)}$who is saved. ${r.bank} messages shaped '
+                    'like it will now be read on their own.$more',
         );
       } else {
         messenger.showSnackBar(
@@ -109,6 +118,7 @@ class _Editor extends StatelessWidget {
         .where((x) => x.id == state.categoryId)
         .firstOrNull;
     final isSms = item.raw.channel == Channel.sms;
+    final mandate = state.isMandate;
 
     return Scaffold(
       appBar: AppBar(
@@ -134,6 +144,16 @@ class _Editor extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           const SizedBox(height: 8),
+          if (item.unknownSender) ...[
+            Text("A sender k doesn't know", style: t.title),
+            const SizedBox(height: 4),
+            Text(
+              "It reads like a payment. If it's from your bank, pick the bank "
+              'and k reads this sender from now on.',
+              style: t.body.copyWith(color: c.text2, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+          ],
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -179,6 +199,31 @@ class _Editor extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          if (item.unknownSender)
+            FieldRow(
+              label: 'Bank',
+              value: SelectButton(
+                label: cubit.bankLabel(),
+                onPressed: () => _pickBank(context),
+              ),
+            ),
+          FieldRow(
+            label: 'Message',
+            value: SegmentedButton<TemplateKind>(
+              segments: const [
+                ButtonSegment(
+                  value: TemplateKind.transaction,
+                  label: Text('Payment'),
+                ),
+                ButtonSegment(
+                  value: TemplateKind.mandate,
+                  label: Text('AutoPay due'),
+                ),
+              ],
+              selected: {state.kind},
+              onSelectionChanged: (v) => cubit.setKind(v.single),
+            ),
+          ),
           FieldRow(
             label: 'Amount',
             onTap: () => _editAmount(context, f.amountMinor),
@@ -189,7 +234,9 @@ class _Editor extends StatelessWidget {
                     children: [
                       NoteChip(
                         amountMinor: f.amountMinor!,
-                        style: state.direction == Direction.debit
+                        style: mandate
+                            ? NoteChipStyle.pending
+                            : state.direction == Direction.debit
                             ? NoteChipStyle.filled
                             : NoteChipStyle.outlined,
                       ),
@@ -201,26 +248,28 @@ class _Editor extends StatelessWidget {
                     ],
                   ),
           ),
-          FieldRow(
-            label: 'Direction',
-            value: SegmentedButton<Direction>(
-              segments: const [
-                ButtonSegment(value: Direction.debit, label: Text('Debit')),
-                ButtonSegment(value: Direction.credit, label: Text('Credit')),
-              ],
-              selected: {state.direction},
-              onSelectionChanged: (v) => cubit.setDirection(v.single),
+          if (!mandate) ...[
+            FieldRow(
+              label: 'Direction',
+              value: SegmentedButton<Direction>(
+                segments: const [
+                  ButtonSegment(value: Direction.debit, label: Text('Debit')),
+                  ButtonSegment(value: Direction.credit, label: Text('Credit')),
+                ],
+                selected: {state.direction},
+                onSelectionChanged: (v) => cubit.setDirection(v.single),
+              ),
             ),
-          ),
-          FieldRow(
-            label: 'Account',
-            onTap: () => _pickAccount(context),
-            value: Text(
-              cubit.accountLabel(),
-              style: t.body,
-              textAlign: TextAlign.right,
+            FieldRow(
+              label: 'Account',
+              onTap: () => _pickAccount(context),
+              value: Text(
+                cubit.accountLabel(),
+                style: t.body,
+                textAlign: TextAlign.right,
+              ),
             ),
-          ),
+          ],
           FieldRow(
             label: 'Payee',
             onTap: () => _editText(context, 'Payee', f.payee, cubit.setPayee),
@@ -230,51 +279,44 @@ class _Editor extends StatelessWidget {
               textAlign: TextAlign.right,
             ),
           ),
-          FieldRow(
-            label: 'Reference',
-            onTap: () => _editText(context, 'Reference', f.ref, cubit.setRef),
-            value: Text(
-              f.ref ?? 'None',
-              style: t.body.copyWith(color: f.ref == null ? c.text3 : c.text),
-            ),
-          ),
-          FieldRow(
-            label: 'Date',
-            onTap: () =>
-                _pickDate(context, f.occurredAt ?? item.raw.receivedAt),
-            value: Text(
-              fullStamp(f.occurredAt ?? item.raw.receivedAt),
-              style: t.body,
-            ),
-          ),
-          FieldRow(
-            label: 'Category',
-            value: OutlinedButton(
-              onPressed: () => _pickCategory(context),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          if (mandate)
+            FieldRow(
+              label: 'Due on',
+              onTap: () => _pickDueDate(context, f.dueDate),
+              value: Text(
+                f.dueDate == null ? 'Mark or pick' : dayShortYear(f.dueDate!),
+                style: t.body.copyWith(
+                  color: f.dueDate == null ? c.text3 : c.text,
                 ),
-                padding: const EdgeInsets.only(left: 16, right: 8),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (category != null) ...[
-                    Icon(categoryIcon(category.icon), size: 18, color: c.text2),
-                    const SizedBox(width: 8),
-                  ],
-                  Text(
-                    category?.name ?? 'Choose',
-                    style: t.body.copyWith(
-                      color: category == null ? c.text2 : c.text,
-                    ),
-                  ),
-                  Icon(Icons.arrow_drop_down_rounded, color: c.text2),
-                ],
+            )
+          else ...[
+            FieldRow(
+              label: 'Reference',
+              onTap: () => _editText(context, 'Reference', f.ref, cubit.setRef),
+              value: Text(
+                f.ref ?? 'None',
+                style: t.body.copyWith(color: f.ref == null ? c.text3 : c.text),
               ),
             ),
-          ),
+            FieldRow(
+              label: 'Date',
+              onTap: () =>
+                  _pickDate(context, f.occurredAt ?? item.raw.receivedAt),
+              value: Text(
+                fullStamp(f.occurredAt ?? item.raw.receivedAt),
+                style: t.body,
+              ),
+            ),
+            FieldRow(
+              label: 'Category',
+              value: SelectButton(
+                label: category?.name,
+                icon: category == null ? null : categoryIcon(category.icon),
+                onPressed: () => _pickCategory(context),
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           Row(
             children: [
@@ -285,8 +327,17 @@ class _Editor extends StatelessWidget {
                     Text('Learn this format', style: t.title),
                     const SizedBox(height: 4),
                     Text(
-                      'Next time ${cubit.bankShort()} sends a message shaped '
-                      'like this, k reads it on its own.',
+                      item.unknownSender
+                          ? 'k reads ${item.raw.sender} as '
+                                '${cubit.bankLabel() ?? 'that bank'} from now '
+                                'on, and messages shaped like this on their '
+                                'own.'
+                          : mandate
+                          ? 'Next time ${cubit.bankShort()} sends an AutoPay '
+                                'alert shaped like this, k adds it to Upcoming '
+                                'on its own.'
+                          : 'Next time ${cubit.bankShort()} sends a message '
+                                'shaped like this, k reads it on its own.',
                       style: t.body.copyWith(color: c.text2),
                     ),
                   ],
@@ -311,19 +362,21 @@ class _Editor extends StatelessWidget {
                 style: OutlinedButton.styleFrom(minimumSize: const Size(0, 52)),
                 onPressed: state.saving
                     ? null
-                    : () async {
-                        final nav = Navigator.of(context);
-                        await cubit.notATransaction();
-                        if (cubit.state.item == null && nav.canPop()) {
-                          nav.pop();
-                        }
-                      },
-                child: const Text('Not a transaction'),
+                    : () => item.unknownSender
+                          ? _notABank(context)
+                          : _notATransaction(context),
+                child: Text(
+                  item.unknownSender ? 'Not a bank' : 'Not a transaction',
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: state.saving || f.amountMinor == null
+                  onPressed:
+                      state.saving ||
+                          f.amountMinor == null ||
+                          (item.unknownSender && state.bank == null) ||
+                          (mandate && f.dueDate == null)
                       ? null
                       : () => _save(context),
                   icon: state.saving
@@ -433,14 +486,18 @@ class _Editor extends StatelessWidget {
                     runSpacing: 8,
                     children: [
                       for (final field in MarkField.values)
-                        ActionChip(
-                          label: Text(_fieldName(field)),
-                          onPressed: () => Navigator.pop(context, (
-                            field,
-                            words[first].start,
-                            words[last].end,
-                          )),
-                        ),
+                        if (field !=
+                            (state.isMandate
+                                ? MarkField.date
+                                : MarkField.dueDate))
+                          ActionChip(
+                            label: Text(_fieldName(field)),
+                            onPressed: () => Navigator.pop(context, (
+                              field,
+                              words[first].start,
+                              words[last].end,
+                            )),
+                          ),
                     ],
                   ),
                   if (existing != null) ...[
@@ -479,6 +536,7 @@ class _Editor extends StatelessWidget {
     MarkField.ref => 'Reference',
     MarkField.date => 'Date',
     MarkField.balance => 'Balance',
+    MarkField.dueDate => 'Due date',
   };
 
   String _fieldArticle(MarkField f) => switch (f) {
@@ -486,7 +544,7 @@ class _Editor extends StatelessWidget {
     MarkField.amount => 'an amount',
     MarkField.balance => 'a balance',
     MarkField.ref => 'a reference',
-    MarkField.date => 'a date',
+    MarkField.date || MarkField.dueDate => 'a date',
     _ => 'that field',
   };
 
@@ -526,6 +584,109 @@ class _Editor extends StatelessWidget {
       action: 'Done',
       numeric: numeric,
     );
+  }
+
+  Future<void> _pickDueDate(BuildContext context, DateTime? current) async {
+    final cubit = context.read<ReviewEditorCubit>();
+    final now = DateTime.now();
+    final day = await showDatePicker(
+      context: context,
+      initialDate: current ?? now,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 2),
+    );
+    if (day != null) cubit.setDueDate(day);
+  }
+
+  /// "Not a transaction" sheet (design 03j), then Undo (03k).
+  Future<void> _notATransaction(BuildContext context) async {
+    final cubit = context.read<ReviewEditorCubit>();
+    final bank = cubit.bankShort();
+    final skip = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => _NotATransactionSheet(bank: bank),
+    );
+    if (skip == null || !context.mounted) return;
+    final nav = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final undo = await cubit.notATransaction(skipSimilar: skip);
+    if (undo == null) return;
+    final more = undo.rawIds.length - 1;
+    _offerUndo(
+      messenger,
+      more > 0
+          ? 'Marked not a transaction, and $more more like it'
+          : 'Marked not a transaction',
+      undo,
+    );
+    if (cubit.state.item == null && nav.canPop()) nav.pop();
+  }
+
+  Future<void> _notABank(BuildContext context) async {
+    final cubit = context.read<ReviewEditorCubit>();
+    final nav = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final undo = await cubit.notABank();
+    if (undo == null) return;
+    _offerUndo(messenger, '${item.raw.sender} is not a bank', undo);
+    if (cubit.state.item == null && nav.canPop()) nav.pop();
+  }
+
+  static void _offerUndo(
+    ScaffoldMessengerState messenger,
+    String text,
+    ReviewUndo undo,
+  ) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(text),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () => getIt<ReviewService>().undo(undo),
+          ),
+        ),
+      );
+  }
+
+  /// Which bank sent this (design 03g); "A bank not in k" → 03h.
+  Future<void> _pickBank(BuildContext context) async {
+    final cubit = context.read<ReviewEditorCubit>();
+    final picked = await showBankPicker(
+      context,
+      banks: state.banks,
+      title: 'Which bank sent this?',
+      subtitle: 'k will read ${item.raw.sender} as that bank, by SMS.',
+      selectedId: state.bank?.id,
+    );
+    if (!context.mounted || picked == null) return;
+    if (picked == newBankPick) {
+      final choice = await showModalBottomSheet<BankChoice>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (_) => _NewBankSheet(
+          sender: item.raw.sender,
+          initial: state.bank?.newName ?? _guessBankName(item.raw.sender),
+        ),
+      );
+      if (choice != null) cubit.setBank(choice);
+    } else {
+      cubit.setBank(BankChoice.existing(picked));
+    }
+  }
+
+  /// "JD-HDFCBK-S" → "HDFC Bank": drop the operator prefix/suffix and a
+  /// trailing BK/BNK. Only a starting point for the name field.
+  static String _guessBankName(String sender) {
+    final parts = sender.toUpperCase().split('-');
+    var core = parts.length > 1 && parts.first.length == 2
+        ? parts[1]
+        : parts.first;
+    core = core.replaceFirst(RegExp(r'(BNK|BK|BANK)$'), '');
+    return core.isEmpty ? '' : '$core Bank';
   }
 
   Future<void> _pickDate(BuildContext context, DateTime current) async {
@@ -608,5 +769,185 @@ class _Editor extends StatelessWidget {
       await cubit.reloadCategories();
     }
     cubit.setCategory(picked);
+  }
+}
+
+/// Design 03j: confirm, optionally skipping messages shaped like this.
+/// Pops true/false (skip similar), null on cancel.
+class _NotATransactionSheet extends StatefulWidget {
+  const _NotATransactionSheet({required this.bank});
+
+  final String bank;
+
+  @override
+  State<_NotATransactionSheet> createState() => _NotATransactionSheetState();
+}
+
+class _NotATransactionSheetState extends State<_NotATransactionSheet> {
+  var _skip = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.kt;
+    final c = context.k;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Not a transaction', style: t.title.copyWith(fontSize: 18)),
+            const SizedBox(height: 4),
+            Text(
+              "k keeps the message in its trail but won't log a payment "
+              'from it.',
+              style: t.meta.copyWith(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Skip messages like this',
+                        style: t.body.copyWith(fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.bank} messages shaped like this one go '
+                        'straight to skipped, not Review. Turn off in '
+                        'Settings → Message formats.',
+                        style: t.meta.copyWith(fontSize: 13, color: c.text2),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Switch(
+                  value: _skip,
+                  onChanged: (v) => setState(() => _skip = v),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, _skip),
+                  child: const Text('Not a transaction'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Design 03h: name a bank k doesn't have, plus its alert mail sender.
+class _NewBankSheet extends StatefulWidget {
+  const _NewBankSheet({required this.sender, required this.initial});
+
+  final String sender;
+  final String initial;
+
+  @override
+  State<_NewBankSheet> createState() => _NewBankSheetState();
+}
+
+class _NewBankSheetState extends State<_NewBankSheet> {
+  late final _name = TextEditingController(text: widget.initial);
+  final _email = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.kt;
+    final c = context.k;
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          0,
+          20,
+          16 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('A bank not in k', style: t.title.copyWith(fontSize: 18)),
+            const SizedBox(height: 4),
+            Text(
+              'Name it once. k adds it to Settings → Banks and reads '
+              '${widget.sender} as this bank.',
+              style: t.meta.copyWith(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _name,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(labelText: 'Bank name'),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _email,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Alert email from (optional)',
+                hintText: 'e.g. hdfcbank.net',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'If this bank also mails you alerts, add its address or domain '
+              'and k picks them up from your connected inbox.',
+              style: t.meta.copyWith(fontSize: 13, color: c.text2),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: _name.text.trim().isEmpty
+                      ? null
+                      : () => Navigator.pop(
+                          context,
+                          BankChoice.create(
+                            _name.text.trim(),
+                            emailSender: _email.text.trim(),
+                          ),
+                        ),
+                  child: const Text('Add bank'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

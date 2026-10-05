@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
 
@@ -10,6 +11,7 @@ import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/text_prompt.dart';
+import 'add_account_screen.dart';
 
 typedef _Row = ({AccountView account, AccountBalance? balance});
 
@@ -37,6 +39,16 @@ class AccountsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Accounts'),
+        actions: [
+          IconButton(
+            tooltip: 'Add account',
+            icon: const Icon(Icons.add_rounded),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const AddAccountScreen()),
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: StreamBuilder<List<_Row>>(
         stream: rows,
@@ -47,7 +59,9 @@ class AccountsScreen extends StatelessWidget {
             return const Center(
               child: EmptyState(
                 title: 'No accounts yet',
-                body: 'Accounts appear as bank messages arrive.',
+                body:
+                    'Accounts appear as bank messages arrive, or add one '
+                    'with +.',
               ),
             );
           }
@@ -117,16 +131,16 @@ class AccountsScreen extends StatelessWidget {
       );
       if (name != null) await ledger.renameAccount(r.account.id, name);
     } else {
-      final text = await _prompt(
-        context,
-        title: isCredit ? 'Available limit now' : 'Balance now',
-        initial: r.balance == null
-            ? ''
-            : (r.balance!.amountMinor / 100).toStringAsFixed(2),
-        hint: '0.00',
-        numeric: true,
+      final minor = await showDialog<int>(
+        context: context,
+        builder: (_) => _BalanceDialog(
+          title: isCredit ? 'Available limit now' : 'Balance now',
+          initialMinor: r.balance?.amountMinor,
+          // A card's available limit can't go below zero; a bank or cash
+          // balance can (overdraft, design 10b).
+          allowOverdrawn: !isCredit && !r.account.isCash,
+        ),
       );
-      final minor = text == null ? null : parseAmountMinor(text);
       if (minor != null) {
         await ledger.setManualBalance(r.account.id, minor, DateTime.now());
       }
@@ -231,6 +245,8 @@ class _AccountRow extends StatelessWidget {
               '$label · set by you ${_when(b.anchorAt)}, estimated since',
             BalanceSource.manual => '$label · set by you ${_when(b.anchorAt)}',
           };
+    final overdrawn =
+        b != null && b.amountMinor < 0 && !isCredit && !row.account.isCash;
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -251,7 +267,7 @@ class _AccountRow extends StatelessWidget {
                       style: t.meta,
                     ),
                   const SizedBox(height: 2),
-                  Text(meta, style: t.meta),
+                  Text(overdrawn ? '$meta · overdrawn' : meta, style: t.meta),
                 ],
               ),
             ),
@@ -272,4 +288,95 @@ class _AccountRow extends StatelessWidget {
   }
 
   String _when(DateTime d) => '${dayMonth(d)}, ${hhmm(d)}';
+}
+
+/// Balance / limit entry. A bank balance can be overdrawn: the sign is a
+/// choice, not a typed minus (design 10b). Pops the signed paise.
+class _BalanceDialog extends StatefulWidget {
+  const _BalanceDialog({
+    required this.title,
+    required this.initialMinor,
+    required this.allowOverdrawn,
+  });
+
+  final String title;
+  final int? initialMinor;
+  final bool allowOverdrawn;
+
+  @override
+  State<_BalanceDialog> createState() => _BalanceDialogState();
+}
+
+class _BalanceDialogState extends State<_BalanceDialog> {
+  late var _overdrawn = widget.allowOverdrawn && (widget.initialMinor ?? 0) < 0;
+  late final _controller = TextEditingController(
+    text: widget.initialMinor == null
+        ? ''
+        : (widget.initialMinor!.abs() / 100).toStringAsFixed(2),
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final minor = parseAmountMinor(_controller.text);
+    if (minor == null) return;
+    Navigator.pop(context, _overdrawn ? -minor : minor);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.kt;
+    return AlertDialog(
+      title: Text(widget.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.allowOverdrawn) ...[
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(value: false, label: Text('In credit')),
+                ButtonSegment(value: true, label: Text('Overdrawn')),
+              ],
+              selected: {_overdrawn},
+              onSelectionChanged: (v) => setState(() => _overdrawn = v.single),
+            ),
+            const SizedBox(height: 12),
+          ],
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+            ],
+            decoration: InputDecoration(
+              hintText: '0.00',
+              prefixText: _overdrawn ? '−₹ ' : '₹ ',
+            ),
+            onSubmitted: (_) => _save(),
+          ),
+          if (_overdrawn) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Overdrawn: the account owes the bank this much. Later payments '
+              'still add up from it.',
+              style: t.meta,
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(onPressed: _save, child: const Text('Save')),
+      ],
+    );
+  }
 }

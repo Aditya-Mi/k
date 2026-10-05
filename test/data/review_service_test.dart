@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:k/data/db/app_database.dart' hide ParserTemplate, SenderRule;
 import 'package:k/data/ingest/ingestion_service.dart';
+import 'package:k/data/repositories/bank_repository.dart';
 import 'package:k/data/repositories/ledger_models.dart';
 import 'package:k/data/repositories/ledger_repository.dart';
 import 'package:k/data/review/field_marks.dart';
@@ -37,7 +38,12 @@ void main() {
     );
     ingest = IngestionService(db);
     ledger = LedgerRepository(db, onRulesChanged: ingest.invalidate);
-    review = ReviewService(db, ingest, ledger);
+    review = ReviewService(
+      db,
+      ingest,
+      ledger,
+      BankRepository(db, onRulesChanged: ingest.invalidate),
+    );
   });
   tearDown(() => db.close());
 

@@ -56,7 +56,12 @@ Future<void> configureDependencies() async {
     ..registerSingleton<TransferLinker>(TransferLinker(db))
     ..registerSingleton<SmsBridge>(bridge)
     ..registerLazySingleton<ReviewService>(
-      () => ReviewService(db, ingestion, getIt<LedgerRepository>()),
+      () => ReviewService(
+        db,
+        ingestion,
+        getIt<LedgerRepository>(),
+        getIt<BankRepository>(),
+      ),
     )
     ..registerLazySingleton<LearnedFormats>(() => LearnedFormats(db, ingestion))
     ..registerSingleton<GoogleAuth>(google)

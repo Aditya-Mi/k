@@ -3,7 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:txn_parser/txn_parser.dart';
+
+import '../../../data/db/enums.dart';
+import '../../../data/email/email_sync.dart';
 
 import '../../../data/repositories/ledger_models.dart';
 import '../../format.dart';
@@ -11,7 +15,9 @@ import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/month_note_panel.dart';
 import '../../widgets/txn_row.dart';
+import '../../../di.dart';
 import '../accounts/accounts_screen.dart';
+import '../settings/connect_inbox_screen.dart';
 import '../settings/settings_screen.dart';
 import '../txn_detail/txn_detail_screen.dart';
 import 'add_payment_screen.dart';
@@ -35,6 +41,27 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   final _search = TextEditingController();
   bool _searching = false;
   Timer? _debounce;
+  final _inboxes = getIt<EmailSync>().watch();
+
+  /// Banner "Turn on": the system prompt, or app settings once Android stops
+  /// asking. The controller re-checks when k comes back to the front.
+  Future<void> _turnOnSms() async {
+    final status = await Permission.sms.request();
+    if (!status.isGranted) await openAppSettings();
+  }
+
+  Future<void> _fixInbox(EmailAccountView a) async {
+    if (a.row.authType == EmailAuthType.oauth) {
+      final from = a.row.lastSyncAt ?? DateTime.now();
+      await connectGoogle(context, from.subtract(const Duration(days: 1)));
+    } else {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => AppPasswordScreen(email: a.row.email),
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -149,18 +176,39 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: NoticeBanner(
                           icon: Icons.sms_failed_outlined,
-                          text:
-                              'SMS access is off, so new payments are not '
-                              'being logged',
-                          action: 'Fix',
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const SettingsScreen(),
-                            ),
-                          ),
+                          problem: true,
+                          text: 'SMS access is off',
+                          detail: "New payments aren't being logged",
+                          action: 'Turn on',
+                          onTap: _turnOnSms,
                         ),
                       )
                     : const SizedBox.shrink(),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: StreamBuilder<List<EmailAccountView>>(
+                stream: _inboxes,
+                builder: (context, snap) {
+                  final failing = (snap.data ?? const <EmailAccountView>[])
+                      .where((a) => a.error != null && a.row.enabled)
+                      .firstOrNull;
+                  if (failing == null) return const SizedBox.shrink();
+                  final gmail = failing.row.authType == EmailAuthType.oauth;
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: NoticeBanner(
+                      icon: Icons.mail_outline_rounded,
+                      problem: true,
+                      text: gmail
+                          ? 'Gmail stopped syncing'
+                          : 'Inbox stopped syncing',
+                      detail: '${failing.row.email} · ${failing.error}',
+                      action: gmail ? 'Sign in' : 'Fix',
+                      onTap: () => _fixInbox(failing),
+                    ),
+                  );
+                },
               ),
             ),
             if (s.reviewCount > 0)

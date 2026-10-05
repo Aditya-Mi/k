@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Cash account added; same-name payees merge; custom categories). Schema v8.
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Cash account added; same-name payees merge; custom categories; unknown-sender learning, AutoPay/skip learning, review undo, sync-problem banners, overdrawn balances). Schema v8.
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -157,8 +157,48 @@ Bug: renaming payees to the same name ("Zepto") only changed display names; sepa
 - `LedgerRepository`: `addCategory` (last in sort order), `updateCategory` (name/icon, built-ins too), `setCategoryHidden`, `watchCategoryUse` (payment counts). Icon set `categoryIcons` in `widgets/common.dart` (30 Material Symbols).
 - Settings → Categories (list: yours / built in / hidden; + adds). Every category picker (detail, add payment, review, subscription) ends with "New category" (`newCategoryTile`).
 
-## Next: unknown-sender learning (agreed, not built)
-SMS from an unknown alphanumeric sender that reads like a payment (amount + debited/credited/a/c/UPI, not OTP/promo) → Review as "unknown sender" instead of dropped; Save & learn asks the bank name once → new bank + sender rule + learned format. "Not a bank" blocks the sender. Email can't learn this way (k only fetches known senders); offer adding the bank's mail domain after learning it from SMS. Needs design first.
+## Unknown senders + review gaps (2026-10-05, no schema change)
+Designs: `03f` unknown-sender editor, `03g` which-bank sheet, `03h` new-bank sheet, `03i` AutoPay-due kind, `03j` not-a-transaction sheet, `03k` queue with new-sender card + Undo, `01c` sync-problem banners, `10b` overdrawn balance. Light inks re-tuned (see below).
+- **Unknown sender** (`lib/data/ingest/unknown_sender.dart`): an SMS from a sender no rule knows is probed with a throwaway `ParserEngine` (public API only; the parser's OTP/promo/decline prefilters + `guessFields`). Business sender + amount + payment word → `raw_messages` with `bankId = null`, `needsReview`, note `unknown sender`; else dropped as before. Email never (k only fetches known senders).
+- Review: unknown items show "A sender k doesn't know", a Bank row (03g: existing banks or "A bank not in k" → 03h name + optional alert-mail sender). Save → `BankRepository.addBank` (id = name code, "HDFC Bank" → `HDFC`, reuses same-name bank) + SMS sender rule on the header core (`senderCore`: "JD-HDFCBK-S" → "HDFCBK") + optional email rule → `assignBank` gives every waiting message from that sender the bank → normal save & learn → reprocess.
+- "Not a bank" blocks the sender core (setting `senders.notBank`, JSON list; `BlockedSenders`), its waiting messages → nonTransaction. Settings → Banks shows "Not banks" with "Read again".
+- **AutoPay learning**: editor "Message: Payment | AutoPay due". AutoPay hides direction/account/ref/category, marks DUE ON (`MarkField.dueDate`; a DATE mark converts), learns a `mandate` template (verified: amount + due date read back) and logs an upcoming charge.
+- **Skip learning + undo**: "Not a transaction" opens 03j; "Skip messages like this" (default off) learns an `ignore` template = first 20 normalized words, digit words free, anchored (`skipPattern`), priority 50, verified to skip its sample; reprocess now also clears items a format marks nonTransaction. Snackbar Undo (`ReviewUndo`) restores the messages, forgets the skip format / unblocks the sender. Learned formats list shows "skips" / "AutoPay alert".
+- **Sync banners** (Transactions): SMS off → "Turn on" (system prompt, else app settings); a failing inbox → "Gmail stopped syncing · Sign in" / IMAP "Fix" (app password). `EmailSync.watch` now re-emits on settings writes so errors show at once. `NoticeBanner` got `detail` + `problem` (alert icon, as 06d).
+- **Overdrawn**: Accounts → Set balance has In credit / Overdrawn (not for cards or cash); row meta adds "· overdrawn".
+- **Light inks**: ink-10 `#6A3A26`, ink-20 `#557018`, ink-200 `#8A6300` — all ≥4.9:1 on paper and every pair ≥ΔE2000 20 (old 10↔200 was 15). `k_colors.dart`, DESIGN.md, k.pen variables; `08` re-exported.
+- Tests: `test/data/unknown_sender_test.dart`, `bank_repository_test.dart` (add account, bank codes). `flutter test` 98 pass.
+- Messages from unknown senders that arrived before this build were dropped, not stored: Settings → Sync → read past SMS from a date picks them up (dedup makes it safe).
+
+Device checks:
+1. An SMS from a bank k lacks (or a wallet) → Review card "New sender". Pick "A bank not in k", name it, Save & learn → payment logged; Settings → Banks lists the bank with its header.
+2. "Not a bank" on another → gone; Undo brings it back; Settings → Banks → Not banks → Read again.
+3. An AutoPay alert in Review → Message: AutoPay due → Save & learn → shows under Upcoming.
+4. Not a transaction with Skip on → snackbar "…and N more like it" → Undo.
+5. Turn off SMS permission → banner; Turn on. Let Gmail expire (7 days) → banner → Sign in.
+6. Accounts → Set balance → Overdrawn → row shows −₹ and "overdrawn".
+7. Light theme: ₹10 / ₹20 / ₹200 chips now tell apart.
+
+### For the parser session
+- Banks learned from unknown senders (Settings → Banks, Message formats samples) are candidates for built-in `BankDefinition`s; use the same code as the app's id (`bankCodeFor`, e.g. `HDFC`) so the seeded row lands on the owner's.
+- Skip formats the owner teaches are `ignore` templates in `parser_templates`; recurring ones are worth built-in ignore templates.
+
+## Parser session task: bank catalogue, second guess, wallets (from `transaction_sms_parser`)
+Owner wants all three. Source: [`transaction_sms_parser`](https://github.com/MabudAlam/transaction_sms_parser) (pub.dev 0.0.1, MIT, pure Dart, 2 commits, keyword heuristics: `TransactionEngine.getTransactionInfo(msg)` → account/transaction/balance, no confidence score). Not a replacement for our templates: it guesses and never says "unsure", can't learn, SMS only. Use it as data + a fallback, never to auto-log.
+
+0. **Evaluate first.** Add it as a dev dependency, or copy its tables with MIT attribution. Run it over every fixture in `test/fixtures/*.json`, comparing amount, direction, last4, payee and balance against `expected` and against our `guessFields`. Write the hit rates in this file. Decide whether to depend on it or copy the parts you need. Copying is likely better: one maintainer, version 0.0.1.
+1. **Bank catalogue.** Add a `BankDefinition` for every bank it knows (SBI, HDFC, ICICI, PNB, Canara, Union, IDFC First, Yes, IndusInd, Federal, AU, RBL…), with real SMS sender header cores and alert-mail domains where known. `templates: const []` is fine to start. Use ids from the app's `bankCodeFor(name)` (`HDFC`, `ICICI`, `IDFC_FIRST`, `STATE_INDIA` → prefer a short code like `SBI` and tell the main session). That way a bank the owner already added from an unknown sender lands on the same row. Register them in `registry.dart`; the app seeds them automatically. Add a fixture per bank only when you have a real (masked) sample.
+2. **Second guess.** When no template matches, also run the package's (or the ported) heuristics. Fill only the fields `guessFields` left null; keep "prefer null over a wrong value". Result stays `needsReview`. The app just shows better Review prefills; no app change needed.
+3. **Wallets.** Add definitions for PhonePe, Paytm, Amazon Pay, MobiKwik… and a way to mark an institution as a wallet. Proposed API change: `BankDefinition.kind` (`bank` | `wallet`), default `bank`. Tell the main session the final API; the app will map wallet → `AccountType.wallet` and label it "wallet" in the UI.
+4. Keep the rules: mask fixtures, never loosen tests, parser stays pure Dart.
+
+Main session side — **done** (designs `03g` updated, `10` "+", `10c-add-account`, `06k-banks`):
+- `BankView.accounts` / `inUse` (has an account or a stored message). Shared searchable picker `lib/ui/widgets/bank_picker.dart` (`showBankPicker`, `filterBanks`; search appears past 6 banks): "Your banks" then "Other banks k reads", optional "A bank not in k". Used by Review (unknown sender), Add account, Settings → Add a bank sender.
+- Settings → Banks lists only your banks + "All banks k reads" → `BanksScreen` (06k, search, tap → add sender).
+- Accounts → "+" → `AddAccountScreen`: bank (catalogue or new name), Savings/Current/Credit card/Wallet, last 4 (not for wallet), nickname, balance now (In credit/Overdrawn; card = available limit). `LedgerRepository.addAccount` (null if bank+last4 exists; revives a soft-deleted one). Messages for that bank + last 4 land on it.
+- Parser session did parts 1 + 3 (`6385f23`): `catalogue.dart` with 20 banks (short codes SBI, HDFC, ICICI, PNB, CANARA, UNION, BOI, CENTRAL, INDIAN, IOB, UCO, IDBI, IDFC_FIRST, YES, INDUSIND, FEDERAL, AU, RBL, BANDHAN, SBI_CARD; senders from memory, unverified) + 5 wallets (PHONEPE, PAYTM, AMAZON_PAY, MOBIKWIK, FREECHARGE; no senders on purpose, learned via unknown sender) and `BankDefinition.kind` (`InstitutionKind.bank|wallet`).
+- App follow-up done: `beforeOpen` re-runs the idempotent seeder on every open, so catalogue additions reach existing installs with no migration. `addBank` reuses a bank whose name, name code or id matches ("State Bank of India"/"sbi" → `SBI`), so short catalogue codes need no mapping table. Wallets: `isWalletBank` (from `kind`) → `AccountType.wallet` in `_accountFor`, "Wallet ·" + wallet icon in picker / 06k / Settings; Add account presets type Wallet. Tests switched to a made-up sender (`JD-ZZBANK-S`) since HDFC is built in; wallet test added.
+- **Still open: part 0 + 2 (package evaluation, second guess).** The parser session's auto mode refused `dart pub get` of `transaction_sms_parser` (untrusted code). Owner to choose: allow it, have the parser session read the source on GitHub (no download/run) and port the useful rules with MIT attribution, or strengthen `guessFields` without it.
 
 ## Next step: Phase 6 device test
 Google Cloud project stays in **Testing** (owner's choice: production needs homepage + privacy policy URLs); Gmail grant expires every 7 days.
@@ -190,10 +230,7 @@ Then Phase 3: review queue + fix-by-selection + learned templates + category rul
 - `.impeccable/review/` is gitignored scratch; `.impeccable/questions/*.state.json` may show as modified — harmless.
 
 ## Open items
-- Balance after a manual set is "set by you", then estimated by later payments; negative balances can't be entered (overdraft) — add if needed.
-- Phase 3 gaps: learning only makes transaction formats (not mandate/ignore); no undo for "Not a transaction" in review.
+- Balance after a manual set is "set by you", then estimated by later payments.
 - Phase 2 shortcuts: section head shows the whole list's date span (not the span in view); upcoming charges have no account last4 (not stored on `upcoming_charges`); credits with no keyword stay Uncategorized; merchant names from VPAs can be ugly ("Zeptonowcashfree") until Phase 3 renames/merges.
 - Widget tests render via `tester.runAsync` + drift streams hang on teardown — screenshot harness was deleted; if adding widget tests, close cubits/DB inside runAsync.
-- Light-theme inks ink-10/20/200 sit close; verify on device.
-- Not yet designed: SMS-permission-revoked and Gmail-sync-failed states (add in phases 2 and 5).
 - Design review: second-round fixes self-verified, not re-scored by reviewer.

@@ -224,6 +224,10 @@ class AppDatabase extends _$AppDatabase {
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
+      // Banks, senders and categories the parser adds in later builds reach
+      // existing installs without a migration (seedAll is insert-or-ignore,
+      // so the owner's edits and deletions stay).
+      if (!details.wasCreated) await Seeder(this).seedAll();
     },
   );
 }

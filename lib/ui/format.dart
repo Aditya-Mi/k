@@ -38,6 +38,11 @@ final _fullDay = DateFormat('d MMM yyyy');
 
 String hhmm(DateTime d) => _time.format(d);
 String dayShort(DateTime d) => _dayShort.format(d);
+
+final _dayShortYear = DateFormat('EEE d MMM yyyy');
+
+/// "Mon 29 Sep 2026".
+String dayShortYear(DateTime d) => _dayShortYear.format(d);
 String dayMonth(DateTime d) => _dayMonth.format(d);
 String monthYear(DateTime d) => _monthYear.format(d);
 

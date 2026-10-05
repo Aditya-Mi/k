@@ -85,6 +85,15 @@ class LearnedFormats {
       );
       if (read.status == ParseStatus.parsed) {
         marks = prefillMarks(text, read.fields);
+        // An AutoPay format's date is the due date.
+        if (t.kind == TemplateKind.mandate) {
+          marks = [
+            for (final m in marks)
+              m.field == MarkField.date
+                  ? FieldMark(MarkField.dueDate, m.start, m.end)
+                  : m,
+          ];
+        }
       }
     }
     return LearnedFormat(

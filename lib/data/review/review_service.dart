@@ -7,6 +7,8 @@ import '../../core/ids.dart';
 import '../db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../db/enums.dart';
 import '../ingest/ingestion_service.dart';
+import '../ingest/unknown_sender.dart';
+import '../repositories/bank_repository.dart';
 import '../repositories/ledger_repository.dart';
 import 'field_marks.dart';
 
@@ -25,10 +27,13 @@ class ReviewItem {
   final String text;
   final ParseResult guess;
 
-  String get bankId => raw.bankId!;
+  /// Null while the sender is one k doesn't know (design 03f).
+  String? get bankId => raw.bankId;
+  bool get unknownSender => raw.bankId == null;
 
   /// Short reason shown on the queue card.
   String get reason {
+    if (unknownSender) return 'New sender · reads like a payment';
     if (guess.missing.contains('template')) return 'No format matched';
     if (guess.fields.amountMinor == null) return 'Amount missing';
     if (guess.fields.direction == null) return 'Debit or credit unclear';
@@ -38,10 +43,27 @@ class ReviewItem {
 }
 
 /// What the owner confirmed in the editor.
+/// Which bank an unknown sender is: one k has ([id]) or a new one.
+class BankChoice {
+  const BankChoice.existing(String this.id)
+    : newName = null,
+      emailSender = null;
+  const BankChoice.create(String this.newName, {this.emailSender}) : id = null;
+
+  final String? id;
+  final String? newName;
+
+  /// Optional alert mail address/domain for a new bank.
+  final String? emailSender;
+}
+
 class ReviewDraft {
   const ReviewDraft({
     required this.marks,
     required this.direction,
+    this.kind = TemplateKind.transaction,
+    this.bank,
+    this.dueDate,
     this.amountMinor,
     this.accountId,
     this.payee,
@@ -54,6 +76,13 @@ class ReviewDraft {
   final List<FieldMark> marks;
   final Direction direction;
 
+  /// A payment, or an AutoPay alert ([TemplateKind.mandate], design 03i).
+  final TemplateKind kind;
+
+  /// Required when the sender is unknown.
+  final BankChoice? bank;
+  final DateTime? dueDate;
+
   /// Typed values; null → taken from the mark.
   final int? amountMinor;
   final String? accountId;
@@ -62,6 +91,21 @@ class ReviewDraft {
   final DateTime? occurredAt;
   final String? categoryId;
   final bool learn;
+
+  bool get isMandate => kind == TemplateKind.mandate;
+}
+
+/// What to put back when the owner taps Undo (design 03k).
+class ReviewUndo {
+  const ReviewUndo({required this.rawIds, this.templateId, this.unblock});
+
+  final List<String> rawIds;
+
+  /// A "skip messages like this" format to forget.
+  final String? templateId;
+
+  /// A sender core to stop treating as "not a bank".
+  final String? unblock;
 }
 
 class SaveResult {
@@ -78,29 +122,41 @@ class SaveResult {
 
 /// Review queue: list, prefill, save (+ learn a format), dismiss.
 class ReviewService {
-  ReviewService(this._db, this._ingest, this._ledger);
+  ReviewService(this._db, this._ingest, this._ledger, this._banks);
 
   final AppDatabase _db;
   final IngestionService _ingest;
   final LedgerRepository _ledger;
+  final BankRepository _banks;
 
   Stream<List<ReviewItem>> watchQueue() =>
       (_db.select(_db.rawMessages)
             ..where(
               (r) =>
                   r.deletedAt.isNull() &
-                  r.bankId.isNotNull() &
                   r.status.equalsValue(RawMessageStatus.needsReview),
             )
             ..orderBy([(r) => OrderingTerm.desc(r.receivedAt)]))
           .watch()
           .asyncMap((rows) async => [for (final r in rows) await item(r)]);
 
-  Future<ReviewItem> item(RawMessage raw) async => ReviewItem(
-    raw: raw,
-    text: normalizeText([?raw.subject, raw.body].join(' ')),
-    guess: await _ingest.parseRaw(raw),
-  );
+  Future<ReviewItem> item(RawMessage raw) async {
+    var guess = await _ingest.parseRaw(raw);
+    if (guess.status == ParseStatus.notBank) {
+      guess =
+          probeUnknown(_inputOf(raw)) ??
+          const ParseResult(
+            status: ParseStatus.needsReview,
+            missing: ['sender'],
+            note: unknownSenderNote,
+          );
+    }
+    return ReviewItem(
+      raw: raw,
+      text: normalizeText([?raw.subject, raw.body].join(' ')),
+      guess: guess,
+    );
+  }
 
   /// The draft's values as parser fields.
   ParsedFields fieldsOf(ReviewItem item, ReviewDraft d) {
@@ -112,13 +168,14 @@ class ReviewService {
     }
 
     final date = marked(MarkField.date);
+    final due = marked(MarkField.dueDate);
     final balance = marked(MarkField.balance);
     final payee = d.payee ?? marked(MarkField.payee);
     final amount = marked(MarkField.amount);
     return ParsedFields(
       amountMinor:
           d.amountMinor ?? (amount == null ? null : parseAmountMinor(amount)),
-      direction: d.direction,
+      direction: d.isMandate ? Direction.debit : d.direction,
       txnType: item.guess.fields.txnType ?? TxnType.other,
       last4: marked(MarkField.account),
       payee: payee == null ? null : cleanPayee(payee),
@@ -130,14 +187,40 @@ class ReviewService {
             item.raw.receivedAt,
           ),
       balanceMinor: balance == null ? null : parseAmountMinor(balance),
+      dueDate: d.dueDate ?? (due == null ? null : parseBankDate(due)?.value),
     );
   }
 
-  Future<SaveResult> save(ReviewItem item, ReviewDraft d) async {
-    final fields = fieldsOf(item, d);
+  Future<SaveResult> save(ReviewItem start, ReviewDraft d) async {
+    final fields = fieldsOf(start, d);
     if (fields.amountMinor == null) {
       throw ArgumentError('amount is required');
     }
+    if (d.isMandate && fields.dueDate == null) {
+      throw ArgumentError('due date is required');
+    }
+
+    // Unknown sender: the bank (new or not) and its sender rule come first,
+    // so the format below is learned for that bank.
+    var item = start;
+    final namedBank = item.unknownSender;
+    if (namedBank) {
+      final choice = d.bank;
+      if (choice == null) throw ArgumentError('pick the bank first');
+      final bankId = choice.id ?? await _banks.addBank(choice.newName!);
+      await _banks.addSender(bankId, Channel.sms, senderCore(item.raw.sender));
+      final mail = choice.emailSender?.trim();
+      if (mail != null && mail.isNotEmpty) {
+        await _banks.addSender(bankId, Channel.email, mail);
+      }
+      await _ingest.assignBank(item.raw.sender, bankId);
+      _ingest.invalidate();
+      final raw = await (_db.select(
+        _db.rawMessages,
+      )..where((r) => r.id.equals(item.raw.id))).getSingle();
+      item = await this.item(raw);
+    }
+    final bankId = item.bankId!;
 
     String? templateId;
     String? learnError;
@@ -150,9 +233,9 @@ class ReviewService {
             .insert(
               ParserTemplatesCompanion.insert(
                 id: Value(template.id),
-                bankId: item.bankId,
+                bankId: bankId,
                 channel: item.raw.channel,
-                kind: TemplateKind.transaction,
+                kind: d.kind,
                 name: 'Learned from ${item.raw.sender}',
                 pattern: template.pattern,
                 fieldDefaults: Value(jsonEncode(template.defaults)),
@@ -168,20 +251,23 @@ class ReviewService {
     await _ingest.logReviewed(
       item.raw,
       fields,
-      accountId: d.accountId,
-      categoryId: d.categoryId,
+      kind: d.kind,
+      accountId: d.isMandate ? null : d.accountId,
+      categoryId: d.isMandate ? null : d.categoryId,
       templateId: templateId,
     );
 
     // A category picked here is taught for the merchant too.
-    if (d.categoryId != null) {
+    if (d.categoryId != null && !d.isMandate) {
       final txnId = await _txnFor(item.raw.id);
       if (txnId != null) {
         await _ledger.setCategory(txnId, d.categoryId!, applyToMerchant: true);
       }
     }
 
-    final cleared = templateId == null ? 0 : await _ingest.reprocessReview();
+    final cleared = templateId == null && !namedBank
+        ? 0
+        : await _ingest.reprocessReview();
     return SaveResult(
       learned: templateId != null,
       learnError: learnError,
@@ -189,8 +275,82 @@ class ReviewService {
     );
   }
 
-  Future<void> notATransaction(ReviewItem item) =>
-      _ingest.markNotTransaction(item.raw.id);
+  /// Not a transaction (design 03j). With [skipSimilar], k also learns a
+  /// format that skips messages shaped like this one, and clears the
+  /// waiting ones it matches.
+  Future<ReviewUndo> notATransaction(
+    ReviewItem item, {
+    bool skipSimilar = false,
+  }) async {
+    await _ingest.markNotTransaction(item.raw.id);
+    if (!skipSimilar || item.bankId == null) {
+      return ReviewUndo(rawIds: [item.raw.id]);
+    }
+    final pattern = skipPattern(item.text);
+    final id = 'user_${newId()}';
+    if (!_skips(item, id, pattern)) return ReviewUndo(rawIds: [item.raw.id]);
+    await _db
+        .into(_db.parserTemplates)
+        .insert(
+          ParserTemplatesCompanion.insert(
+            id: Value(id),
+            bankId: item.bankId!,
+            channel: item.raw.channel,
+            kind: TemplateKind.ignore,
+            name: 'Skip, learned from ${item.raw.sender}',
+            pattern: pattern,
+            priority: const Value(50),
+            sampleRawMessageId: Value(item.raw.id),
+          ),
+        );
+    await (_db.update(_db.rawMessages)..where((r) => r.id.equals(item.raw.id)))
+        .write(RawMessagesCompanion(templateId: Value(id)));
+    _ingest.invalidate();
+    final cleared = await _ingest.reprocessReviewIds();
+    return ReviewUndo(rawIds: [item.raw.id, ...cleared], templateId: id);
+  }
+
+  /// "Not a bank": blocks the sender; its waiting messages leave Review.
+  Future<ReviewUndo> notABank(ReviewItem item) async {
+    final ids = await _ingest.markNotABank(item.raw.sender);
+    return ReviewUndo(rawIds: ids, unblock: senderCore(item.raw.sender));
+  }
+
+  Future<void> undo(ReviewUndo u) async {
+    if (u.templateId != null) {
+      final now = DateTime.now();
+      await (_db.update(
+        _db.parserTemplates,
+      )..where((t) => t.id.equals(u.templateId!))).write(
+        ParserTemplatesCompanion(updatedAt: Value(now), deletedAt: Value(now)),
+      );
+    }
+    if (u.unblock != null) await _ingest.blocked.remove(u.unblock!);
+    _ingest.invalidate();
+    await _ingest.restoreToReview(u.rawIds);
+  }
+
+  /// Proves a skip format reads its own sample as "not a transaction".
+  bool _skips(ReviewItem item, String id, String pattern) {
+    final check = ParserEngine(
+      banks: const [],
+      senderRules: [
+        SenderRule(item.bankId!, item.raw.channel, senderKeyOf(item.raw)),
+      ],
+      userTemplates: [
+        ParserTemplate(
+          id: id,
+          bankCode: item.bankId!,
+          channel: item.raw.channel,
+          kind: TemplateKind.ignore,
+          name: 'skip',
+          pattern: pattern,
+          priority: 50,
+        ),
+      ],
+    ).parse(_inputOf(item.raw));
+    return check.status == ParseStatus.nonTransaction && check.templateId == id;
+  }
 
   Future<String?> _txnFor(String rawId) async {
     final row = await (_db.select(
@@ -207,46 +367,49 @@ class ReviewService {
     ReviewDraft d,
     ParsedFields want,
   ) {
+    final bankId = item.bankId!;
     final values = <String, String>{
-      for (final m in d.marks) m.field.group: m.valueIn(item.text),
+      for (final m in d.marks)
+        // An AutoPay format reads the due date, not the message date.
+        if (!(d.isMandate && m.field == MarkField.date) &&
+            !(!d.isMandate && m.field == MarkField.dueDate))
+          m.field.group: m.valueIn(item.text),
     };
     if (!values.containsKey(Fields.amount)) {
       return (null, 'mark the amount in the message to learn this format');
     }
+    if (d.isMandate && !values.containsKey(Fields.dueDate)) {
+      return (null, 'mark the due date in the message to learn this format');
+    }
     String? lastError;
-    for (final captureDirection in [true, false]) {
+    // AutoPay alerts are always debits; no direction to capture.
+    for (final captureDirection in d.isMandate ? [false] : [true, false]) {
       final v = {...values};
       if (!captureDirection) v.remove(Fields.direction);
       if (captureDirection && !v.containsKey(Fields.direction)) continue;
       final generated = TemplateGenerator().generate(
         id: 'user_${newId()}',
-        bankCode: item.bankId,
+        bankCode: bankId,
         channel: item.raw.channel,
         sampleText: item.text,
         fieldValues: v,
-        defaults: captureDirection ? const {} : {'direction': d.direction.name},
+        kind: d.kind,
+        defaults: captureDirection || d.isMandate
+            ? const {}
+            : {'direction': d.direction.name},
       );
       if (!generated.ok) {
         lastError = generated.error;
         continue;
       }
       final t = generated.template!;
-      final check =
-          ParserEngine(
-            banks: const [],
-            senderRules: [
-              SenderRule(item.bankId, item.raw.channel, senderKeyOf(item.raw)),
-            ],
-            userTemplates: [t],
-          ).parse(
-            RawInput(
-              channel: item.raw.channel,
-              sender: item.raw.sender,
-              body: item.raw.body,
-              subject: item.raw.subject,
-              receivedAt: item.raw.receivedAt,
-            ),
-          );
+      final check = ParserEngine(
+        banks: const [],
+        senderRules: [
+          SenderRule(bankId, item.raw.channel, senderKeyOf(item.raw)),
+        ],
+        userTemplates: [t],
+      ).parse(_inputOf(item.raw));
       final got = check.fields;
       final mismatch = check.status != ParseStatus.parsed
           ? 'the new format does not read this message (${check.note ?? check.status.name})'
@@ -256,12 +419,37 @@ class ReviewService {
           ? 'debit/credit reads back differently'
           : (want.last4 != null && got.last4 != want.last4)
           ? 'account reads back differently'
+          : (d.isMandate && !_sameDay(got.dueDate, want.dueDate))
+          ? 'due date reads back differently'
           : null;
       if (mismatch == null) return (t, null);
       lastError = mismatch;
     }
     return (null, lastError);
   }
+}
+
+bool _sameDay(DateTime? a, DateTime? b) =>
+    a != null &&
+    b != null &&
+    a.year == b.year &&
+    a.month == b.month &&
+    a.day == b.day;
+
+RawInput _inputOf(RawMessage raw) => RawInput(
+  channel: raw.channel,
+  sender: raw.sender,
+  body: raw.body,
+  subject: raw.subject,
+  receivedAt: raw.receivedAt,
+);
+
+/// A skip format from one sample: the message's first 20 words in order,
+/// any word with a digit (amounts, dates, account numbers) left free.
+/// Anchored at the start, so only messages shaped like the sample match.
+String skipPattern(String text) {
+  final words = text.split(' ').where((w) => w.isNotEmpty).take(20);
+  return '^${words.map((w) => w.contains(RegExp(r'\d')) ? r'\S+' : RegExp.escape(w)).join(r'\s+')}';
 }
 
 /// A sender rule that matches this exact sender, for verification only.
