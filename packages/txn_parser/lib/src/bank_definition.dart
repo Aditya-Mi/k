@@ -12,6 +12,7 @@ class BankDefinition {
     required this.smsSenders,
     required this.emailSenders,
     required this.templates,
+    this.kind = InstitutionKind.bank,
   });
 
   final String code;
@@ -23,6 +24,7 @@ class BankDefinition {
   /// Full addresses or domains, e.g. 'axisbank.com'.
   final List<String> emailSenders;
   final List<ParserTemplate> templates;
+  final InstitutionKind kind;
 
   List<SenderRule> get senderRules => [
     for (final p in smsSenders) SenderRule(code, Channel.sms, p),
