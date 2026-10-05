@@ -48,7 +48,7 @@ class EmailSettings extends StatelessWidget {
               title: inboxes.isEmpty
                   ? 'Connect an inbox'
                   : 'Connect another inbox',
-              subtitle: 'Bank alert emails, merged with their SMS',
+              subtitle: 'Bank alert emails',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   fullscreenDialog: true,
@@ -161,10 +161,9 @@ class EmailSettings extends StatelessWidget {
             title: Text('Disconnect ${a.row.email}?'),
             content: Text(
               a.row.authType == EmailAuthType.oauth
-                  ? 'k stops reading this inbox and gives up its Gmail '
-                        'access. Payments already logged stay.'
+                  ? 'k stops reading this inbox. Logged payments stay.'
                   : 'k stops reading this inbox and forgets its password. '
-                        'Payments already logged stay.',
+                        'Logged payments stay.',
             ),
             actions: [
               TextButton(

@@ -163,9 +163,7 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
           Text(
             _editing
                 ? 'Renaming changes it on every payment filed here.'
-                : 'Categories stay plain: amounts carry the colour. Pick '
-                      '“Use for all” on a payment to file a payee here from '
-                      'now on.',
+                : 'Use “Use for all” on a payment to file a payee here.',
             style: t.meta.copyWith(color: c.text3, height: 1.35),
           ),
           if (_editing) ...[
@@ -187,10 +185,7 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              widget.category!.hidden
-                  ? 'Hidden: past payments keep it, but it isn’t offered.'
-                  : 'Hiding keeps it on past payments. It stops being offered, '
-                        'and payees filed here automatically go uncategorized.',
+              widget.category!.hidden ? 'Hidden: past payments keep it.' : 'Past payments keep it. Payees filed here go uncategorized.',
               style: t.meta,
             ),
           ],

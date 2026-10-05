@@ -6,6 +6,7 @@ import 'package:k/data/db/enums.dart';
 import 'package:k/data/emis/emi_schedule.dart';
 import 'package:k/data/emis/emi_service.dart';
 import 'package:k/data/ingest/card_bill.dart';
+import 'package:k/data/ingest/transfer_linker.dart';
 import 'package:k/data/ingest/ingestion_service.dart';
 import 'package:k/data/repositories/ledger_models.dart';
 import 'package:k/data/repositories/ledger_repository.dart';
@@ -80,18 +81,38 @@ void main() {
     expect(looksLikeCardBill('BILLDESK CC PAYMENT', ''), isTrue);
     expect(looksLikeCardBill('Credence Stores', ''), isFalse);
     expect(looksLikeCardBill('AMAZON', 'debited A/c XX1111'), isFalse);
+    // Card boilerplate in a message is not a bill payment.
+    expect(
+      looksLikeCardBill('SWIGGY', 'Not you? Call us to block your credit card'),
+      isFalse,
+    );
+    expect(
+      looksLikeCardBill('ZEPTO', 'Get a lifetime free Credit Card. Apply now'),
+      isFalse,
+    );
     expect(maskedDigits('to card XX5678 from XX1111', own: '1111'), {'5678'});
   });
 
-  test('paying the card bill from savings is not spent', () async {
+  test('with no card in k, a CRED payment stays a payment', () async {
     await ingest.ingest(
       axisOut(12300, DateTime(2026, 10, 2, 10, 4), payee: 'CRED Club'),
     );
     final rows = await txns();
+    expect(rows.single.isCardBill, isFalse);
+    expect(rows.single.isTransfer, isFalse);
+    expect(summarize(oct.from, rows).spentMinor, 1230000);
+  });
+
+  test('paying the card bill from savings is not spent', () async {
+    await ingest.ingest(cardSpend(1299, DateTime(2026, 10, 1, 12)));
+    await ingest.ingest(
+      axisOut(12300, DateTime(2026, 10, 2, 10, 4), payee: 'CRED Club'),
+    );
+    final rows = (await txns()).where((r) => r.isDebit && r.isCardBill);
     expect(rows.single.isCardBill, isTrue);
     expect(rows.single.countsInTotals, isFalse);
     expect(rows.single.category?.id, cardBillCategoryId);
-    expect(summarize(oct.from, rows).spentMinor, 0);
+    expect(rows.single.category?.id, cardBillCategoryId);
   });
 
   test('with the card in k, a bill payment adds the card side', () async {
@@ -108,24 +129,45 @@ void main() {
     expect(credit.isRefund, isFalse);
   });
 
-  test('a lone bill payment joins the card\'s payment received', () async {
-    // Paid before the card was in k: logged alone.
+  test(
+    'a bill paid before the card was in k is picked up once it is',
+    () async {
+      await ingest.ingest(
+        axisOut(12300, DateTime(2026, 10, 2, 10, 4), payee: 'CRED Club'),
+      );
+      expect((await txns()).single.isCardBill, isFalse);
+      await ingest.ingest(cardSpend(1299, DateTime(2026, 10, 2, 12)));
+      // Start-up backfill.
+      await TransferLinker(db).markCardBillsAll();
+      final bill = (await txns()).where((r) => r.isCardBill).toList();
+      expect(bill, hasLength(2));
+      expect(bill.first.transferId, bill.last.transferId);
+      final credit = bill.firstWhere((r) => !r.isDebit);
+      expect(credit.account?.last4, '5678');
+      expect(credit.partnerAccount?.last4, '1111');
+    },
+  );
+
+  test('1.1.0 false card bills go back to payments, once', () async {
+    final linker = TransferLinker(db);
     await ingest.ingest(
-      axisOut(12300, DateTime(2026, 10, 2, 10, 4), payee: 'CRED Club'),
+      axisOut(41200, DateTime(2026, 10, 2, 10, 4), payee: 'ZEPTO'),
     );
-    await ingest.ingest(cardSpend(1299, DateTime(2026, 10, 2, 12)));
-    // The card's own "payment received" (no built-in format yet).
-    await ingest.addManual(
-      direction: Direction.credit,
-      amountMinor: 1230000,
-      occurredAt: DateTime(2026, 10, 3, 9),
-      accountId: await cardId(),
-    );
-    final bill = (await txns()).where((r) => r.isCardBill).toList();
-    expect(bill, hasLength(2));
-    expect(bill.first.transferId, bill.last.transferId);
-    final credit = bill.firstWhere((r) => !r.isDebit);
-    expect(credit.partnerAccount?.last4, '1111');
+    final id = (await txns()).single.id;
+    // What 1.1.0 did: marked it a lone card bill (email boilerplate).
+    await linker.markCardBill(id, force: true);
+    expect((await txns()).single.isCardBill, isTrue);
+
+    await linker.markCardBillsAll();
+    final row = (await txns()).single;
+    expect(row.isCardBill, isFalse);
+    expect(row.isTransfer, isFalse);
+    expect(row.category?.id, isNot(cardBillCategoryId));
+
+    // Runs once: a bill the owner marks afterwards stays.
+    await linker.markCardBill(id, force: true);
+    await linker.markCardBillsAll();
+    expect((await txns()).single.isCardBill, isTrue);
   });
 
   test('card refunds lower spent; they are not money in', () async {

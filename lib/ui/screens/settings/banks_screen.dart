@@ -49,8 +49,7 @@ class _BanksScreenState extends State<BanksScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(0, 16, 0, 24),
                 child: Text(
-                  'k reads alerts from every bank here. Tap one to add a '
-                  'sender when it starts texting or mailing from a new name.',
+                  'Tap a bank to add a sender.',
                   style: t.meta.copyWith(fontSize: 13, color: c.text2),
                 ),
               ),

@@ -61,7 +61,7 @@ class _BackupSettingsState extends State<BackupSettings> {
               iconColor: error == null ? null : c.alert,
               title: 'Google Drive backup',
               subtitle: !on
-                  ? 'Off. Daily, encrypted, to your own Drive.'
+                  ? 'Off'
                   : error ??
                         [
                           'Daily, encrypted',

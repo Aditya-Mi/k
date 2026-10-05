@@ -11,9 +11,29 @@ import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/text_prompt.dart';
-import '../settings/settings_screen.dart';
 import 'add_account_screen.dart';
 import 'card_screen.dart';
+
+/// Banks, wallets and cash, minus what cards owe. Accounts with no known
+/// balance, and cards with no limit set, are left out.
+({int totalMinor, int owedMinor}) accountsTotal(List<AccountRowData> rows) {
+  var have = 0;
+  var owed = 0;
+  for (final r in rows) {
+    final b = r.balance;
+    if (b == null) continue;
+    if (r.account.isCreditCard) {
+      owed += r.account.owedMinor(b.amountMinor) ?? 0;
+    } else {
+      have += b.amountMinor;
+    }
+  }
+  return (totalMinor: have - owed, owedMinor: owed);
+}
+
+/// "−₹1,234" for a negative amount.
+String signedInr(int minor, {bool paise = false}) =>
+    '${minor < 0 ? '−' : ''}${inr(minor.abs(), paise: paise)}';
 
 typedef AccountRowData = ({
   AccountView account,
@@ -22,7 +42,7 @@ typedef AccountRowData = ({
 });
 
 /// Own accounts with their latest balance; cards show what's owed (design
-/// 12). A tab on home ([asTab]: no back, settings in the bar).
+/// 12). A tab on home ([asTab]: no back button).
 class AccountsScreen extends StatelessWidget {
   const AccountsScreen({super.key, this.asTab = false});
 
@@ -51,7 +71,6 @@ class AccountsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.kt;
-    final c = context.k;
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -72,14 +91,6 @@ class AccountsScreen extends StatelessWidget {
               MaterialPageRoute<void>(builder: (_) => const AddAccountScreen()),
             ),
           ),
-          if (asTab)
-            IconButton(
-              tooltip: 'Settings',
-              icon: const Icon(Icons.settings_outlined),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
-              ),
-            ),
           const SizedBox(width: 4),
         ],
       ),
@@ -92,9 +103,7 @@ class AccountsScreen extends StatelessWidget {
             return const Center(
               child: EmptyState(
                 title: 'No accounts yet',
-                body:
-                    'Accounts appear as bank messages arrive, or add one '
-                    'with +.',
+                body: 'Accounts appear as bank messages arrive.',
               ),
             );
           }
@@ -124,9 +133,21 @@ class AccountsScreen extends StatelessWidget {
                   ),
                 )
               : accountActions(context, r, list);
+          final total = accountsTotal(list);
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
+              const SizedBox(height: 8),
+              Text('Total', style: t.meta),
+              Text(
+                signedInr(total.totalMinor, paise: true),
+                style: t.amountHero.copyWith(fontSize: 34),
+              ),
+              if (total.owedMinor > 0)
+                Text(
+                  'After ${inr(total.owedMinor, paise: true)} owed on cards',
+                  style: t.meta,
+                ),
               if (banks.isNotEmpty) ...[
                 head('Bank accounts'),
                 for (final r in banks)
@@ -141,16 +162,6 @@ class AccountsScreen extends StatelessWidget {
                 head('Cash'),
                 for (final r in cash) _AccountRow(row: r, onTap: () => open(r)),
               ],
-              const SizedBox(height: 24),
-              Text(
-                'Balances come from your banks\' messages; k estimates '
-                'between them. A card shows what you owe: its limit minus the '
-                'available limit the bank reports. Paying the bill moves '
-                'money from savings to the card, so it is not counted as '
-                'spent. Cash goes up with ATM withdrawals and down with cash '
-                'payments you add.',
-                style: t.meta.copyWith(color: c.text3),
-              ),
               const SizedBox(height: 24),
             ],
           );
@@ -221,8 +232,7 @@ Future<void> accountActions(
           initialMinor: r.account.creditLimitMinor,
           allowOverdrawn: false,
           note:
-              'The total limit on the card. With the available limit the '
-              'bank reports, k works out what you owe.',
+              'Used with the bank\'s available limit to work out what you owe.',
         ),
       );
       if (minor != null) await ledger.setCreditLimit(r.account.id, minor);
@@ -277,9 +287,8 @@ Future<void> _merge(
     builder: (context) => AlertDialog(
       title: const Text('Merge accounts?'),
       content: Text(
-        'Payments on ${r.account.long} move to ${target.long}, and future '
-        'messages for ${r.account.short} are logged there. This can\'t be '
-        'undone from the app yet.',
+        'Payments and future messages for ${r.account.short} move to '
+        '${target.long}. This can\'t be undone.',
       ),
       actions: [
         TextButton(
@@ -322,20 +331,17 @@ class _AccountRow extends StatelessWidget {
     const label = 'Balance';
     final meta = a.isCash
         ? (b == null || b.anchorAt.millisecondsSinceEpoch == 0
-              ? 'ATM withdrawals add, cash payments you log subtract'
-              : 'Counted by you ${_when(b.anchorAt)}'
-                    '${b.estimated ? ', then ATM and cash payments' : ''}')
+              ? 'Not counted yet · tap to set'
+              : 'Counted ${_when(b.anchorAt)}')
         : b == null
         ? 'No balance yet · tap to set'
         : switch (b.source) {
             BalanceSource.bank when b.estimated =>
-              '$label · estimated from ${b.estimatedFrom} '
-                  '${b.estimatedFrom == 1 ? 'payment' : 'payments'} since '
-                  '${_when(b.anchorAt)}',
+              '$label · estimated since ${_when(b.anchorAt)}',
             BalanceSource.bank => '$label · bank, ${_when(b.anchorAt)}',
             BalanceSource.manual when b.estimated =>
-              '$label · set by you ${_when(b.anchorAt)}, estimated since',
-            BalanceSource.manual => '$label · set by you ${_when(b.anchorAt)}',
+              '$label · set ${_when(b.anchorAt)}, estimated since',
+            BalanceSource.manual => '$label · set ${_when(b.anchorAt)}',
           };
     final overdrawn = b != null && b.amountMinor < 0 && !a.isCash;
     return _shell(
@@ -372,7 +378,7 @@ class _AccountRow extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           owed == null && b != null && limit == null
-              ? '${cardLimitLine(a, b)} · set the limit to see what you owe'
+              ? '${cardLimitLine(a, b)} · set the limit'
               : cardLimitLine(a, b),
           style: t.meta,
         ),
@@ -550,11 +556,7 @@ class _BalanceDialogState extends State<BalanceDialog> {
           ],
           if (_overdrawn) ...[
             const SizedBox(height: 8),
-            Text(
-              'Overdrawn: the account owes the bank this much. Later payments '
-              'still add up from it.',
-              style: t.meta,
-            ),
+            Text('Overdrawn: you owe the bank this much.', style: t.meta),
           ],
         ],
       ),

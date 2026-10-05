@@ -3,7 +3,7 @@ name: Release
 # Run by hand from main (Actions → Release → Run workflow). One run does it
 # all, in this order, so a failure never leaves a half release:
 #   next version → analyze + tests → signed APK → signing-key check
-#   → commit pubspec + tag → GitHub release → update gist.
+#   → smoke test on an emulator → commit pubspec + tag → GitHub release → update gist.
 #
 # Versioning: semver x.y.z in pubspec.yaml is the version name. The build
 # number (Android versionCode) counts releases: 1 for the first, then +1 per
@@ -167,6 +167,36 @@ jobs:
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "sha256=$(sha256sum "$name" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
           echo "size=$(stat -c %s "$name")" >> "$GITHUB_OUTPUT"
+
+      # Same code and R8 shrinking as the release, built for the x86_64
+      # emulator (the published APK is arm64 only). Stops the release if
+      # the app crashes on start or the background SMS worker fails.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build smoke-test APK (x86_64)
+        env:
+          K_KEYSTORE_PASSWORD: ${{ secrets.K_KEYSTORE_PASSWORD }}
+          K_KEY_ALIAS: ${{ secrets.K_KEY_ALIAS }}
+          K_KEY_PASSWORD: ${{ secrets.K_KEY_PASSWORD }}
+        run: |
+          flutter build apk --release \
+            --build-name=${{ steps.v.outputs.version }} \
+            --build-number=${{ steps.v.outputs.code }} \
+            --target-platform android-x64
+
+      - name: Smoke test on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          disable-animations: true
+          script: tool/smoke_test.sh build/app/outputs/flutter-apk/app-release.apk
 
       - name: Commit version and tag
         env:

@@ -12,6 +12,7 @@ import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/month_note_panel.dart';
 import '../../widgets/txn_row.dart';
+import '../accounts/accounts_screen.dart';
 import '../txn_detail/txn_detail_screen.dart';
 
 /// Where the month went (design 05): the month panel, six months of spend,
@@ -130,7 +131,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       label: shownCurrent ? 'So far this month' : 'All month',
                       showLeft: true,
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 8),
+                    const _AccountsTotal(),
+                    const SizedBox(height: 20),
                     _Section(
                       title: 'Last 6 months',
                       meta: r.trendAverage == null
@@ -237,6 +240,41 @@ class _SummaryScreenState extends State<SummaryScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// "In your accounts · ₹49,890 ›": the Accounts total, opens Accounts.
+class _AccountsTotal extends StatelessWidget {
+  const _AccountsTotal();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.kt;
+    return StreamBuilder<List<AccountRowData>>(
+      stream: AccountsScreen.rows(),
+      builder: (context, snap) {
+        final rows = snap.data;
+        if (rows == null || rows.every((r) => r.balance == null)) {
+          return const SizedBox.shrink();
+        }
+        return FieldRow(
+          label: 'In your accounts',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const AccountsScreen()),
+          ),
+          value: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                signedInr(accountsTotal(rows).totalMinor),
+                style: t.amountRow,
+              ),
+              Icon(Icons.chevron_right_rounded, color: context.k.text2),
+            ],
+          ),
+        );
+      },
     );
   }
 }

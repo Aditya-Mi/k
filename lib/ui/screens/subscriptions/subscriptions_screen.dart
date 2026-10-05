@@ -59,10 +59,7 @@ class SubscriptionsScreen extends StatelessWidget {
                     child: EmptyState(
                       title: 'Nothing recurring yet',
                       body:
-                          'k spots charges that repeat, and AutoPay alerts '
-                          'from your bank. After a couple of months of '
-                          'payments, suggestions show up here to confirm. '
-                          'EMIs show here too.',
+                          'Repeating charges, AutoPays and EMIs show up here.',
                       action: OutlinedButton.icon(
                         onPressed: () => _add(context),
                         icon: const Icon(Icons.add_rounded, size: 20),
@@ -110,8 +107,7 @@ class SubscriptionsScreen extends StatelessWidget {
                     _ListHead(reminderDays: o.reminderDays),
                     const SizedBox(height: 12),
                     Text(
-                      'Each bar is one billing cycle. The filled part is the '
-                      'time left before the next charge.',
+                      'Each bar shows time left before the next charge.',
                       style: t.meta.copyWith(
                         color: context.k.text3,
                         height: 1.35,

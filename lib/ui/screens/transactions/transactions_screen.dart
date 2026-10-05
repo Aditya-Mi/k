@@ -17,6 +17,7 @@ import '../../widgets/month_note_panel.dart';
 import '../../widgets/txn_row.dart';
 import '../../../di.dart';
 import '../settings/connect_inbox_screen.dart';
+import '../settings/settings_screen.dart';
 import '../txn_detail/txn_detail_screen.dart';
 import 'add_payment_screen.dart';
 import 'transactions_cubit.dart';
@@ -133,6 +134,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     icon: const Icon(Icons.search_rounded),
                     onPressed: () => setState(() => _searching = true),
                   ),
+                if (!_searching)
+                  IconButton(
+                    tooltip: 'Settings',
+                    icon: const Icon(Icons.settings_outlined),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const SettingsScreen(),
+                      ),
+                    ),
+                  ),
                 const SizedBox(width: 4),
               ],
             ),
@@ -219,7 +230,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             ),
             if (showUpcoming) ...[
               const SliverToBoxAdapter(
-                child: DayHeader(label: 'Upcoming · from bank AutoPay alerts'),
+                child: DayHeader(label: 'Upcoming · AutoPay'),
               ),
               SliverList.builder(
                 itemCount: s.upcoming.length,
@@ -234,7 +245,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       : 'No payments logged this month',
                   body: s.narrowed
                       ? null
-                      : 'New bank alerts will appear here as they arrive.',
+                      : 'Bank alerts appear here as they arrive.',
                 ),
               )
             else

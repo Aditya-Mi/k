@@ -82,8 +82,8 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
           Text(
-            "k reads only mail from your banks' alert addresses, on this "
-            'phone. Nothing is sent anywhere.',
+            "k reads only your banks' alert mail, on this phone. "
+            'Nothing leaves it.',
             style: t.body.copyWith(color: c.text2, fontSize: 14),
           ),
           const SizedBox(height: 16),
@@ -92,8 +92,8 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
             title: 'Sign in with Google',
             tag: 'Recommended',
             subtitle:
-                "Read-only Gmail access. Google will say k isn't verified: "
-                "it's your own app, tap Advanced → Go to k.",
+                "Read-only. If Google says k isn't verified, tap "
+                'Advanced → Go to k.',
             busy: _signingIn,
             onTap: _signingIn ? null : _google,
           ),
@@ -101,9 +101,7 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
           _Option(
             icon: Icons.key_outlined,
             title: 'Use an app password',
-            subtitle:
-                'Works for Gmail with 2-Step Verification, and other IMAP '
-                'mail. No Google sign-in.',
+            subtitle: 'For Gmail with 2-Step Verification, or other IMAP mail',
             onTap: () async {
               final done = await Navigator.of(context).push<bool>(
                 MaterialPageRoute(
@@ -134,8 +132,7 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Checks every hour, and when you open k. A payment that comes by '
-            'SMS and email is logged once.',
+            'Checked hourly and when k opens.',
             style: t.meta.copyWith(color: c.text3, height: 1.35),
           ),
         ],
@@ -385,8 +382,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            "k signs in to imap.gmail.com and reads only your banks' alert "
-            "mail. The password stays in the phone's secure storage.",
+            'The password stays in secure storage on this phone.',
             style: t.meta.copyWith(color: c.text3, height: 1.35),
           ),
         ],
@@ -444,15 +440,15 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
           content: Text(
             logged == 0
                 ? 'Connected. No new payments in the mail.'
-                : 'Connected. $logged new ${logged == 1 ? 'payment' : 'payments'} logged.',
+                : 'Connected. $logged ${logged == 1 ? 'payment' : 'payments'} logged.',
           ),
         ),
       );
     } on EmailAuthException {
       setState(
         () => _error =
-            'Google refused it. Check the address, and that this is an app '
-            'password (not your Google password).',
+            'Google refused it. Check the address and use an app password, '
+            'not your Google password.',
       );
     } catch (_) {
       setState(() => _error = "Couldn't reach Gmail. Check the connection.");

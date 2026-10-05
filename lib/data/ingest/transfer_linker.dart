@@ -44,10 +44,12 @@ class TransferLinker {
   }
 
   /// A debit that pays a credit card bill ([looksLikeCardBill] on its payee
-  /// or message [text]) becomes a self transfer to that card. When the card
-  /// is in k (named by its digits, or the only one) it gets the card's
-  /// matching credit, or a card side added by k; else it's logged alone.
-  /// Returns true if marked.
+  /// or SMS [text]) becomes a self transfer to that card: the card's
+  /// matching credit, or a card side added by k. Only while a credit card
+  /// is in k: with none, a "bill" match is far more likely a false one (a
+  /// payee or message that just mentions cards) than a card k can't see.
+  /// When the card isn't named by digits and there are several, the bill
+  /// is logged alone. Returns true if marked.
   ///
   /// [force]: the owner said so ("Card bill payment" on detail), so the
   /// payee doesn't have to look like one and an unlinked row qualifies.
@@ -73,18 +75,13 @@ class TransferLinker {
             _db.merchants,
           )..where((m) => m.id.equals(t.merchantId!))).getSingleOrNull();
     final payee = [t.payeeRaw, merchant?.displayName].nonNulls.join(' ');
-    if (!force && !looksLikeCardBill(payee, text)) return false;
+    final cards = await _cards();
+    if (!force && (cards.isEmpty || !looksLikeCardBill(payee, text))) {
+      return false;
+    }
     final own = await (_db.select(
       _db.accounts,
     )..where((a) => a.id.equals(t.accountId!))).getSingleOrNull();
-    final cards =
-        await (_db.select(_db.accounts)..where(
-              (a) =>
-                  a.deletedAt.isNull() &
-                  a.mergedIntoId.isNull() &
-                  a.type.equalsValue(AccountType.creditCard),
-            ))
-            .get();
     final named = maskedDigits(text, own: own?.last4);
     final card =
         cards.where((c) => named.contains(c.last4)).firstOrNull ??
@@ -134,13 +131,15 @@ class TransferLinker {
   /// Backfill: bill payments logged before k knew them, reading each
   /// candidate's bank messages too. Returns how many were marked.
   Future<int> markCardBillsAll() async {
+    await _repairCardBills();
+    if ((await _cards()).isEmpty) return 0;
     final rows = await _db
         .customSelect(
           'SELECT t.id, group_concat(r.body, \' \') AS text '
           'FROM transactions t '
           'JOIN accounts a ON a.id = t.account_id '
           'LEFT JOIN transaction_sources s ON s.transaction_id = t.id '
-          'LEFT JOIN raw_messages r ON r.id = s.raw_message_id '
+          "LEFT JOIN raw_messages r ON r.id = s.raw_message_id AND r.channel = 'sms' "
           'WHERE t.deleted_at IS NULL AND t.transfer_id IS NULL '
           "AND t.auto_transfer_off = 0 AND t.direction = 'debit' "
           "AND a.type NOT IN ('creditCard', 'cash') "
@@ -153,6 +152,68 @@ class TransferLinker {
       if (await markCardBill(r.read<String>('id'), text: text)) n++;
     }
     return n;
+  }
+
+  Future<List<Account>> _cards() =>
+      (_db.select(_db.accounts)..where(
+            (a) =>
+                a.deletedAt.isNull() &
+                a.mergedIntoId.isNull() &
+                a.type.equalsValue(AccountType.creditCard),
+          ))
+          .get();
+
+  static const _repairKey = 'repair.cardBills.v1';
+
+  /// Once: 1.1.0 marked debits as card bills from email boilerplate and
+  /// with no card in k. Bills k marked on its own that the stricter rule
+  /// rejects go back to being payments (category re-resolved; free to be
+  /// auto-linked again). Ones the owner changed the category of are kept.
+  Future<int> _repairCardBills() async {
+    final done = await (_db.select(
+      _db.appSettings,
+    )..where((s) => s.key.equals(_repairKey))).getSingleOrNull();
+    if (done != null) return 0;
+    final hasCards = (await _cards()).isNotEmpty;
+    final rows = await _db
+        .customSelect(
+          'SELECT t.id, t.payee_raw, m.display_name, '
+          "group_concat(CASE WHEN r.channel = 'sms' THEN r.body END, ' ') AS text "
+          'FROM transactions t '
+          'JOIN accounts a ON a.id = t.account_id '
+          'LEFT JOIN merchants m ON m.id = t.merchant_id '
+          'LEFT JOIN transaction_sources s ON s.transaction_id = t.id '
+          'LEFT JOIN raw_messages r ON r.id = s.raw_message_id '
+          'WHERE t.deleted_at IS NULL AND t.transfer_id IS NOT NULL '
+          "AND t.direction = 'debit' AND t.user_edited = 0 "
+          "AND t.category_id = '$cardBillCategoryId' "
+          "AND a.type NOT IN ('creditCard', 'cash') "
+          'GROUP BY t.id',
+        )
+        .get();
+    var undone = 0;
+    await _db.transaction(() async {
+      for (final r in rows) {
+        final payee = [
+          r.readNullable<String>('payee_raw'),
+          r.readNullable<String>('display_name'),
+        ].nonNulls.join(' ');
+        final text = r.readNullable<String>('text') ?? '';
+        if (hasCards && looksLikeCardBill(payee, text)) continue;
+        await unlink(r.read<String>('id'), blockRelink: false);
+        undone++;
+      }
+      await _db
+          .into(_db.appSettings)
+          .insertOnConflictUpdate(
+            AppSettingsCompanion.insert(
+              key: _repairKey,
+              value: '$undone',
+              updatedAt: Value(DateTime.now()),
+            ),
+          );
+    });
+    return undone;
   }
 
   /// Backfill: pairs every eligible unlinked transaction. Returns pairs made.
@@ -250,56 +311,62 @@ class TransferLinker {
   });
 
   /// "Not a self transfer": unlinks both sides and stops auto-linking them.
-  Future<void> unlink(String txnId) => _db.transaction(() async {
-    final t = await _byId(txnId);
-    final transferId = t?.transferId;
-    if (transferId == null) return;
-    final sides = await (_db.select(
-      _db.transactions,
-    )..where((o) => o.transferId.equals(transferId))).get();
-    final resolver = await CategoryResolver.load(_db);
-    final now = DateTime.now();
-    for (final side in sides) {
-      // A side the owner added only existed for this transfer.
-      if (side.origin == TxnOrigin.user) {
-        await (_db.update(
+  /// [blockRelink]: the owner unlinked it, so it's never auto-linked again.
+  Future<void> unlink(String txnId, {bool blockRelink = true}) =>
+      _db.transaction(() async {
+        final t = await _byId(txnId);
+        final transferId = t?.transferId;
+        if (transferId == null) return;
+        final sides = await (_db.select(
           _db.transactions,
-        )..where((o) => o.id.equals(side.id))).write(
-          TransactionsCompanion(
-            deletedAt: Value(now),
-            transferId: const Value(null),
-            updatedAt: Value(now),
-          ),
-        );
-        continue;
-      }
-      String? category;
-      if (!side.userEdited &&
-          (side.categoryId == transfersCategoryId ||
-              side.categoryId == cardBillCategoryId)) {
-        final merchant = side.merchantId == null
-            ? null
-            : await (_db.select(
-                _db.merchants,
-              )..where((m) => m.id.equals(side.merchantId!))).getSingleOrNull();
-        category = resolver.resolve(
-          merchantKey: merchant?.normalizedKey,
-          payee: side.payeeRaw,
-          txnType: side.txnType,
-        );
-      }
-      await (_db.update(
-        _db.transactions,
-      )..where((o) => o.id.equals(side.id))).write(
-        TransactionsCompanion(
-          transferId: const Value(null),
-          autoTransferOff: const Value(true),
-          categoryId: category == null ? const Value.absent() : Value(category),
-          updatedAt: Value(now),
-        ),
-      );
-    }
-  });
+        )..where((o) => o.transferId.equals(transferId))).get();
+        final resolver = await CategoryResolver.load(_db);
+        final now = DateTime.now();
+        for (final side in sides) {
+          // A side the owner added only existed for this transfer.
+          if (side.origin == TxnOrigin.user) {
+            await (_db.update(
+              _db.transactions,
+            )..where((o) => o.id.equals(side.id))).write(
+              TransactionsCompanion(
+                deletedAt: Value(now),
+                transferId: const Value(null),
+                updatedAt: Value(now),
+              ),
+            );
+            continue;
+          }
+          String? category;
+          if (!side.userEdited &&
+              (side.categoryId == transfersCategoryId ||
+                  side.categoryId == cardBillCategoryId)) {
+            final merchant = side.merchantId == null
+                ? null
+                : await (_db.select(_db.merchants)
+                        ..where((m) => m.id.equals(side.merchantId!)))
+                      .getSingleOrNull();
+            category = resolver.resolve(
+              merchantKey: merchant?.normalizedKey,
+              payee: side.payeeRaw,
+              txnType: side.txnType,
+            );
+          }
+          await (_db.update(
+            _db.transactions,
+          )..where((o) => o.id.equals(side.id))).write(
+            TransactionsCompanion(
+              transferId: const Value(null),
+              autoTransferOff: blockRelink
+                  ? const Value(true)
+                  : const Value.absent(),
+              categoryId: category == null
+                  ? const Value.absent()
+                  : Value(category),
+              updatedAt: Value(now),
+            ),
+          );
+        }
+      });
 
   Future<void> _link(List<Transaction> sides, {String? category}) async {
     final id = newId();

@@ -350,15 +350,14 @@ class _Loaded extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         detail.sourcesFromPartner
-                            ? 'Your bank sent no message for this side. It '
-                                  'mirrors the other side of the transfer:'
-                            : 'Your bank sent no message for this.',
+                            ? 'Mirrors the other side of the transfer:'
+                            : 'No bank message for this.',
                         style: t.body.copyWith(color: c.text2),
                       ),
                     ] else if (sources.length > 1) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Same amount, account and time, so they were merged into one',
+                        'Same amount, account and time, merged into one',
                         style: t.body.copyWith(color: c.text2),
                       ),
                     ],
@@ -492,9 +491,7 @@ class _Loaded extends StatelessWidget {
                     value: forMerchant,
                     onChanged: (v) => setSheet(() => forMerchant = v),
                     title: Text('Use for all ${txn.payee}'),
-                    subtitle: const Text(
-                      'Past and future payments, unless you set one yourself',
-                    ),
+                    subtitle: const Text('Past and future payments'),
                   ),
                 Flexible(
                   child: ListView(
@@ -536,9 +533,7 @@ class _Loaded extends StatelessWidget {
       context,
       title: 'Rename payee',
       initial: txn.payee,
-      help:
-          'Changes every payment to them. A name another payee already has '
-          'makes them one.',
+      help: 'Changes every payment to them.',
     );
     if (name == null || name.trim().isEmpty || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -569,78 +564,83 @@ class _Loaded extends StatelessWidget {
               a.id != txn.account?.id && !a.isCash && !withRow.contains(a.id),
         )
         .toList();
-    final picked = await showModalBottomSheet<({String? partner, String? addOn})>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+    final picked =
+        await showModalBottomSheet<({String? partner, String? addOn})>(
+          context: context,
+          isScrollControlled: true,
+          builder: (context) => SafeArea(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+              ),
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                    child: Text(
+                      txn.isDebit
+                          ? 'Where did it go?'
+                          : 'Where did it come from?',
+                      style: t.title,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text(
+                      candidates.isEmpty
+                          ? 'No ${inrRow(txn.amountMinor)} '
+                                '${txn.isDebit ? 'credit' : 'debit'} on another '
+                                'account within 3 days.'
+                          : 'Same amount on your other accounts within 3 days.',
+                      style: t.meta,
+                    ),
+                  ),
+                  for (final o in candidates)
+                    ListTile(
+                      leading: NoteChip(
+                        amountMinor: o.amountMinor,
+                        style: o.direction == Direction.debit
+                            ? NoteChipStyle.filled
+                            : NoteChipStyle.outlined,
+                      ),
+                      title: Text(
+                        accounts[o.accountId]?.short ?? 'Unknown account',
+                      ),
+                      subtitle: Text(
+                        [
+                          ?o.payeeRaw,
+                          '${dayMonth(o.occurredAt)}, ${hhmm(o.occurredAt)}',
+                        ].join(' · '),
+                      ),
+                      onTap: () =>
+                          Navigator.pop(context, (partner: o.id, addOn: null)),
+                    ),
+                  for (final a in addable)
+                    ListTile(
+                      leading: Icon(Icons.add_rounded, color: context.k.text2),
+                      title: Text('${txn.isDebit ? 'To' : 'From'} ${a.short}'),
+                      subtitle: const Text(
+                        'No message from this bank — add it',
+                      ),
+                      onTap: () =>
+                          Navigator.pop(context, (partner: null, addOn: a.id)),
+                    ),
+                  ListTile(
+                    leading: const Icon(Icons.account_balance_outlined),
+                    title: Text(
+                      txn.isDebit
+                          ? 'To an account not in k'
+                          : 'From an account not in k',
+                    ),
+                    onTap: () =>
+                        Navigator.pop(context, (partner: null, addOn: null)),
+                  ),
+                ],
+              ),
+            ),
           ),
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                child: Text(
-                  txn.isDebit ? 'Where did it go?' : 'Where did it come from?',
-                  style: t.title,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Text(
-                  candidates.isEmpty
-                      ? 'No ${inrRow(txn.amountMinor)} '
-                            '${txn.isDebit ? 'credit' : 'debit'} on another '
-                            'account within 3 days.'
-                      : 'Same amount on your other accounts, within 3 days.',
-                  style: t.meta,
-                ),
-              ),
-              for (final o in candidates)
-                ListTile(
-                  leading: NoteChip(
-                    amountMinor: o.amountMinor,
-                    style: o.direction == Direction.debit
-                        ? NoteChipStyle.filled
-                        : NoteChipStyle.outlined,
-                  ),
-                  title: Text(
-                    accounts[o.accountId]?.short ?? 'Unknown account',
-                  ),
-                  subtitle: Text(
-                    [
-                      ?o.payeeRaw,
-                      '${dayMonth(o.occurredAt)}, ${hhmm(o.occurredAt)}',
-                    ].join(' · '),
-                  ),
-                  onTap: () =>
-                      Navigator.pop(context, (partner: o.id, addOn: null)),
-                ),
-              for (final a in addable)
-                ListTile(
-                  leading: Icon(Icons.add_rounded, color: context.k.text2),
-                  title: Text('${txn.isDebit ? 'To' : 'From'} ${a.short}'),
-                  subtitle: const Text('No message from this bank — add it'),
-                  onTap: () =>
-                      Navigator.pop(context, (partner: null, addOn: a.id)),
-                ),
-              ListTile(
-                leading: const Icon(Icons.account_balance_outlined),
-                title: Text(
-                  txn.isDebit
-                      ? 'To an account not in k'
-                      : 'From an account not in k',
-                ),
-                onTap: () =>
-                    Navigator.pop(context, (partner: null, addOn: null)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+        );
     if (picked != null) {
       await cubit.markTransfer(
         partnerId: picked.partner,
@@ -677,9 +677,8 @@ class _Loaded extends StatelessWidget {
         ),
         content: Text(
           notATransaction
-              ? 'It leaves the ledger. The bank message is kept and marked, '
-                    'so it will not be logged again.'
-              : 'It leaves the ledger. The bank message is kept for the record.',
+              ? 'Removed from your payments; it won\'t be logged again.'
+              : 'Removed from your payments. The bank message is kept.',
         ),
         actions: [
           TextButton(

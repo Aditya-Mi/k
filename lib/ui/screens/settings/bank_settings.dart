@@ -37,7 +37,7 @@ class BankSettings extends StatelessWidget {
           SettingsItem(
             icon: Icons.format_list_bulleted_rounded,
             title: 'All banks k reads',
-            subtitle: '${banks.length} banks and their SMS and email senders',
+            subtitle: '${banks.length} banks',
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(builder: (_) => const BanksScreen()),
             ),
@@ -46,7 +46,7 @@ class BankSettings extends StatelessWidget {
           SettingsItem(
             icon: Icons.add_rounded,
             title: 'Add a bank sender',
-            subtitle: 'When a bank texts or mails from a new name',
+            subtitle: 'For a bank sending from a new name',
             onTap: () => addBankSender(context, banks),
           ),
           StreamBuilder<List<String>>(
@@ -97,11 +97,7 @@ class BankSettings extends StatelessWidget {
     ingestion.invalidate();
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'New SMS from $core that read like payments will wait in Review',
-          ),
-        ),
+        SnackBar(content: Text('SMS from $core will wait in Review')),
       );
     }
   }

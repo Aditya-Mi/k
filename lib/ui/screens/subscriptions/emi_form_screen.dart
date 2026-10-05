@@ -197,7 +197,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
                               if (widget.purchase != null)
                                 dayMonth(widget.purchase!.occurredAt),
                             ].join(' · ')
-                          : 'Paid from your bank account each month',
+                          : 'Debited monthly',
                       style: t.meta,
                     ),
                   ],
@@ -268,13 +268,10 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
           const SizedBox(height: 20),
           Text(
             _card
-                ? 'Each month the bank bills ${_each == null ? 'an EMI' : inr(_each!)} '
-                      'on this card. k links those charges to this EMI and stops '
-                      'after $_count. '
-                      '${_spread ? 'The purchase is spread across the months, not counted at once.' : 'The purchase counts once; the monthly charges don\'t count again.'}'
-                : 'When the debit arrives, k links it: a payment from this '
-                      'account of about this amount, within a week of the date. '
-                      'Most loan EMIs come as NACH or ECS debits.',
+                ? (_spread
+                      ? 'Spent is spread across the months.'
+                      : 'The purchase counts once; monthly charges don\'t.')
+                : 'k links a debit from this account near this amount and date.',
             style: t.meta.copyWith(color: c.text3, height: 1.35),
           ),
         ],
@@ -455,7 +452,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
           children: [
             ListTile(
               title: const Text('Each EMI, monthly'),
-              subtitle: const Text('The purchase is spread over the months'),
+              subtitle: const Text('Spent is spread over the months'),
               trailing: _spread ? const Icon(Icons.check_rounded) : null,
               onTap: () => Navigator.pop(context, true),
             ),
@@ -530,8 +527,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
         title: const Text('Stop tracking this EMI?'),
         content: Text(
           _card
-              ? 'The purchase counts as spent once again, in the month you '
-                    'bought it.'
+              ? 'The purchase counts as spent in the month you bought it.'
               : 'Its debits stay logged as payments.',
         ),
         actions: [

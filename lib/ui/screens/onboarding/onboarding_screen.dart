@@ -75,9 +75,8 @@ class _OnboardingViewState extends State<_OnboardingView> {
                       Text('Log payments from bank SMS', style: t.headline),
                       const SizedBox(height: 8),
                       Text(
-                        'k reads alerts from your banks on this phone and logs '
-                        'each payment. Messages are read here, stored encrypted, '
-                        'and never leave the phone. SMS from people are skipped.',
+                        'Messages are read and stored encrypted on this phone. '
+                        'They never leave it.',
                         style: t.body.copyWith(color: c.text2),
                       ),
                       const SizedBox(height: 24),
@@ -86,12 +85,9 @@ class _OnboardingViewState extends State<_OnboardingView> {
                         title: 'SMS access',
                         done: s.smsGranted,
                         body: s.smsBlocked
-                            ? 'Android blocks SMS access for apps installed '
-                                  'outside the Play Store. Open App info, tap ⋮ '
-                                  '(top right) → Allow restricted settings, then '
-                                  'come back and tap Allow.'
-                            : 'Needed to log new payments as they arrive and to '
-                                  'read past bank alerts.',
+                            ? 'Android blocks this. Open App info, tap ⋮ → '
+                                  'Allow restricted settings, then tap Allow.'
+                            : 'Logs new payments and reads past bank alerts.',
                         action: s.smsGranted
                             ? null
                             : Wrap(
@@ -114,9 +110,8 @@ class _OnboardingViewState extends State<_OnboardingView> {
                         title: 'Log while k is closed',
                         done: s.battery?.isGranted ?? false,
                         body:
-                            'Lets k run without battery limits so a payment is '
-                            'logged even when the app is not open. On Nothing OS '
-                            'also check App info → Battery → Unrestricted.',
+                            'Remove battery limits so payments log when k is '
+                            'closed. Also set App info → Battery → Unrestricted.',
                         action: (s.battery?.isGranted ?? false)
                             ? null
                             : Wrap(

@@ -50,7 +50,9 @@ Future<void> smsBackgroundMain() async {
     } catch (e) {
       debugPrint('k: notifications unavailable in background: $e');
     }
-    await getIt<SmsSync>().drainPending();
+    final logged = await getIt<SmsSync>().drainPending();
+    // Count only, never content. tool/smoke_test.sh waits for this line.
+    debugPrint('k: background SMS drained, logged $logged');
     ok = true;
   } catch (e, s) {
     debugPrint('k: background SMS ingest failed: $e\n$s');

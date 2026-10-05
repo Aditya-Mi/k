@@ -55,8 +55,8 @@ class _RestoreScreenState extends State<RestoreScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Replace everything?'),
         content: const Text(
-          'Payments, accounts, subscriptions and settings on this phone are '
-          "replaced with the backup's. This can't be undone.",
+          "Everything on this phone is replaced with the backup's. This can't "
+          'be undone.',
         ),
         actions: [
           TextButton(
@@ -176,7 +176,7 @@ class _RestoreScreenState extends State<RestoreScreen> {
             const SizedBox(height: 20),
           ] else if (_savedKeyOpens == true) ...[
             Text(
-              'Opens with your current backup passphrase.',
+              'Opens with your current passphrase.',
               style: t.meta.copyWith(fontSize: 13),
             ),
             const SizedBox(height: 20),
@@ -186,8 +186,7 @@ class _RestoreScreenState extends State<RestoreScreen> {
             const SizedBox(height: 12),
           ],
           Text(
-            'Restoring replaces every payment, account, subscription and '
-            "setting on this phone with the backup's. Email inboxes need "
+            "Restoring replaces everything on this phone. Email inboxes need "
             'signing in again.',
             style: t.meta.copyWith(height: 1.35),
           ),

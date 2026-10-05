@@ -56,7 +56,7 @@ class CategoriesScreen extends StatelessWidget {
               icon: categoryIcon(e.$1.icon),
               title: e.$1.name,
               subtitle: [
-                if (e.$1.hidden) 'Hidden · not offered when you pick',
+                if (e.$1.hidden) 'Hidden',
                 if (!e.$1.hidden || e.$2 > 0)
                   e.$2 == 0
                       ? (e.$1.isSystem ? 'No payments yet' : 'Added by you')

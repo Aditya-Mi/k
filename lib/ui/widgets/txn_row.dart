@@ -54,8 +54,8 @@ class TxnRow extends StatelessWidget {
             padding: const EdgeInsets.only(right: 8),
             child: Tooltip(
               message: txn.isCardBill
-                  ? 'Paying a card bill, not counted as spent'
-                  : 'Between your own accounts, not counted as spent',
+                  ? 'Card bill, not counted as spent'
+                  : 'Own accounts, not counted as spent',
               child: Icon(
                 Icons.swap_horiz_rounded,
                 size: 16,
@@ -67,7 +67,7 @@ class TxnRow extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Tooltip(
-              message: 'Paid from cash, already counted at the ATM',
+              message: 'Cash, counted at the ATM',
               child: Icon(
                 Icons.payments_outlined,
                 size: 16,
@@ -79,7 +79,7 @@ class TxnRow extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Tooltip(
-              message: 'Merged from ${txn.sourceCount} bank messages',
+              message: '${txn.sourceCount} messages merged',
               child: Icon(
                 Icons.merge_rounded,
                 size: 16,

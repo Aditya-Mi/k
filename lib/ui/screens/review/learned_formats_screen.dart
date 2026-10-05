@@ -37,9 +37,7 @@ class LearnedFormatsScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 child: EmptyState(
                   title: 'No learned formats',
-                  body:
-                      'When you Save & learn a message in Review, k keeps its '
-                      'format here.',
+                  body: 'Formats you teach k in Review appear here.',
                 ),
               ),
             );
@@ -50,8 +48,7 @@ class LearnedFormatsScreen extends StatelessWidget {
             separatorBuilder: (_, _) => const SizedBox(height: 16),
             itemBuilder: (context, i) => i == list.length
                 ? Text(
-                    'Pausing or forgetting a format keeps the payments it '
-                    'already logged.',
+                    'Logged payments stay if you pause or forget a format.',
                     style: t.meta.copyWith(color: c.text3),
                   )
                 : _FormatCard(format: list[i]),
@@ -166,8 +163,7 @@ class _FormatCard extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Forget this format?'),
         content: const Text(
-          'New messages like this one will go to Review again. Payments it '
-          'already logged stay.',
+          'Similar messages go to Review again. Logged payments stay.',
         ),
         actions: [
           TextButton(

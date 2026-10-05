@@ -202,8 +202,8 @@ class _BackupScreenState extends State<BackupScreen> {
                 icon: Icons.cloud_upload_outlined,
                 title: 'Daily backup',
                 subtitle: on
-                    ? '${s.account} · overnight · keeps the last ${BackupService.keep}'
-                    : 'Off. An encrypted copy goes to your Google Drive each night.',
+                    ? '${s.account} · keeps the last ${BackupService.keep}'
+                    : 'Off',
                 onTap: _busy ? null : () => _toggle(!on, s),
                 trailing: Switch(
                   value: on,
@@ -252,8 +252,7 @@ class _BackupScreenState extends State<BackupScreen> {
                 SettingsItem(
                   icon: Icons.manage_search_rounded,
                   title: 'Find backups on Drive',
-                  subtitle:
-                      'Sign in with the Google account they were saved to',
+                  subtitle: 'Sign in to the account they were saved to',
                   onTap: _busy ? null : _findOnDrive,
                   trailing: const SettingsChevron(),
                 )
@@ -266,7 +265,7 @@ class _BackupScreenState extends State<BackupScreen> {
                         icon: Icons.cloud_off_outlined,
                         title: "Couldn't list Drive",
                         subtitle: list.error is DriveAuthException
-                            ? 'Sign in with Google again: turn backup off and on'
+                            ? 'Sign in again: turn backup off and on'
                             : 'Check the connection',
                         onTap: () => setState(() => _drive = null),
                       );
@@ -276,14 +275,14 @@ class _BackupScreenState extends State<BackupScreen> {
                       return const SettingsItem(
                         icon: Icons.history_rounded,
                         title: 'Looking…',
-                        subtitle: 'Reading the k backups folder',
+                        subtitle: 'Reading your backups',
                       );
                     }
                     if (copies.isEmpty) {
                       return const SettingsItem(
                         icon: Icons.history_rounded,
                         title: 'None yet',
-                        subtitle: 'The first one is made tonight, or now',
+                        subtitle: 'First one tonight',
                       );
                     }
                     final shown = _allCopies ? copies : copies.take(3).toList();
@@ -323,8 +322,8 @@ class _BackupScreenState extends State<BackupScreen> {
                     ? 'Set a passphrase'
                     : 'Change passphrase',
                 subtitle: _hasPassphrase == false
-                    ? 'Backups and backup files are locked with it'
-                    : 'New backups use the new one. Older ones still need the old one.',
+                    ? 'Locks backups and backup files'
+                    : 'Older backups need the old one',
                 onTap: _busy ? null : _changePassphrase,
                 trailing: const SettingsChevron(),
               ),
@@ -332,8 +331,7 @@ class _BackupScreenState extends State<BackupScreen> {
               SettingsItem(
                 icon: Icons.upload_file_rounded,
                 title: 'Import a backup file',
-                subtitle:
-                    'A .${BackupFile.extension} file from Export or another phone',
+                subtitle: 'A .${BackupFile.extension} file from Export',
                 onTap: _busy ? null : _import,
                 trailing: const SettingsChevron(),
               ),
@@ -346,9 +344,8 @@ class _BackupScreenState extends State<BackupScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Backups are encrypted on this phone with your '
-                        'passphrase before they reach Drive. Without the '
-                        'passphrase nobody can open them, not even k.',
+                        'Backups are encrypted here with your passphrase. '
+                        'Without it nobody can open them, not even k.',
                         style: t.meta.copyWith(color: c.text3, height: 1.4),
                       ),
                     ),

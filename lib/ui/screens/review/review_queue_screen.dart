@@ -37,9 +37,7 @@ class ReviewQueueScreen extends StatelessWidget {
                 child: Center(
                   child: EmptyState(
                     title: 'Nothing to review',
-                    body:
-                        'Every bank message so far was read on its own. '
-                        "New ones k can't read will wait here.",
+                    body: "Messages k can't read will wait here.",
                   ),
                 ),
               )
@@ -48,9 +46,7 @@ class ReviewQueueScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                   child: Text(
-                    "Bank messages k couldn't read, and payments from senders "
-                    "it doesn't know yet. Fix one and k learns it for next "
-                    'time.',
+                    "Messages k couldn't read. Fix one and k learns it.",
                     style: t.body.copyWith(color: c.text2),
                   ),
                 ),

@@ -66,8 +66,8 @@ class _EditorView extends StatelessWidget {
       final who = r.fields.payee == null ? '' : ' to ${r.fields.payee}';
       final more = r.result.cleared == 0
           ? ''
-          : ' It also read ${r.result.cleared} more waiting '
-                '${r.result.cleared == 1 ? 'message' : 'messages'}.';
+          : ' ${r.result.cleared} more waiting '
+                '${r.result.cleared == 1 ? 'message' : 'messages'} read too.';
       final autopay = r.fields.dueDate != null;
       if (r.result.learned) {
         await showLearnedOverlay(
@@ -78,10 +78,8 @@ class _EditorView extends StatelessWidget {
               : 'Learned this ${r.bank} format',
           body: autopay
               ? '${inrRow(amount)}$who is in Upcoming for '
-                    '${dayShort(r.fields.dueDate!)}. ${r.bank} AutoPay alerts '
-                    'shaped like it will now be read on their own.$more'
-              : '${inrRow(amount)}$who is saved. ${r.bank} messages shaped '
-                    'like it will now be read on their own.$more',
+                    '${dayShort(r.fields.dueDate!)}.$more'
+              : '${inrRow(amount)}$who is saved.$more',
         );
       } else {
         messenger.showSnackBar(
@@ -148,8 +146,7 @@ class _Editor extends StatelessWidget {
             Text("A sender k doesn't know", style: t.title),
             const SizedBox(height: 4),
             Text(
-              "It reads like a payment. If it's from your bank, pick the bank "
-              'and k reads this sender from now on.',
+              "If it's from your bank, pick the bank.",
               style: t.body.copyWith(color: c.text2, fontSize: 14),
             ),
             const SizedBox(height: 16),
@@ -330,14 +327,10 @@ class _Editor extends StatelessWidget {
                       item.unknownSender
                           ? 'k reads ${item.raw.sender} as '
                                 '${cubit.bankLabel() ?? 'that bank'} from now '
-                                'on, and messages shaped like this on their '
-                                'own.'
+                                'on.'
                           : mandate
-                          ? 'Next time ${cubit.bankShort()} sends an AutoPay '
-                                'alert shaped like this, k adds it to Upcoming '
-                                'on its own.'
-                          : 'Next time ${cubit.bankShort()} sends a message '
-                                'shaped like this, k reads it on its own.',
+                          ? 'Similar AutoPay alerts go to Upcoming on their own.'
+                          : 'Similar messages are read on their own.',
                       style: t.body.copyWith(color: c.text2),
                     ),
                   ],
@@ -658,7 +651,7 @@ class _Editor extends StatelessWidget {
       context,
       banks: state.banks,
       title: 'Which bank sent this?',
-      subtitle: 'k will read ${item.raw.sender} as that bank, by SMS.',
+      subtitle: 'k will read ${item.raw.sender} as that bank.',
       selectedId: state.bank?.id,
     );
     if (!context.mounted || picked == null) return;
@@ -800,8 +793,7 @@ class _NotATransactionSheetState extends State<_NotATransactionSheet> {
             Text('Not a transaction', style: t.title.copyWith(fontSize: 18)),
             const SizedBox(height: 4),
             Text(
-              "k keeps the message in its trail but won't log a payment "
-              'from it.',
+              "k keeps the message but won't log a payment.",
               style: t.meta.copyWith(fontSize: 13),
             ),
             const SizedBox(height: 16),
@@ -817,9 +809,8 @@ class _NotATransactionSheetState extends State<_NotATransactionSheet> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${widget.bank} messages shaped like this one go '
-                        'straight to skipped, not Review. Turn off in '
-                        'Settings → Message formats.',
+                        'Similar ${widget.bank} messages skip Review. '
+                        'Undo in Settings → Message formats.',
                         style: t.meta.copyWith(fontSize: 13, color: c.text2),
                       ),
                     ],
@@ -895,8 +886,7 @@ class _NewBankSheetState extends State<_NewBankSheet> {
             Text('A bank not in k', style: t.title.copyWith(fontSize: 18)),
             const SizedBox(height: 4),
             Text(
-              'Name it once. k adds it to Settings → Banks and reads '
-              '${widget.sender} as this bank.',
+              'k reads ${widget.sender} as this bank from now on.',
               style: t.meta.copyWith(fontSize: 13),
             ),
             const SizedBox(height: 16),
@@ -918,8 +908,7 @@ class _NewBankSheetState extends State<_NewBankSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'If this bank also mails you alerts, add its address or domain '
-              'and k picks them up from your connected inbox.',
+              'Add its address or domain to read its emails too.',
               style: t.meta.copyWith(fontSize: 13, color: c.text2),
             ),
             const SizedBox(height: 16),

@@ -54,7 +54,7 @@ class SettingsScreen extends StatelessWidget {
           SettingsItem(
             icon: Icons.sms_outlined,
             title: 'Messages and email',
-            subtitle: 'Banks k reads and your email inboxes',
+            subtitle: 'Banks and email inboxes',
             onTap: () => open('Messages and email', const [
               BankSettings(),
               EmailSettings(),
@@ -64,7 +64,7 @@ class SettingsScreen extends StatelessWidget {
           SettingsItem(
             icon: Icons.sync_rounded,
             title: 'Sync',
-            subtitle: 'SMS access, checks, and merging SMS with email',
+            subtitle: 'SMS access and checks',
             onTap: () => open('Sync', const [_SyncSection()]),
             trailing: const SettingsChevron(),
           ),
@@ -79,8 +79,8 @@ class SettingsScreen extends StatelessWidget {
                 icon: Icons.category_outlined,
                 title: 'Categories',
                 subtitle: mine == 0
-                    ? 'Add your own, rename or hide built-in ones'
-                    : '$mine of your own · add, rename or hide',
+                    ? 'Add, rename or hide'
+                    : '$mine of your own',
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute<void>(
@@ -101,8 +101,8 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: n == null
                     ? '…'
                     : n == 0
-                    ? 'None yet. Fixing a message in Review teaches k its format.'
-                    : '$n learned from your corrections',
+                    ? 'None yet'
+                    : '$n learned',
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute<void>(
@@ -116,7 +116,7 @@ class SettingsScreen extends StatelessWidget {
           SettingsItem(
             icon: Icons.cloud_upload_outlined,
             title: 'Backup and export',
-            subtitle: 'Encrypted Drive backup, backup files, CSV',
+            subtitle: 'Drive backup, files, CSV',
             onTap: () => open('Backup and export', const [BackupSettings()]),
             trailing: const SettingsChevron(),
           ),
@@ -140,9 +140,8 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Messages are read and stored on this phone only, in an '
-                    'encrypted database. Backups are encrypted here before '
-                    'they reach your own Google Drive.',
+                    'Messages stay on this phone, in an encrypted database. '
+                    'Backups are encrypted before they leave it.',
                     style: t.meta.copyWith(color: c.text3, height: 1.4),
                   ),
                 ),
@@ -298,11 +297,11 @@ class _SyncSectionState extends State<_SyncSection> {
           iconColor: _sms == null || smsOk ? null : c.alert,
           title: _sms == null ? 'SMS' : (smsOk ? 'SMS allowed' : 'SMS off'),
           subtitle: smsOk
-              ? 'k reads bank SMS as they arrive'
+              ? 'Bank SMS are read as they arrive'
               : (_sms?.isPermanentlyDenied ?? false)
-              ? 'If Android shows no prompt: App info → ⋮ → Allow restricted '
-                    'settings, then Permissions → SMS → Allow.'
-              : 'Tap to allow. Payments by SMS stop until you do.',
+              ? 'No prompt? App info → ⋮ → Allow restricted settings, '
+                    'then allow SMS.'
+              : 'Tap to allow. SMS payments stop until then.',
           subtitleColor: _sms == null || smsOk ? null : c.alert,
           onTap: smsOk ? openAppSettings : _fixSms,
           trailing: const SettingsChevron(),
@@ -311,8 +310,8 @@ class _SyncSectionState extends State<_SyncSection> {
           icon: Icons.battery_full_rounded,
           title: batteryOk ? 'Battery: unrestricted' : 'Battery: limited',
           subtitle: batteryOk
-              ? 'k can read messages while closed'
-              : 'Tap to allow, or some payments log only when you open k',
+              ? 'Reads messages while closed'
+              : 'Tap to allow, or some payments wait for you to open k',
           onTap: batteryOk
               ? null
               : () async {
@@ -346,14 +345,14 @@ class _SyncSectionState extends State<_SyncSection> {
         SettingsItem(
           icon: Icons.history_rounded,
           title: 'Read past SMS',
-          subtitle: 'From a date you pick. Already logged ones are skipped.',
+          subtitle: 'From a date you pick',
           onTap: _checking || !smsOk ? null : _importOlder,
           trailing: const SettingsChevron(),
         ),
         const SettingsItem(
           icon: Icons.schedule_rounded,
           title: 'Check email',
-          subtitle: 'Every hour, and when you open k',
+          subtitle: 'Hourly and when k opens',
         ),
         StreamBuilder<String?>(
           stream: _settings.watch(_dedupKey),
@@ -362,8 +361,7 @@ class _SyncSectionState extends State<_SyncSection> {
             return SettingsItem(
               icon: Icons.merge_rounded,
               title: 'Treat as the same payment',
-              subtitle:
-                  'Same amount and account within ${_minutes(m)}, by SMS and email',
+              subtitle: 'SMS and email within ${_minutes(m)}',
               onTap: () => _pickWindow(m),
               trailing: const SettingsChevron(),
             );

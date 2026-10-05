@@ -59,9 +59,7 @@ class _NotificationSettingsState extends State<NotificationSettings> {
               ? Icons.notifications_active_outlined
               : Icons.notifications_off_outlined,
           title: _permission == null ? '…' : (allowed ? 'Allowed' : 'Off'),
-          subtitle: allowed
-              ? 'Android notification permission for k'
-              : 'Tap to allow. Nothing below can show until you do.',
+          subtitle: allowed ? 'Android permission is on' : 'Tap to allow',
           onTap: allowed ? openAppSettings : _allow,
           trailing: const _Chevron(),
         ),
@@ -96,9 +94,7 @@ class _NotificationSettingsState extends State<NotificationSettings> {
           settingKey: KNotifications.paymentsKey,
           icon: Icons.receipt_long_outlined,
           title: 'Payment logged',
-          subtitle:
-              'Each payment as its SMS arrives. Amounts stay hidden on the '
-              'lock screen.',
+          subtitle: 'Amounts are hidden on the lock screen',
         ),
       ],
     );

@@ -176,12 +176,9 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
               const SizedBox(height: 20),
               Text(
                 _needsDigits
-                    ? 'Messages from ${bankName ?? 'this bank'} that name '
-                          '··${digits.isEmpty ? '1234' : digits} land here. '
-                          'Without a balance, k starts from the first one '
-                          'that reports it.'
-                    : 'Wallet messages from ${bankName ?? 'this wallet'} '
-                          'land here.',
+                    ? 'Messages naming ··${digits.isEmpty ? '1234' : digits} '
+                          'land here.'
+                    : 'Wallet messages land here.',
                 style: t.meta.copyWith(fontSize: 13, color: c.text2),
               ),
               const SizedBox(height: 24),
@@ -221,9 +218,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         context,
         title: 'A bank not in k',
         hint: 'e.g. HDFC Bank',
-        help:
-            'k adds it to your banks. When its first message arrives, '
-            'Review asks you to confirm the sender.',
+        help: 'Review asks you to confirm the sender on its first message.',
         action: 'Add',
       );
       if (name == null || name.trim().isEmpty) return;

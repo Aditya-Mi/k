@@ -183,7 +183,7 @@ class KNotifications {
       title: waiting == 1
           ? 'A bank message needs a look'
           : '$waiting bank messages need a look',
-      body: 'k could not read it. Open Review to mark the amount.',
+      body: 'Open Review to mark the amount.',
       notificationDetails: const NotificationDetails(android: _review),
     );
   }

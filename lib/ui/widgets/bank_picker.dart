@@ -116,9 +116,7 @@ class _BankPickerState extends State<_BankPicker> {
                       ListTile(
                         leading: Icon(Icons.add_rounded, color: c.text2),
                         title: const Text('A bank not in k'),
-                        subtitle: const Text(
-                          'Name it once; it joins your banks',
-                        ),
+                        subtitle: const Text('Name it once'),
                         onTap: () => Navigator.pop(context, newBankPick),
                       ),
                   ],

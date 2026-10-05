@@ -94,7 +94,7 @@ class CardScreen extends StatelessWidget {
                           [
                             if (owed != null) cardLimitLine(a, b),
                             if (b != null)
-                              '${b.source == BalanceSource.bank ? 'bank' : 'set by you'}, '
+                              '${b.source == BalanceSource.bank ? 'bank' : 'set'}, '
                                   '${dayMonth(b.anchorAt)}, ${hhmm(b.anchorAt)}'
                                   '${b.estimated ? ', estimated since' : ''}',
                           ].join(' · '),
@@ -105,9 +105,7 @@ class CardScreen extends StatelessWidget {
                           label: 'Card limit',
                           onTap: () => accountActions(context, row, all),
                           value: Text(
-                            limit == null
-                                ? 'Set it to see what you owe'
-                                : inr(limit),
+                            limit == null ? 'Set it' : inr(limit),
                             style: t.body.copyWith(
                               color: limit == null ? c.text3 : c.text,
                             ),

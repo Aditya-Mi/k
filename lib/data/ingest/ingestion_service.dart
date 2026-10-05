@@ -621,7 +621,10 @@ class IngestionService {
           ),
         );
     if (!await _transfers.autoLink(txn.id)) {
-      await _transfers.markCardBill(txn.id, text: text);
+      await _transfers.markCardBill(
+        txn.id,
+        text: raw.channel == Channel.sms ? text : '',
+      );
     }
     return IngestOutcome.transaction;
   }

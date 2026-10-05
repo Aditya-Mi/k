@@ -29,6 +29,10 @@ Flutter (Dart 3.13) · flutter_bloc + get_it · drift + SQLite3MultipleCiphers (
 cd packages/txn_parser && dart test      # parser tests (fixtures + unit)
 flutter test                             # app/DB tests
 dart run build_runner build              # after any drift table change
+# after a schema version bump: dump + regenerate, then bump `current` in test/data/migration_test.dart
+dart run drift_dev schema dump lib/data/db/app_database.dart drift_schemas/drift_schema_vN.json
+dart run drift_dev schema generate --data-classes --companions drift_schemas/ test/generated_migrations/
+tool/smoke_test.sh <release apk>         # on a running emulator; CI runs it on every release
 flutter analyze
 flutter build apk --debug
 ```

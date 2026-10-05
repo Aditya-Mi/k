@@ -148,9 +148,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            'For payments your bank sent no SMS or email about. If one turns '
-            'up later for the same account and amount, k merges it into this '
-            'row.',
+            'A matching bank message that arrives later merges into this.',
             style: t.meta.copyWith(color: c.text3, height: 1.35),
           ),
         ],
@@ -222,11 +220,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                       : Icons.account_balance_wallet_outlined,
                 ),
                 title: Text(a.short),
-                subtitle: Text(
-                  a.isCash
-                      ? 'Changes cash in hand; already counted at the ATM'
-                      : a.long,
-                ),
+                subtitle: Text(a.isCash ? 'Cash in hand' : a.long),
                 trailing: a.id == _accountId
                     ? const Icon(Icons.check_rounded)
                     : null,

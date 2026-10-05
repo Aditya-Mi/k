@@ -134,9 +134,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            'When the charge arrives, k links it: a payment to a payee with '
-            'this name, about this amount, within a week of the date. After '
-            'that it follows that payee.',
+            'k links a payment to this payee near this amount and date.',
             style: t.meta.copyWith(color: c.text3, height: 1.35),
           ),
         ],

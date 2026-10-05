@@ -133,9 +133,8 @@ class _PassphraseScreenState extends State<PassphraseScreen> {
                   ),
                 ),
                 for (final s in const [
-                  'At least 4 words or 12 characters. A short sentence works '
-                      'well.',
-                  'k keeps it on this phone so daily backups run on their own.',
+                  'At least 4 words or 12 characters.',
+                  'k keeps it on this phone for daily backups.',
                   'On a new phone you type it once to restore.',
                 ]) ...[
                   const SizedBox(height: 10),
@@ -155,9 +154,8 @@ class _PassphraseScreenState extends State<PassphraseScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            "If you forget it, your Drive backups can't be opened. Not by "
-            'you, not by k, not by Google. You can set a new one later; older '
-            'backups still need the old one.',
+            "If you forget it, your backups can't be opened by you, k or "
+            'Google. A new one only covers new backups.',
             style: t.meta.copyWith(color: c.alert, height: 1.35),
           ),
         ],

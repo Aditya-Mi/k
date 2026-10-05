@@ -23,7 +23,8 @@ class PrivacySettings extends StatelessWidget {
           final r = await lock.enable();
           if (!context.mounted || r == UnlockResult.ok) return;
           final msg = switch (r) {
-            UnlockResult.unavailable => 'Set a screen lock on the phone first (Android Settings → Security).',
+            UnlockResult.unavailable =>
+              'Set a screen lock in Android Settings first.',
             UnlockResult.lockedOut => 'Too many tries. Try again in a moment.',
             _ => 'App lock stays off.',
           };

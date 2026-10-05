@@ -178,9 +178,7 @@ class SubscriptionDetailScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Stop tracking ${sub.name}?'),
-        content: const Text(
-          'No more reminders. Its past charges stay in your transactions.',
-        ),
+        content: const Text('No more reminders. Past charges stay.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -372,11 +370,7 @@ class _Fields extends StatelessWidget {
                         style: t.body.copyWith(fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        'Marks it unused in the list, so it stands out when '
-                        'you review.',
-                        style: t.meta,
-                      ),
+                      Text('Flags it in the list', style: t.meta),
                     ],
                   ),
                 ),
@@ -415,7 +409,7 @@ class _Charges extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               '${rows.length} ${rows.length == 1 ? 'payment' : 'payments'} '
-              'matched to this subscription',
+              'matched',
               style: t.meta.copyWith(fontSize: 13),
             ),
             const SizedBox(height: 4),
