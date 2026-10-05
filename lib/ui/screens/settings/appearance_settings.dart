@@ -8,7 +8,10 @@ import 'settings_parts.dart';
 /// Settings → Appearance (design 06): follow the phone, or always light or
 /// dark. Device-local, applied app-wide by `KApp`.
 class AppearanceSettings extends StatelessWidget {
-  const AppearanceSettings({super.key});
+  const AppearanceSettings({super.key, this.showHead = true});
+
+  /// Off when grouped under another head (Settings → This phone).
+  final bool showHead;
 
   static const _labels = {
     ThemeMode.system: 'Same as the phone',
@@ -28,7 +31,7 @@ class AppearanceSettings extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SettingsHead('Appearance'),
+            if (showHead) const SettingsHead('Appearance'),
             SettingsItem(
               icon: Icons.contrast_rounded,
               title: 'Theme',

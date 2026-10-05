@@ -4,6 +4,7 @@ import 'package:txn_parser/txn_parser.dart';
 import '../../core/ids.dart';
 import 'enums.dart';
 import 'seed/seeder.dart';
+import 'tables/emi_tables.dart';
 import 'tables/ledger_tables.dart';
 import 'tables/reference_tables.dart';
 import 'tables/settings_tables.dart';
@@ -26,6 +27,7 @@ part 'app_database.g.dart';
     TransactionSources,
     Subscriptions,
     UpcomingCharges,
+    Emis,
     EmailAccounts,
     AppSettings,
   ],
@@ -34,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   /// Alerts that name no account used to create a "no last4" account even when
   /// the bank had exactly one savings/current account; move those rows over.
@@ -221,6 +223,11 @@ class AppDatabase extends _$AppDatabase {
         await mergeSameNameMerchants();
       }
       if (from < 8) await m.addColumn(categories, categories.hidden);
+      if (from < 9) {
+        await m.addColumn(accounts, accounts.creditLimitMinor);
+        await m.addColumn(transactions, transactions.emiId);
+        await m.createTable(emis);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

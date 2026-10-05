@@ -30,3 +30,8 @@ enum SubscriptionStatus { suggested, active, dismissed, cancelled }
 enum SubscriptionSource { detected, mandate, manual }
 
 enum UpcomingChargeStatus { pending, matched, expired, cancelled }
+
+/// Card purchase converted to EMI, or a loan paid from a bank account.
+enum EmiKind { card, loan }
+
+enum EmiStatus { active, closed }

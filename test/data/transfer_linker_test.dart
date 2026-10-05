@@ -395,6 +395,9 @@ void main() {
       ..execute('ALTER TABLE accounts DROP COLUMN merged_into_id')
       ..execute('ALTER TABLE merchants DROP COLUMN merged_into_id')
       ..execute('ALTER TABLE categories DROP COLUMN hidden')
+      ..execute('ALTER TABLE accounts DROP COLUMN credit_limit_minor')
+      ..execute('ALTER TABLE transactions DROP COLUMN emi_id')
+      ..execute('DROP TABLE emis')
       ..execute('PRAGMA user_version = 1')
       ..close();
 

@@ -148,6 +148,7 @@ class LedgerRepository {
     String? last4,
     String? nickname,
     int? balanceMinor,
+    int? creditLimitMinor,
   }) => _db.transaction(() async {
     final digits = last4?.trim();
     final name = nickname?.trim();
@@ -167,6 +168,7 @@ class LedgerRepository {
       autoCreated: const Value(false),
       manualBalanceMinor: Value(balanceMinor),
       manualBalanceAt: Value(balanceMinor == null ? null : now),
+      creditLimitMinor: Value(creditLimitMinor),
       mergedIntoId: const Value(null),
       updatedAt: Value(now),
     );
@@ -187,6 +189,14 @@ class LedgerRepository {
                 ? null
                 : nickname.trim(),
           ),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+
+  Future<void> setCreditLimit(String id, int? minor) =>
+      (_db.update(_db.accounts)..where((a) => a.id.equals(id))).write(
+        AccountsCompanion(
+          creditLimitMinor: Value(minor),
           updatedAt: Value(DateTime.now()),
         ),
       );
@@ -334,7 +344,11 @@ class LedgerRepository {
     onRulesChanged?.call();
   }
 
-  /// AutoPay / mandate alerts due today or later.
+  /// How far ahead Upcoming looks. A yearly plan's alert (due months
+  /// away) waits on the plan instead of sitting in Transactions.
+  static const upcomingWindow = Duration(days: 30);
+
+  /// AutoPay / mandate alerts due from today to [upcomingWindow] ahead.
   Stream<List<UpcomingView>> watchUpcoming(DateTime now) {
     final u = _db.upcomingCharges;
     final m = _db.merchants;
@@ -349,7 +363,10 @@ class LedgerRepository {
           ..where(
             u.deletedAt.isNull() &
                 u.status.equalsValue(UpcomingChargeStatus.pending) &
-                u.dueDate.isBiggerOrEqualValue(today),
+                u.dueDate.isBetweenValues(
+                  today,
+                  today.add(upcomingWindow + const Duration(days: 1)),
+                ),
           )
           ..orderBy([OrderingTerm.asc(u.dueDate)]))
         .watch()
@@ -552,6 +569,10 @@ class LedgerRepository {
         ),
         leftOuterJoin(_pa, _pa.id.equalsExp(_pt.accountId)),
         leftOuterJoin(_pb, _pb.id.equalsExp(_pa.bankId)),
+        leftOuterJoin(
+          _db.emis,
+          _db.emis.id.equalsExp(t.emiId) & _db.emis.deletedAt.isNull(),
+        ),
       ])
       ..addColumns([_sourceCount])
       ..groupBy([t.id]);
@@ -570,6 +591,7 @@ class LedgerRepository {
     final partner = r.readTableOrNull(_pt);
     final partnerAccount = r.readTableOrNull(_pa);
     final partnerBank = r.readTableOrNull(_pb);
+    final emi = r.readTableOrNull(_db.emis);
     return TxnView(
       id: t.id,
       amountMinor: t.amountMinor,
@@ -589,6 +611,17 @@ class LedgerRepository {
       origin: t.origin,
       transferPartnerId: partner?.id,
       subscriptionId: t.subscriptionId,
+      emi: emi == null
+          ? null
+          : EmiLink(
+              id: emi.id,
+              name: emi.name,
+              kind: emi.kind,
+              isPurchase: emi.purchaseTransactionId == t.id,
+              spread: emi.spread,
+              count: emi.count,
+              amountMinor: emi.amountMinor,
+            ),
       partnerAccount: partnerAccount == null || partnerBank == null
           ? null
           : _account(partnerAccount, partnerBank),
@@ -609,5 +642,6 @@ class LedgerRepository {
         last4: a.last4,
         nickname: a.nickname,
         includes: includes,
+        creditLimitMinor: a.creditLimitMinor,
       );
 }

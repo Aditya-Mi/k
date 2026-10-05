@@ -5,7 +5,6 @@ import '../../../app/updates.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../data/ingest/sms_sync.dart';
-import '../../../data/repositories/ledger_models.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../data/review/learned_formats.dart';
@@ -14,7 +13,6 @@ import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/date_pick.dart';
 import '../../../data/db/app_database.dart' show Category;
-import '../accounts/accounts_screen.dart';
 import '../categories/categories_screen.dart';
 import '../review/learned_formats_screen.dart';
 import 'appearance_settings.dart';
@@ -25,8 +23,8 @@ import 'notification_settings.dart';
 import 'privacy_settings.dart';
 import 'settings_parts.dart';
 
-/// Settings (design 06): accounts, banks, email, sync, notifications,
-/// backup, appearance, privacy, message formats.
+/// Settings (design 06l): a short list grouped as Reading, Your data and
+/// This phone; detail lives on sub-pages.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -34,6 +32,12 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.k;
     final t = context.kt;
+    void open(String title, List<Widget> children) => Navigator.of(context)
+        .push(
+          MaterialPageRoute<void>(
+            builder: (_) => _SubPage(title: title, children: children),
+          ),
+        );
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -46,9 +50,25 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
-          const _AccountsSection(),
-          const BankSettings(),
-          const SettingsHead('Categories'),
+          const SettingsHead('Reading'),
+          SettingsItem(
+            icon: Icons.sms_outlined,
+            title: 'Messages and email',
+            subtitle: 'Banks k reads and your email inboxes',
+            onTap: () => open('Messages and email', const [
+              BankSettings(),
+              EmailSettings(),
+            ]),
+            trailing: const SettingsChevron(),
+          ),
+          SettingsItem(
+            icon: Icons.sync_rounded,
+            title: 'Sync',
+            subtitle: 'SMS access, checks, and merging SMS with email',
+            onTap: () => open('Sync', const [_SyncSection()]),
+            trailing: const SettingsChevron(),
+          ),
+          const SettingsHead('Your data'),
           StreamBuilder<List<Category>>(
             stream: getIt<LedgerRepository>().watchCategories(),
             builder: (context, snap) {
@@ -71,25 +91,18 @@ class SettingsScreen extends StatelessWidget {
               );
             },
           ),
-          const EmailSettings(),
-          const _SyncSection(),
-          const NotificationSettings(),
-          const BackupSettings(),
-          const AppearanceSettings(),
-          const PrivacySettings(),
-          const SettingsHead('Message formats'),
           StreamBuilder<List<LearnedFormat>>(
             stream: getIt<LearnedFormats>().watch(),
             builder: (context, snap) {
               final n = snap.data?.length;
               return SettingsItem(
                 icon: Icons.school_outlined,
-                title: 'Learned in Review',
+                title: 'Message formats',
                 subtitle: n == null
                     ? '…'
                     : n == 0
                     ? 'None yet. Fixing a message in Review teaches k its format.'
-                    : '$n ${n == 1 ? 'format' : 'formats'} k reads now',
+                    : '$n learned from your corrections',
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute<void>(
@@ -100,6 +113,23 @@ class SettingsScreen extends StatelessWidget {
               );
             },
           ),
+          SettingsItem(
+            icon: Icons.cloud_upload_outlined,
+            title: 'Backup and export',
+            subtitle: 'Encrypted Drive backup, backup files, CSV',
+            onTap: () => open('Backup and export', const [BackupSettings()]),
+            trailing: const SettingsChevron(),
+          ),
+          const SettingsHead('This phone'),
+          SettingsItem(
+            icon: Icons.notifications_outlined,
+            title: 'Notifications',
+            subtitle: 'Payments, review, reminders',
+            onTap: () => open('Notifications', const [NotificationSettings()]),
+            trailing: const SettingsChevron(),
+          ),
+          const PrivacySettings(showHead: false),
+          const AppearanceSettings(showHead: false),
           const AboutSettings(),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
@@ -125,51 +155,27 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-/// Accounts k has seen in messages; rename or merge on the Accounts screen.
-class _AccountsSection extends StatelessWidget {
-  const _AccountsSection();
+/// A settings sub-page holding existing sections.
+class _SubPage extends StatelessWidget {
+  const _SubPage({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) => StreamBuilder<List<AccountView>>(
-    stream: getIt<LedgerRepository>().watchAccounts(),
-    builder: (context, snap) {
-      final accounts = snap.data ?? const <AccountView>[];
-      void open() => Navigator.of(
-        context,
-      ).push(MaterialPageRoute<void>(builder: (_) => const AccountsScreen()));
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SettingsHead('Accounts', note: 'Added from messages'),
-          if (accounts.isEmpty)
-            const SettingsItem(
-              icon: Icons.account_balance_wallet_outlined,
-              title: 'None yet',
-              subtitle: 'Accounts appear as bank messages name them',
-            )
-          else
-            for (final a in accounts)
-              SettingsItem(
-                icon: a.isCash
-                    ? Icons.payments_outlined
-                    : a.isCard
-                    ? Icons.credit_card_outlined
-                    : Icons.account_balance_wallet_outlined,
-                title: a.nickname ?? a.long,
-                subtitle: a.isCash
-                    ? 'ATM withdrawals add, cash payments you log subtract'
-                    : [
-                        if (a.nickname != null) a.long,
-                        if (a.includes.isNotEmpty)
-                          'includes ${a.includes.join(', ')}',
-                        'tap to rename or merge',
-                      ].join(' · '),
-                onTap: open,
-                trailing: const SettingsChevron(),
-              ),
-        ],
-      );
-    },
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      leading: IconButton(
+        tooltip: 'Back',
+        icon: const Icon(Icons.arrow_back_rounded),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: Text(title),
+    ),
+    body: ListView(
+      padding: const EdgeInsets.only(bottom: 24),
+      children: children,
+    ),
   );
 }
 

@@ -5,6 +5,7 @@ import '../../../data/repositories/ledger_models.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../data/summary/month_report.dart';
+import '../../../data/emis/emi_service.dart';
 import '../../../di.dart';
 import '../../format.dart';
 import '../../theme/k_theme.dart';
@@ -48,7 +49,14 @@ class _SummaryScreenState extends State<SummaryScreen> {
             to: DateTime(m.year, m.month + 1),
           ),
         )
-        .map((txns) => (MonthReport.build(m, txns), txns));
+        .asyncMap((txns) async {
+          // Spread card EMIs count an instalment a month.
+          final virtual = await getIt<EmiService>().virtualInstalments([
+            for (var i = MonthReport.trendMonths - 1; i >= 0; i--)
+              DateTime(m.year, m.month - i),
+          ]);
+          return (MonthReport.build(m, [...txns, ...virtual]), txns);
+        });
   }
 
   void _go(DateTime month) {

@@ -3,17 +3,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app/sms_controller.dart';
 import '../../app/updates.dart';
+import '../../data/emis/emi_service.dart';
 import '../../data/repositories/ledger_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../di.dart';
 import '../theme/k_theme.dart';
+import 'accounts/accounts_screen.dart';
 import 'review/review_queue_screen.dart';
 import 'subscriptions/subscriptions_screen.dart';
 import 'summary/summary_screen.dart';
 import 'transactions/transactions_cubit.dart';
 import 'transactions/transactions_screen.dart';
 
-/// Bottom navigation: Transactions, Review, Subscriptions, Summary.
+/// Bottom navigation: Transactions, Review, Recurring, Accounts, Summary.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, required this.sms});
 
@@ -41,6 +43,7 @@ class _HomeShellState extends State<HomeShell> {
       create: (_) => TransactionsCubit(
         getIt<LedgerRepository>(),
         getIt<SettingsRepository>(),
+        instalments: (month) => getIt<EmiService>().virtualInstalments([month]),
       ),
       child: Scaffold(
         body: SafeArea(
@@ -54,6 +57,7 @@ class _HomeShellState extends State<HomeShell> {
               ),
               const ReviewQueueScreen(),
               const SubscriptionsScreen(),
+              const AccountsScreen(asTab: true),
               const SummaryScreen(),
             ],
           ),
@@ -79,7 +83,12 @@ class _HomeShellState extends State<HomeShell> {
                   ),
                   const NavigationDestination(
                     icon: Icon(Icons.autorenew_rounded),
-                    label: 'Subscriptions',
+                    label: 'Recurring',
+                  ),
+                  const NavigationDestination(
+                    icon: Icon(Icons.account_balance_wallet_outlined),
+                    selectedIcon: Icon(Icons.account_balance_wallet_rounded),
+                    label: 'Accounts',
                   ),
                   const NavigationDestination(
                     icon: Icon(Icons.donut_large_rounded),

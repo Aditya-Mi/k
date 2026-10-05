@@ -443,7 +443,9 @@ class IngestionService {
             origin: const Value(TxnOrigin.user),
           ),
         );
-    if (accountId != null) await _transfers.autoLink(txn.id);
+    if (accountId != null && !await _transfers.autoLink(txn.id)) {
+      await _transfers.markCardBill(txn.id);
+    }
     return txn.id;
   });
 
@@ -618,7 +620,9 @@ class IngestionService {
             rawMessageId: raw.id,
           ),
         );
-    await _transfers.autoLink(txn.id);
+    if (!await _transfers.autoLink(txn.id)) {
+      await _transfers.markCardBill(txn.id, text: text);
+    }
     return IngestOutcome.transaction;
   }
 

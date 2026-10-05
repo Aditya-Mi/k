@@ -57,6 +57,7 @@ class SmsController with WidgetsBindingObserver {
     // Review items get another read: a newer parser may know them now.
     unawaited(
       _guard(_transfers.autoLinkAll)
+          .then((_) => _guard(_transfers.markCardBillsAll))
           .then((_) => _guard(_ingestion.reprocessReview))
           .then((_) => refresh()),
     );

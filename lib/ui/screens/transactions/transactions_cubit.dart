@@ -82,16 +82,18 @@ MonthSummary summarize(DateTime month, List<TxnView> txns) {
   var spends = 0;
   final bands = List.filled(Bands.count, 0);
   for (final t in txns) {
-    // Own-account moves and cash payments (counted at the ATM) are out.
+    // Own-account moves and cash payments (counted at the ATM) are out;
+    // card refunds lower spent.
     if (!t.countsInTotals) continue;
-    if (t.isDebit) {
-      spent += t.amountMinor;
+    came += t.inMinor;
+    final a = t.spentMinor;
+    spent += a;
+    if (a > 0) {
       spends++;
-      bands[Bands.of(t.amountMinor)] += t.amountMinor;
-    } else {
-      came += t.amountMinor;
+      bands[Bands.of(a)] += a;
     }
   }
+  if (spent < 0) spent = 0;
   return MonthSummary(
     month: month,
     spentMinor: spent,
@@ -102,8 +104,12 @@ MonthSummary summarize(DateTime month, List<TxnView> txns) {
 }
 
 class TransactionsCubit extends Cubit<TransactionsState> {
-  TransactionsCubit(this._ledger, this._settings, {DateTime? now})
-    : super(_initial(now ?? DateTime.now())) {
+  TransactionsCubit(
+    this._ledger,
+    this._settings, {
+    DateTime? now,
+    this.instalments,
+  }) : super(_initial(now ?? DateTime.now())) {
     final today = now ?? DateTime.now();
     _subs.addAll([
       _ledger.watchUpcoming(today).listen((u) => _emit(upcoming: u)),
@@ -127,6 +133,9 @@ class TransactionsCubit extends Cubit<TransactionsState> {
 
   final LedgerRepository _ledger;
   final SettingsRepository _settings;
+
+  /// Spread card EMI instalments for a month (they count as spent there).
+  final Future<List<TxnView>> Function(DateTime month)? instalments;
   final _subs = <StreamSubscription<Object?>>[];
   StreamSubscription<List<TxnView>>? _list;
   StreamSubscription<List<TxnView>>? _period;
@@ -160,9 +169,16 @@ class TransactionsCubit extends Cubit<TransactionsState> {
   void _watchPeriod() {
     _period?.cancel();
     final f = state.filter;
-    _period = _ledger.watchTransactions(f.periodOnly).listen((txns) {
-      if (!isClosed) emit(state.copyWith(summary: summarize(f.from, txns)));
-    });
+    _period = _ledger
+        .watchTransactions(f.periodOnly)
+        .asyncMap(
+          (txns) async => [...txns, ...?await instalments?.call(f.from)],
+        )
+        .listen((txns) {
+          if (!isClosed) {
+            emit(state.copyWith(summary: summarize(f.from, txns)));
+          }
+        });
   }
 
   void _setFilter(TxnFilter f) {

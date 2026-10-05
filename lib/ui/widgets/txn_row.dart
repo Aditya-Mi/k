@@ -24,11 +24,22 @@ class TxnRow extends StatelessWidget {
             hhmm(txn.occurredAt),
           ].join(' · ')
         : [
-            txn.category?.name ?? 'Uncategorized',
+            if (txn.isRefund)
+              'Refund'
+            else
+              txn.category?.name ?? 'Uncategorized',
+            if (txn.emi != null)
+              txn.emi!.isPurchase ? 'EMI ×${txn.emi!.count}' : 'EMI',
             if (txn.account != null) txn.account!.short,
             hhmm(txn.occurredAt),
           ].join(' · ');
-    final title = this.title ?? (txn.isTransfer ? 'Self transfer' : txn.payee);
+    final title =
+        this.title ??
+        (txn.isCardBill
+            ? 'Card bill payment'
+            : txn.isTransfer
+            ? 'Self transfer'
+            : txn.payee);
     return _RowShell(
       onTap: onTap,
       chip: NoteChip(
@@ -42,7 +53,9 @@ class TxnRow extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Tooltip(
-              message: 'Between your own accounts, not counted as spent',
+              message: txn.isCardBill
+                  ? 'Paying a card bill, not counted as spent'
+                  : 'Between your own accounts, not counted as spent',
               child: Icon(
                 Icons.swap_horiz_rounded,
                 size: 16,

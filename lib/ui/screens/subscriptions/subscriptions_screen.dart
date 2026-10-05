@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:rxdart/rxdart.dart';
 
+import '../../../data/emis/emi_service.dart';
 import '../../../data/subscriptions/subscription_service.dart';
 import '../../../di.dart';
 import '../../format.dart';
@@ -8,28 +10,35 @@ import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/note_chip.dart';
 import 'add_subscription_screen.dart';
+import 'emi_form_screen.dart';
+import 'emi_parts.dart';
 import 'subscription_detail_screen.dart';
 import 'subscription_parts.dart';
 
-/// Totals, suggestions to confirm, then tracked plans by next charge
-/// (design 04 / 04c).
+/// Recurring tab (design 13, was 04): totals, suggestions to confirm,
+/// tracked plans by next charge, then EMIs.
 class SubscriptionsScreen extends StatelessWidget {
   const SubscriptionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final t = context.kt;
-    return StreamBuilder<SubscriptionsOverview>(
-      stream: getIt<SubscriptionService>().watch(),
+    return StreamBuilder<(SubscriptionsOverview, List<EmiView>)>(
+      stream: Rx.combineLatest2(
+        getIt<SubscriptionService>().watch(),
+        getIt<EmiService>().watch(),
+        (a, b) => (a, b),
+      ),
       builder: (context, snap) {
-        final o = snap.data;
+        final o = snap.data?.$1;
+        final emis = snap.data?.$2 ?? const <EmiView>[];
         final title = Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 4, 0),
           child: Row(
             children: [
-              Expanded(child: Text('Subscriptions', style: t.headline)),
+              Expanded(child: Text('Recurring', style: t.headline)),
               IconButton(
-                tooltip: 'Add subscription',
+                tooltip: 'Add',
                 icon: const Icon(Icons.add_rounded),
                 onPressed: () => _add(context),
               ),
@@ -39,7 +48,7 @@ class SubscriptionsScreen extends StatelessWidget {
         if (o == null) {
           return Align(alignment: Alignment.topCenter, child: title);
         }
-        if (o.suggestions.isEmpty && o.active.isEmpty) {
+        if (o.suggestions.isEmpty && o.active.isEmpty && emis.isEmpty) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -48,11 +57,12 @@ class SubscriptionsScreen extends StatelessWidget {
                 child: Center(
                   child: SingleChildScrollView(
                     child: EmptyState(
-                      title: 'No subscriptions yet',
+                      title: 'Nothing recurring yet',
                       body:
                           'k spots charges that repeat, and AutoPay alerts '
                           'from your bank. After a couple of months of '
-                          'payments, suggestions show up here to confirm.',
+                          'payments, suggestions show up here to confirm. '
+                          'EMIs show here too.',
                       action: OutlinedButton.icon(
                         onPressed: () => _add(context),
                         icon: const Icon(Icons.add_rounded, size: 20),
@@ -74,12 +84,16 @@ class SubscriptionsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (o.active.isNotEmpty) ...[
+                  if (o.active.isNotEmpty || emis.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Text(
-                      '${inr(o.perMonthMinor)} a month  ·  '
-                      '${inr(o.perYearMinor)} a year  ·  '
-                      '${o.active.length} active',
+                      [
+                        '${inr(o.perMonthMinor + emis.fold(0, (s, e) => s + e.row.amountMinor))} a month',
+                        if (o.active.isNotEmpty)
+                          '${o.active.length} ${o.active.length == 1 ? 'subscription' : 'subscriptions'}',
+                        if (emis.isNotEmpty)
+                          '${emis.length} ${emis.length == 1 ? 'EMI' : 'EMIs'}',
+                      ].join('  ·  '),
                       style: t.title.copyWith(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
@@ -106,6 +120,10 @@ class SubscriptionsScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     for (final s in o.active) _SubRow(sub: s),
                   ],
+                  if (emis.isNotEmpty) ...[
+                    EmiHead(emis: emis),
+                    for (final e in emis) EmiRow(emi: e),
+                  ],
                 ],
               ),
             ),
@@ -116,12 +134,43 @@ class SubscriptionsScreen extends StatelessWidget {
   }
 }
 
-void _add(BuildContext context) => Navigator.of(context).push(
-  MaterialPageRoute<void>(
-    fullscreenDialog: true,
-    builder: (_) => const AddSubscriptionScreen(),
-  ),
-);
+Future<void> _add(BuildContext context) async {
+  final loan = await showModalBottomSheet<bool>(
+    context: context,
+    builder: (context) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.autorenew_rounded),
+            title: const Text('Subscription'),
+            onTap: () => Navigator.pop(context, false),
+          ),
+          ListTile(
+            leading: const Icon(Icons.home_outlined),
+            title: const Text('Loan EMI'),
+            subtitle: const Text('Paid from a bank account each month'),
+            onTap: () => Navigator.pop(context, true),
+          ),
+          ListTile(
+            enabled: false,
+            leading: const Icon(Icons.credit_card_rounded),
+            title: const Text('Card EMI'),
+            subtitle: const Text('Open the card payment, then Convert to EMI'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (loan == null || !context.mounted) return;
+  await Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (_) =>
+          loan ? const EmiFormScreen.loan() : const AddSubscriptionScreen(),
+    ),
+  );
+}
 
 class _SuggestionCard extends StatelessWidget {
   const _SuggestionCard({required this.sub});
@@ -212,7 +261,7 @@ class _ListHead extends StatelessWidget {
     final t = context.kt;
     return Row(
       children: [
-        Expanded(child: Text('Next charges', style: t.title)),
+        Expanded(child: Text('Subscriptions', style: t.title)),
         InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: () async {

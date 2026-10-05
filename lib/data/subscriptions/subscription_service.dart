@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:equatable/equatable.dart';
 import 'package:rxdart/rxdart.dart';
@@ -77,7 +79,13 @@ class SubscriptionsOverview extends Equatable {
 /// Finds subscriptions in the ledger, keeps them matched to new charges and
 /// AutoPay alerts, and holds the owner's edits.
 class SubscriptionService {
-  SubscriptionService(this._db, this._ledger, this._settings, {this.onChanged});
+  SubscriptionService(
+    this._db,
+    this._ledger,
+    this._settings, {
+    this.onChanged,
+    this.alsoRefresh,
+  });
 
   final AppDatabase _db;
   final LedgerRepository _ledger;
@@ -86,8 +94,15 @@ class SubscriptionService {
   /// After anything that moves a reminder (reschedule notifications).
   final Future<void> Function()? onChanged;
 
+  /// Runs with every [refresh] (EMI instalment matching).
+  final Future<void> Function()? alsoRefresh;
+
   static const reminderKey = 'subscriptions.reminderDays';
   static const toleranceKey = 'subscriptions.amountTolerancePct';
+
+  /// Payments the owner took off a plan (JSON list of transaction ids):
+  /// never matched or suggested as a charge again.
+  static const notChargesKey = 'subscriptions.notCharges';
 
   /// A charge this far from the expected day still counts at a new price.
   static const priceChangeWindow = Duration(days: 7);
@@ -100,6 +115,12 @@ class SubscriptionService {
 
   Future<double> _tolerance() async =>
       (await _settings.getInt(toleranceKey) ?? 10) / 100;
+
+  Future<Set<String>> _notCharges() async {
+    final raw = await _settings.get(notChargesKey);
+    if (raw == null) return {};
+    return {for (final id in jsonDecode(raw) as List) id as String};
+  }
 
   // ---------------------------------------------------------------- reads
 
@@ -200,13 +221,15 @@ class SubscriptionService {
   Future<void> refresh({DateTime? now}) async {
     final at = now ?? DateTime.now();
     final tolerance = await _tolerance();
+    final skip = await _notCharges();
     await _db.transaction(() async {
       await _expireMandates(at);
-      await _matchCharges(tolerance);
-      await _matchFirstCharge(tolerance);
+      await _matchCharges(tolerance, skip);
+      await _matchFirstCharge(tolerance, skip);
       await _attachMandates(tolerance);
-      await _detect(at, tolerance);
+      await _detect(at, tolerance, skip);
     });
+    await alsoRefresh?.call();
     await onChanged?.call();
   }
 
@@ -227,8 +250,10 @@ class SubscriptionService {
 
   /// Unlinked debits to the merchant of a tracked plan: within tolerance of
   /// the price anywhere after the last charge, or at any price near the
-  /// expected day (a price change).
-  Future<void> _matchCharges(double tolerance) async {
+  /// expected day (a price change). A plan with no charge yet (started from
+  /// an AutoPay alert) takes only a debit near its expected day, so an old
+  /// shopping order at the same merchant isn't pulled in.
+  Future<void> _matchCharges(double tolerance, Set<String> skip) async {
     final subs =
         await (_db.select(_db.subscriptions)..where(
               (s) =>
@@ -255,11 +280,13 @@ class SubscriptionService {
                 ..orderBy([(t) => OrderingTerm.asc(t.occurredAt)]))
               .get();
       for (final t in candidates) {
+        if (skip.contains(t.id)) continue;
         if (after != null && t.occurredAt.isBefore(after)) continue;
         final expected = sub.nextExpectedAt;
         final onTime =
             expected != null &&
             t.occurredAt.difference(expected).abs() <= priceChangeWindow;
+        if (sub.lastChargedAt == null && !onTime) continue;
         final samePrice = withinTolerance(
           t.amountMinor,
           sub.amountMinor,
@@ -275,7 +302,7 @@ class SubscriptionService {
   /// within [priceChangeWindow] of the expected day, about the same amount,
   /// whose payee shares a word with the plan's name ("Apple Music" →
   /// "APPLE MEDIA SERVICES"). From then on it follows that payee.
-  Future<void> _matchFirstCharge(double tolerance) async {
+  Future<void> _matchFirstCharge(double tolerance, Set<String> skip) async {
     final subs =
         await (_db.select(_db.subscriptions)..where(
               (s) =>
@@ -310,6 +337,7 @@ class SubscriptionService {
       Transaction? best;
       for (final r in rows) {
         final t = r.readTable(_db.transactions);
+        if (skip.contains(t.id)) continue;
         final m = r.readTableOrNull(_db.merchants);
         final payee = nameWords('${m?.displayName ?? ''} ${t.payeeRaw ?? ''}');
         if (!words.any(payee.contains)) continue;
@@ -434,7 +462,7 @@ class SubscriptionService {
   }
 
   /// Repeating debits at a merchant with no plan yet → suggestion.
-  Future<void> _detect(DateTime now, double tolerance) async {
+  Future<void> _detect(DateTime now, double tolerance, Set<String> skip) async {
     final since = now.subtract(const Duration(days: 400));
     final debits =
         await (_db.select(_db.transactions)..where(
@@ -461,6 +489,7 @@ class SubscriptionService {
     }
     final byMerchant = <String, List<Transaction>>{};
     for (final t in debits) {
+      if (skip.contains(t.id)) continue;
       (byMerchant[t.merchantId!] ??= []).add(t);
     }
     for (final MapEntry(key: merchantId, value: txns) in byMerchant.entries) {
@@ -646,6 +675,92 @@ class SubscriptionService {
     id,
     const SubscriptionsCompanion(status: Value(SubscriptionStatus.cancelled)),
   );
+
+  /// "Not part of this subscription" on a payment: unlinks it and keeps it
+  /// from being matched again. If it was the plan's newest charge, the
+  /// plan's last/next charge fall back to the newest one left; an AutoPay
+  /// alert it settled waits again.
+  Future<void> unlinkCharge(String txnId) async {
+    await _db.transaction(() async {
+      final t = await (_db.select(
+        _db.transactions,
+      )..where((x) => x.id.equals(txnId))).getSingle();
+      final subId = t.subscriptionId;
+      if (subId == null) return;
+      final now = DateTime.now();
+      await (_db.update(
+        _db.transactions,
+      )..where((x) => x.id.equals(txnId))).write(
+        TransactionsCompanion(
+          subscriptionId: const Value(null),
+          updatedAt: Value(now),
+        ),
+      );
+      final skip = await _notCharges()
+        ..add(txnId);
+      await _settings.set(notChargesKey, jsonEncode(skip.toList()));
+      await (_db.update(
+        _db.upcomingCharges,
+      )..where((u) => u.matchedTransactionId.equals(txnId))).write(
+        UpcomingChargesCompanion(
+          status: const Value(UpcomingChargeStatus.pending),
+          matchedTransactionId: const Value(null),
+          updatedAt: Value(now),
+        ),
+      );
+      final sub = await (_db.select(
+        _db.subscriptions,
+      )..where((s) => s.id.equals(subId))).getSingle();
+      if (sub.lastChargedAt != t.occurredAt) return;
+      final newest =
+          await (_db.select(_db.transactions)
+                ..where(
+                  (x) => x.deletedAt.isNull() & x.subscriptionId.equals(subId),
+                )
+                ..orderBy([(x) => OrderingTerm.desc(x.occurredAt)])
+                ..limit(1))
+              .getSingleOrNull();
+      // No charge left: the plan's own AutoPay alert says when it's due.
+      final alert = newest != null
+          ? null
+          : await (_db.select(_db.upcomingCharges)
+                  ..where(
+                    (u) =>
+                        u.deletedAt.isNull() &
+                        u.subscriptionId.equals(subId) &
+                        u.status.equalsValue(UpcomingChargeStatus.pending),
+                  )
+                  ..orderBy([(u) => OrderingTerm.desc(u.dueDate)])
+                  ..limit(1))
+                .getSingleOrNull();
+      await (_db.update(
+        _db.subscriptions,
+      )..where((s) => s.id.equals(subId))).write(
+        SubscriptionsCompanion(
+          lastChargedAt: Value(newest?.occurredAt),
+          nextExpectedAt: newest != null
+              ? Value(
+                  nextCharge(
+                    newest.occurredAt,
+                    sub.frequency,
+                    customDays: sub.intervalDays,
+                  ),
+                )
+              : alert != null
+              ? Value(alert.dueDate)
+              : const Value.absent(),
+          amountMinor: newest != null
+              ? Value(newest.amountMinor)
+              : alert != null
+              ? Value(alert.amountMinor)
+              : const Value.absent(),
+          priceChanged: const Value(false),
+          updatedAt: Value(now),
+        ),
+      );
+    });
+    await onChanged?.call();
+  }
 
   Future<void> setUnused(String id, bool unused) =>
       _set(id, SubscriptionsCompanion(unused: Value(unused)));

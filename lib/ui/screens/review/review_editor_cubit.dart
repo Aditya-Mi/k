@@ -179,7 +179,7 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
     final item = queue[index];
     final mandate = item.guess.kind == TemplateKind.mandate;
     var marks = prefillMarks(item.text, item.guess.fields);
-    if (mandate) marks = _swapDate(marks, toDue: true);
+    if (mandate) marks = _swapDate(marks, toDue: true, item: item);
     return ReviewEditorState(
       queue: queue,
       index: index,
@@ -266,21 +266,39 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
     emit(
       state.copyWith(
         kind: kind,
-        marks: _swapDate(state.marks, toDue: kind == TemplateKind.mandate),
+        marks: _swapDate(
+          state.marks,
+          toDue: kind == TemplateKind.mandate,
+          item: state.item!,
+        ),
         dueDate: () => null,
       ),
     );
   }
 
+  /// A DATE becomes DUE ON only when it's after the day the message came:
+  /// a date on or before it is when the alert/mandate was sent or set up
+  /// (e.g. today), not when the charge will be taken.
   static List<FieldMark> _swapDate(
     List<FieldMark> marks, {
     required bool toDue,
+    required ReviewItem item,
   }) {
     final from = toDue ? MarkField.date : MarkField.dueDate;
     final to = toDue ? MarkField.dueDate : MarkField.date;
+    final sent = item.raw.receivedAt;
+    final sentDay = DateTime(sent.year, sent.month, sent.day);
+    bool future(FieldMark m) {
+      final d = parseBankDate(m.valueIn(item.text))?.value;
+      return d != null && d.isAfter(sentDay);
+    }
+
     return [
       for (final m in marks)
-        m.field == from ? FieldMark(to, m.start, m.end) : m,
+        if (m.field != from)
+          m
+        else if (!toDue || future(m))
+          FieldMark(to, m.start, m.end),
     ];
   }
 

@@ -219,4 +219,84 @@ void main() {
     await subs.refresh(now: DateTime(2026, 10, 11));
     expect((await subs.watch().first).suggestions, hasLength(1));
   });
+
+  test(
+    'AutoPay plan with no charge yet skips old orders at the merchant',
+    () async {
+      final amazon = await merchant('Amazon');
+      // An old shopping order at about the plan's price.
+      final order = await debit(amazon, 1450, DateTime(2026, 8, 12));
+      await db
+          .into(db.upcomingCharges)
+          .insert(
+            UpcomingChargesCompanion.insert(
+              merchantId: Value(amazon),
+              amountMinor: 149900,
+              dueDate: DateTime(2027, 6, 24),
+              status: UpcomingChargeStatus.pending,
+            ),
+          );
+      await subs.refresh(now: now);
+      final s = (await subs.watch().first).suggestions.single;
+      await subs.track(s.id);
+      await subs.refresh(now: now);
+      final t = await (db.select(
+        db.transactions,
+      )..where((x) => x.id.equals(order))).getSingle();
+      expect(t.subscriptionId, isNull);
+      expect(
+        (await subs.watchOne(s.id).first)!.row.nextExpectedAt,
+        DateTime(2027, 6, 24),
+      );
+    },
+  );
+
+  test('a payment taken off a plan stays off', () async {
+    final apple = await merchant('Apple Media Services');
+    final first = await debit(apple, 195, DateTime(2026, 8, 29, 6));
+    final id = await subs.trackFromTransaction(
+      first,
+      SubscriptionFrequency.monthly,
+      DateTime(2026, 9, 29),
+    );
+    final wrong = await debit(apple, 199, DateTime(2026, 9, 29, 6));
+    await subs.refresh(now: now);
+    expect(
+      (await (db.select(
+        db.transactions,
+      )..where((x) => x.id.equals(wrong))).getSingle()).subscriptionId,
+      id,
+    );
+
+    await subs.unlinkCharge(wrong);
+    var v = (await subs.watchOne(id).first)!;
+    expect(v.chargeDates, [DateTime(2026, 8, 29, 6)]);
+    expect(v.row.nextExpectedAt, DateTime(2026, 9, 29, 6));
+
+    await subs.refresh(now: now);
+    expect(
+      (await (db.select(
+        db.transactions,
+      )..where((x) => x.id.equals(wrong))).getSingle()).subscriptionId,
+      isNull,
+    );
+    v = (await subs.watchOne(id).first)!;
+    expect(v.chargeDates, hasLength(1));
+  });
+
+  test('Upcoming lists only the next 30 days', () async {
+    for (final due in [DateTime(2026, 10, 20), DateTime(2027, 6, 24)]) {
+      await db
+          .into(db.upcomingCharges)
+          .insert(
+            UpcomingChargesCompanion.insert(
+              amountMinor: 100,
+              dueDate: due,
+              status: UpcomingChargeStatus.pending,
+            ),
+          );
+    }
+    final list = await LedgerRepository(db).watchUpcoming(now).first;
+    expect(list.map((u) => u.dueDate), [DateTime(2026, 10, 20)]);
+  });
 }

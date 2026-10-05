@@ -7,7 +7,10 @@ import 'settings_parts.dart';
 /// Settings → Privacy (design 06): app lock on/off. Turning it on asks the
 /// system prompt once, so it can't lock the owner out.
 class PrivacySettings extends StatelessWidget {
-  const PrivacySettings({super.key});
+  const PrivacySettings({super.key, this.showHead = true});
+
+  /// Off when grouped under another head (Settings → This phone).
+  final bool showHead;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +34,7 @@ class PrivacySettings extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SettingsHead('Privacy'),
+            if (showHead) const SettingsHead('Privacy'),
             SettingsItem(
               icon: Icons.fingerprint_rounded,
               title: 'App lock',

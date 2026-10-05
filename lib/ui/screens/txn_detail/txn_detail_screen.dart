@@ -18,7 +18,9 @@ import '../../widgets/note_chip.dart';
 import '../../widgets/raw_message_card.dart';
 import '../../widgets/rosette.dart';
 import '../../widgets/text_prompt.dart';
+import '../../../data/emis/emi_service.dart';
 import '../../../data/subscriptions/subscription_service.dart';
+import '../subscriptions/emi_form_screen.dart';
 import '../subscriptions/subscription_detail_screen.dart';
 import '../subscriptions/track_subscription_sheet.dart';
 
@@ -78,6 +80,7 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
   Future<int> renamePayee(String merchantId, String name) =>
       _ledger.renameMerchant(merchantId, name);
   Future<void> unlinkTransfer() => _transfers.unlink(txnId);
+  Future<void> markCardBill() => _transfers.markCardBill(txnId, force: true);
   Future<void> markTransfer({String? partnerId, String? addOnAccountId}) =>
       _transfers.markManual(
         txnId,
@@ -212,7 +215,12 @@ class _Loaded extends StatelessWidget {
                           : () => _renamePayee(context, cubit, txn),
                       child: Row(
                         children: [
-                          Flexible(child: Text(txn.payee, style: t.headline)),
+                          Flexible(
+                            child: Text(
+                              txn.isCardBill ? 'Card bill payment' : txn.payee,
+                              style: t.headline,
+                            ),
+                          ),
                           if (txn.merchantId != null && !txn.isTransfer) ...[
                             const SizedBox(width: 8),
                             Icon(Icons.edit_outlined, size: 18, color: c.text3),
@@ -228,6 +236,10 @@ class _Loaded extends StatelessWidget {
                           ? 'not counted as spent'
                           : txn.isCash
                           ? 'from cash, counted at the ATM'
+                          : txn.isRefund
+                          ? 'refund, lowers spent'
+                          : txn.emi?.isPurchase == true && txn.emi!.spread
+                          ? 'spread over ${txn.emi!.count} EMIs'
                           : '${Bands.ranges[band]} range'}',
                       style: t.body.copyWith(color: c.text2),
                     ),
@@ -269,13 +281,47 @@ class _Loaded extends StatelessWidget {
                         label: 'Reference',
                         value: SelectableText(txn.refNo!, style: t.body),
                       ),
-                    if (txn.isTransfer)
+                    if (txn.isCardBill)
+                      FieldRow(
+                        label: txn.isDebit ? 'Paid to' : 'Paid from',
+                        value: Text(
+                          txn.partnerAccount?.long ??
+                              (txn.isDebit
+                                  ? 'A credit card not in k'
+                                  : 'An account not in k'),
+                          style: t.body,
+                          textAlign: TextAlign.right,
+                        ),
+                      )
+                    else if (txn.isTransfer)
                       FieldRow(
                         label: 'Self transfer',
                         value: Text(
                           txn.transferRoute,
                           style: t.body,
                           textAlign: TextAlign.right,
+                        ),
+                      ),
+                    if (txn.emi != null)
+                      _EmiField(link: txn.emi!)
+                    else if (txn.isDebit &&
+                        !txn.isTransfer &&
+                        txn.account?.type == AccountType.creditCard)
+                      FieldRow(
+                        label: 'EMI',
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            fullscreenDialog: true,
+                            builder: (_) =>
+                                EmiFormScreen.convert(purchase: txn),
+                          ),
+                        ),
+                        value: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Convert to EMI', style: t.body),
+                            Icon(Icons.chevron_right_rounded, color: c.text2),
+                          ],
                         ),
                       ),
                     if (txn.subscriptionId != null)
@@ -339,13 +385,29 @@ class _Loaded extends StatelessWidget {
                             onPressed: () =>
                                 showTrackSubscriptionSheet(context, txn),
                           ),
-                        if (txn.isTransfer)
+                        if (txn.subscriptionId != null)
                           OutlinedButton.icon(
                             icon: const Icon(Icons.link_off_rounded, size: 20),
-                            label: const Text('Not a self transfer'),
+                            label: const Text('Not a subscription charge'),
+                            onPressed: () => getIt<SubscriptionService>()
+                                .unlinkCharge(txn.id),
+                          ),
+                        if (txn.isTransfer)
+                          OutlinedButton.icon(
+                            icon: Icon(
+                              txn.isCardBill
+                                  ? Icons.undo_rounded
+                                  : Icons.link_off_rounded,
+                              size: 20,
+                            ),
+                            label: Text(
+                              txn.isCardBill
+                                  ? 'Not a card bill'
+                                  : 'Not a self transfer',
+                            ),
                             onPressed: cubit.unlinkTransfer,
                           )
-                        else if (!txn.isCash)
+                        else if (!txn.isCash) ...[
                           OutlinedButton.icon(
                             icon: const Icon(
                               Icons.swap_horiz_rounded,
@@ -354,6 +416,18 @@ class _Loaded extends StatelessWidget {
                             label: const Text('Mark as self transfer'),
                             onPressed: () => _markTransfer(context, cubit, txn),
                           ),
+                          if (txn.isDebit &&
+                              txn.account?.type != AccountType.creditCard &&
+                              txn.emi == null)
+                            OutlinedButton.icon(
+                              icon: const Icon(
+                                Icons.credit_score_outlined,
+                                size: 20,
+                              ),
+                              label: const Text('Card bill payment'),
+                              onPressed: cubit.markCardBill,
+                            ),
+                        ],
                         OutlinedButton.icon(
                           icon: const Icon(Icons.block_rounded, size: 20),
                           label: const Text('Not a transaction'),
@@ -625,6 +699,50 @@ class _Loaded extends StatelessWidget {
   }
 }
 
+/// "EMI · 12 × ₹3,330 ›" — opens the EMI.
+class _EmiField extends StatelessWidget {
+  const _EmiField({required this.link});
+
+  final EmiLink link;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.kt;
+    return StreamBuilder<EmiView?>(
+      stream: getIt<EmiService>().watchOne(link.id),
+      builder: (context, snap) {
+        final emi = snap.data;
+        return FieldRow(
+          label: 'EMI',
+          onTap: emi == null
+              ? null
+              : () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => EmiFormScreen.edit(emi: emi),
+                  ),
+                ),
+          value: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  link.isPurchase
+                      ? '${link.count} × ${inr(link.amountMinor)}'
+                      : '${link.name} instalment',
+                  style: t.body,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              if (emi != null)
+                Icon(Icons.chevron_right_rounded, color: context.k.text2),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// "Subscription · Apple Media Services ›" — opens the plan.
 class _SubscriptionField extends StatelessWidget {
   const _SubscriptionField({required this.id});
@@ -639,6 +757,7 @@ class _SubscriptionField extends StatelessWidget {
       builder: (context, snap) {
         final sub = snap.data;
         if (sub == null) return const SizedBox.shrink();
+        final stopped = sub.row.status == SubscriptionStatus.cancelled;
         return FieldRow(
           label: 'Subscription',
           onTap: () => Navigator.of(context).push(
@@ -651,7 +770,7 @@ class _SubscriptionField extends StatelessWidget {
             children: [
               Flexible(
                 child: Text(
-                  sub.name,
+                  stopped ? '${sub.name} · stopped' : sub.name,
                   style: t.body,
                   textAlign: TextAlign.right,
                 ),

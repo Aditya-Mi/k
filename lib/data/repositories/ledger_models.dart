@@ -24,6 +24,7 @@ class AccountView extends Equatable {
     this.last4,
     this.nickname,
     this.includes = const [],
+    this.creditLimitMinor,
   });
 
   final String id;
@@ -35,6 +36,19 @@ class AccountView extends Equatable {
 
   /// Accounts folded into this one, e.g. "card ··4444".
   final List<String> includes;
+
+  /// Credit card: total limit the owner entered.
+  final int? creditLimitMinor;
+
+  bool get isCreditCard => type == AccountType.creditCard;
+
+  /// Credit card owed: limit minus [availableMinor], never below 0.
+  int? owedMinor(int? availableMinor) {
+    final limit = creditLimitMinor;
+    if (limit == null || availableMinor == null) return null;
+    final owed = limit - availableMinor;
+    return owed < 0 ? 0 : owed;
+  }
 
   bool get isCard =>
       type == AccountType.creditCard || type == AccountType.debitCard;
@@ -66,6 +80,7 @@ class AccountView extends Equatable {
   @override
   List<Object?> get props => [
     id, bankId, bankName, type, last4, nickname, includes, //
+    creditLimitMinor,
   ];
 }
 
@@ -90,6 +105,7 @@ class TxnView extends Equatable {
     this.transferPartnerId,
     this.partnerAccount,
     this.subscriptionId,
+    this.emi,
   });
 
   final String id;
@@ -121,19 +137,51 @@ class TxnView extends Equatable {
   /// Matched to a subscription (one of its charges).
   final String? subscriptionId;
 
+  /// The EMI this is the purchase or an instalment of.
+  final EmiLink? emi;
+
   bool get isTransfer => transferId != null;
+
+  /// A self transfer to or from a credit card: paying its bill.
+  bool get isCardBill => isTransfer && category?.id == 'cat_card_bill';
+
+  /// Money back on a credit card that isn't a bill payment: lowers spent.
+  bool get isRefund =>
+      !isDebit && !isTransfer && account?.type == AccountType.creditCard;
+
+  /// Left out of totals because of an EMI: a spread purchase (its
+  /// instalments count instead), or a card instalment of a purchase that
+  /// already counted once.
+  bool get _emiExcluded {
+    final e = emi;
+    if (e == null) return false;
+    if (e.isPurchase) return e.spread;
+    return e.kind == EmiKind.card && !e.spread;
+  }
 
   /// Paid from cash: it already counted as spent when withdrawn at the ATM.
   bool get isCash => account?.isCash ?? false;
 
   /// Counts toward spent / came in. Self transfers and cash payments don't
-  /// (cash was counted once, at the ATM).
-  bool get countsInTotals => !isTransfer && !isCash;
+  /// (cash was counted once, at the ATM); see also [_emiExcluded].
+  bool get countsInTotals => !isTransfer && !isCash && !_emiExcluded;
+
+  /// Signed contribution to spent: debits add, card refunds subtract.
+  int get spentMinor => !countsInTotals
+      ? 0
+      : isDebit
+      ? amountMinor
+      : isRefund
+      ? -amountMinor
+      : 0;
+
+  /// Contribution to came in (refunds lower spent instead).
+  int get inMinor => countsInTotals && !isDebit && !isRefund ? amountMinor : 0;
   bool get addedByUser => origin == TxnOrigin.user;
 
   /// "Axis ··1111 → Kotak ··5555"; an untracked side reads "own account".
   String get transferRoute {
-    const other = 'own account';
+    final other = isCardBill ? 'credit card' : 'own account';
     final mine = account?.short ?? 'this account';
     final theirs = partnerAccount?.short ?? other;
     return isDebit ? '$mine → $theirs' : '$theirs → $mine';
@@ -154,7 +202,35 @@ class TxnView extends Equatable {
     transferId,
     merchantId,
     origin,
-    transferPartnerId, partnerAccount, subscriptionId,
+    transferPartnerId, partnerAccount, subscriptionId, emi,
+  ];
+}
+
+/// What a transaction is to its EMI.
+class EmiLink extends Equatable {
+  const EmiLink({
+    required this.id,
+    required this.name,
+    required this.kind,
+    required this.isPurchase,
+    required this.spread,
+    required this.count,
+    required this.amountMinor,
+  });
+
+  final String id;
+  final String name;
+  final EmiKind kind;
+
+  /// The purchase converted to EMI (else one instalment).
+  final bool isPurchase;
+  final bool spread;
+  final int count;
+  final int amountMinor;
+
+  @override
+  List<Object?> get props => [
+    id, name, kind, isPurchase, spread, count, amountMinor, //
   ];
 }
 

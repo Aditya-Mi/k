@@ -24,6 +24,10 @@ class Accounts extends Table with SyncColumns {
   /// account). Kept so messages naming this last4 still resolve; hidden.
   TextColumn get mergedIntoId => text().nullable()();
 
+  /// Credit card: the total limit the owner entered. What's owed is this
+  /// minus the available limit the bank reports.
+  IntColumn get creditLimitMinor => integer().nullable()();
+
   @override
   List<Set<Column>> get uniqueKeys => [
     {bankId, last4},
@@ -88,6 +92,9 @@ class Transactions extends Table with SyncColumns {
   /// `user` rows have no bank message of their own.
   TextColumn get origin =>
       textEnum<TxnOrigin>().withDefault(Constant(TxnOrigin.message.name))();
+
+  /// An EMI's purchase or one of its instalments (Emis.id).
+  TextColumn get emiId => text().nullable()();
 }
 
 /// Dedup link: one transaction ← many raw messages (SMS + email).

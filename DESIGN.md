@@ -237,7 +237,7 @@ Each ink has a deepened light-theme twin (`-light` keys) that holds at least 4.9
 
 ## Layout
 
-A single column on a 412dp-wide phone with a 16dp gutter. Sections are separated by 16–24dp. List rows use 10dp vertical padding and a 14dp gap between chip, text block and amount; the amount column is right-aligned at the gutter. Lists group by day with a day header carrying the day's total out; the list section head shows the date span currently in view and sticks while scrolling. Primary actions sit at the bottom of the screen in thumb reach, full-width or as a pair (outlined secondary left, filled primary right). Bottom navigation has four destinations: Transactions, Review, Subscriptions, Summary. Detail screens use label-left, value-right field rows separated by hairlines.
+A single column on a 412dp-wide phone with a 16dp gutter. Sections are separated by 16–24dp. List rows use 10dp vertical padding and a 14dp gap between chip, text block and amount; the amount column is right-aligned at the gutter. Lists group by day with a day header carrying the day's total out; the list section head shows the date span currently in view and sticks while scrolling. Primary actions sit at the bottom of the screen in thumb reach, full-width or as a pair (outlined secondary left, filled primary right). Bottom navigation has five destinations: Transactions, Review, Recurring (subscriptions and EMIs), Accounts, Summary. Settings opens from the Accounts tab's top bar. Detail screens use label-left, value-right field rows separated by hairlines.
 
 ## Elevation & Depth
 
@@ -282,8 +282,8 @@ Small, banknote-proportioned rectangles for anything inked; soft 12dp cards for 
 - **Switch:** track in text colour, thumb in bg with a check when on.
 
 ### Navigation
-- **Bottom Nav:** Material 3 navigation bar on surface-1, four destinations with Material Symbols Rounded icons over 12dp labels. Selected destination: surface-3 indicator (64×32dp) behind the icon, label in text colour. Unselected: icon and label in text-2. The Review badge is neutral: a small text-coloured disc with a bg-coloured count.
-- **Top App Bar:** home shows the lowercase "k" wordmark in Archivo with search and settings actions; inner screens show a back or close icon, an Archivo 22dp title, and actions on the right.
+- **Bottom Nav:** Material 3 navigation bar on surface-1, five destinations with Material Symbols Rounded icons over 12dp labels. Selected destination: surface-3 indicator (64×32dp) behind the icon, label in text colour. Unselected: icon and label in text-2. The Review badge is neutral: a small text-coloured disc with a bg-coloured count.
+- **Top App Bar:** home shows the lowercase "k" wordmark in Archivo with add and search actions; inner screens show a back or close icon, an Archivo 22dp title, and actions on the right.
 
 ### Txn Row
 Note chip · payee (Body) over meta (Meta) · amount (Amount Row) right-aligned. An optional merged icon sits before the amount when the row came from more than one message. Row states (pending, unused, merged) restyle the chip and text tone without moving the columns.
@@ -298,6 +298,9 @@ The signature. A surface-2 card at about 2.07:1 holding the month and sync state
 4. **Empty states:** the house rosette at 132dp in text-2 replaces a generic icon (e.g. "Nothing to review").
 5. **The drawn moment:** when k learns a new format, and on successful unlock, a rosette draws itself (see Motion). It is drawn in the ink of the amount involved, or neutral for unlock.
 6. **App icon:** the house rosette in paper white on bg with "k" in Archivo bold in a solid core; adaptive icon, rosette inside the 72dp safe zone.
+
+### Card Used Bar and EMI Progress
+A credit card shows what's owed first (limit minus the bank's available limit) with a 4–6dp rounded bar: surface-3 track, text-coloured fill for the share of the limit used. EMI rows (Recurring, card screen) carry the same bar for instalments paid. Neutral, never ink.
 
 ### Subscription Cycle Bar
 Under each subscription row: a rounded bar whose track length is the billing cycle (a yearly plan draws a full-width track, a monthly plan a short one) and whose fill is the time left before the next charge.

@@ -25,6 +25,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
   final _last4 = TextEditingController();
   final _nickname = TextEditingController();
   final _balance = TextEditingController();
+  final _limit = TextEditingController();
   String? _bankId;
 
   /// A bank typed in "A bank not in k", created on save.
@@ -45,6 +46,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
     _last4.dispose();
     _nickname.dispose();
     _balance.dispose();
+    _limit.dispose();
     super.dispose();
   }
 
@@ -117,6 +119,23 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                   hintText: 'e.g. Salary account',
                 ),
               ),
+              if (_isCard) ...[
+                const SizedBox(height: 20),
+                const _Label('Card limit (optional)'),
+                TextField(
+                  controller: _limit,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+                  ],
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. 1,00,000',
+                    prefixText: '₹ ',
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               _Label(
                 _isCard
@@ -265,6 +284,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         last4: _needsDigits ? _last4.text.trim() : null,
         nickname: _nickname.text,
         balanceMinor: typed == null ? null : (_overdrawn ? -typed : typed),
+        creditLimitMinor: _isCard ? parseAmountMinor(_limit.text) : null,
       );
       if (id == null) {
         messenger.showSnackBar(

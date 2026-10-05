@@ -8,6 +8,7 @@ import 'data/db/app_database.dart';
 import 'data/db/connection.dart';
 import 'data/db/seed/seeder.dart';
 import 'data/email/email_sync.dart';
+import 'data/emis/emi_service.dart';
 import 'data/email/google_auth.dart';
 import 'data/ingest/ingestion_service.dart';
 import 'data/ingest/sms_sync.dart';
@@ -36,12 +37,18 @@ Future<void> configureDependencies() async {
   final ledger = LedgerRepository(db, onRulesChanged: ingestion.invalidate);
   final notifications = KNotifications(db, ledger, settings);
   late final SubscriptionService subscriptions;
+  late final EmiService emis;
+  Future<void> syncReminders() async => notifications.syncReminders(
+    (await subscriptions.watch().first).active,
+    await emis.watch().first,
+  );
+  emis = EmiService(db, settings, onChanged: syncReminders);
   subscriptions = SubscriptionService(
     db,
     ledger,
     settings,
-    onChanged: () async =>
-        notifications.syncReminders((await subscriptions.watch().first).active),
+    onChanged: syncReminders,
+    alsoRefresh: () => emis.refresh(),
   );
 
   getIt
@@ -54,6 +61,7 @@ Future<void> configureDependencies() async {
     )
     ..registerSingleton<KNotifications>(notifications)
     ..registerSingleton<SubscriptionService>(subscriptions)
+    ..registerSingleton<EmiService>(emis)
     ..registerSingleton<IngestionService>(ingestion)
     ..registerSingleton<TransferLinker>(TransferLinker(db))
     ..registerSingleton<SmsBridge>(bridge)

@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Cash account added; same-name payees merge; custom categories; unknown-sender learning, AutoPay/skip learning, review undo, sync-problem banners, overdrawn balances). Schema v8.
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Cash account added; same-name payees merge; custom categories; unknown-sender learning, AutoPay/skip learning, review undo, sync-problem banners, overdrawn balances). Schema v9.
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -182,6 +182,27 @@ Device checks:
 ### For the parser session
 - Banks learned from unknown senders (Settings → Banks, Message formats samples) are candidates for built-in `BankDefinition`s; use the same code as the app's id (`bankCodeFor`, e.g. `HDFC`) so the seeded row lands on the owner's.
 - Skip formats the owner teaches are `ignore` templates in `parser_templates`; recurring ones are worth built-in ignore templates.
+
+## Credit cards, EMIs, 5-tab nav (schema v9, 2026-10-05)
+Owner has no credit card yet: no real card samples; card bill / payment-received / statement formats stay unbuilt (parser).
+- Designs: `12-accounts-tab`, `12b-credit-card`, `13-recurring`, `13b-convert-to-emi`, `13c-add-loan-emi`, `02d-card-bill-payment`, `02e-card-payment-emi`, `06l-settings-grouped`; bottom nav component now 5 tabs; Transactions top bar is + and search only.
+- Schema v9: `accounts.credit_limit_minor`, `transactions.emi_id`, table `emis` (`lib/data/db/tables/emi_tables.dart`); seeded category `cat_card_bill` "Card bill".
+- **Card bill ≠ spend** (`lib/data/ingest/card_bill.dart`, `TransferLinker.markCardBill`): a non-card debit whose payee/message looks like a bill payment (CRED, credit card, CC payment, BillDesk card…) becomes a transfer to the card: the card's matching credit within ±3 days, else a card side added by k (`origin user`; a late message becomes it) when the card is named by digits or is the only one, else alone. A card credit later joins a lone bill. Backfill `markCardBillsAll` on start. Detail: "Card bill payment" (force) / "Not a card bill" (unlink).
+- **Owed**: `AccountView.owedMinor` = limit − available. Set via Accounts → card → ⋮ / Card limit, or Add account.
+- **Refunds**: credit on a credit card that isn't a bill payment = `TxnView.isRefund`; `spentMinor` is signed, so refunds lower spent (month panel, day totals, Summary), never "in".
+- **EMIs** (`lib/data/emis/`): `EmiSchedule` (pure), `EmiService` (convert a card purchase, add a loan, edit, stop; `refresh` links debits within ±2% and ±7 days of a due instalment on the EMI's account; runs with subscription refresh). Card EMI `spread` (default): purchase not counted, each due instalment counts in its month via `virtualInstalments` (month panel + Summary only, never listed) unless a real linked charge covers that month; unspread: purchase counts once, linked instalments don't. Loan EMIs count as normal debits. Loan reminders share the subscription reminder channel.
+- Nav: Transactions · Review · Recurring · Accounts · Summary. Settings regrouped (Reading / Your data / This phone / About) with sub-pages reusing the old sections.
+- Tests: `test/data/credit_card_test.dart`; `flutter test` 111 pass. Emulator-checked on a release build: v8→v9 migration, CRED bill as transfer with card side, card screen, Convert to EMI, Recurring, Settings.
+
+### For the parser session
+- Credit card "payment received", statement/bill due ("Total due ₹X, min ₹Y, due …") and refund formats, once the owner (or a tester) has a card. Card-on-UPI (RuPay) messages must give the card's last4 so they land on the card.
+
+## Subscription fixes from Amazon Prime card change (2026-10-05)
+- A plan with no charge yet (suggested from an AutoPay alert) took any past debit at its merchant within ±10% (old Amazon order → "Prime"). `_matchCharges` now needs such a debit within ±7 days of the expected day.
+- Txn detail: "Not a subscription charge" → `SubscriptionService.unlinkCharge` (unlinks; id kept in setting `subscriptions.notCharges` so match/detect skip it; plan's last/next/amount fall back to the newest charge left, else its pending AutoPay alert; a settled alert goes back to pending). Field reads "<name> · stopped" for a stopped plan.
+- Upcoming on Transactions shows only alerts due in the next 30 days (`LedgerRepository.upcomingWindow`).
+- Review: switching to AutoPay due (or a parser-guessed AutoPay) turns a DATE mark into DUE ON only if it's after the day the message came; otherwise "Mark or pick".
+- Not fixed: AutoPay-alert suggestions are always monthly (the alert doesn't say how often).
 
 ## Releases + in-app updates (2026-10-05)
 Repo goes public; `design/k.pen` untracked (`*.pen` ignored; stays local, still in old history by owner's choice). Real account digits masked everywhere (parser fixtures `4b4dadf`; app tests, docs and designs: real last-4s replaced with 1111–5555).

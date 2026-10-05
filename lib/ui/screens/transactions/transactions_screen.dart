@@ -16,9 +16,7 @@ import '../../widgets/common.dart';
 import '../../widgets/month_note_panel.dart';
 import '../../widgets/txn_row.dart';
 import '../../../di.dart';
-import '../accounts/accounts_screen.dart';
 import '../settings/connect_inbox_screen.dart';
-import '../settings/settings_screen.dart';
 import '../txn_detail/txn_detail_screen.dart';
 import 'add_payment_screen.dart';
 import 'transactions_cubit.dart';
@@ -135,24 +133,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     icon: const Icon(Icons.search_rounded),
                     onPressed: () => setState(() => _searching = true),
                   ),
-                IconButton(
-                  tooltip: 'Accounts',
-                  icon: const Icon(Icons.account_balance_wallet_outlined),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const AccountsScreen(),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Settings',
-                  icon: const Icon(Icons.settings_outlined),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const SettingsScreen(),
-                    ),
-                  ),
-                ),
                 const SizedBox(width: 4),
               ],
             ),
@@ -296,10 +276,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   String? _outLabel(List<TxnView> rows) {
-    final out = rows
-        .where((r) => r.isDebit && r.countsInTotals)
-        .fold(0, (sum, r) => sum + r.amountMinor);
-    return out == 0 ? null : '${inr(out)} out';
+    final out = rows.fold(0, (sum, r) => sum + r.spentMinor);
+    return out <= 0 ? null : '${inr(out)} out';
   }
 }
 

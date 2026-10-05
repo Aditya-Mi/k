@@ -9,6 +9,7 @@ import '../data/db/app_database.dart';
 import '../data/db/enums.dart';
 import '../data/repositories/ledger_repository.dart';
 import '../data/repositories/settings_repository.dart';
+import '../data/emis/emi_service.dart';
 import '../data/subscriptions/subscription_service.dart';
 import '../ui/format.dart';
 
@@ -78,7 +79,10 @@ class KNotifications {
 
   // ------------------------------------------------------------ reminders
 
-  Future<void> syncReminders(List<SubscriptionView> active) async {
+  Future<void> syncReminders(
+    List<SubscriptionView> active,
+    List<EmiView> emis,
+  ) async {
     if (!_ready) return;
     try {
       // Only reminders are scheduled ahead; live alerts are shown at once.
@@ -96,6 +100,23 @@ class KNotifications {
           scheduledDate: at,
           title: '${s.name} renews ${_when(s.reminderDays)}',
           body: '${inr(s.amountMinor)} on ${dayShort(next)}$account',
+          notificationDetails: const NotificationDetails(android: _reminders),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+      }
+      for (final e in emis) {
+        final next = e.nextDueAt;
+        // Card EMIs arrive on the card bill; only loans need a heads-up.
+        if (e.isCard || next == null || e.reminderDays <= 0) continue;
+        final day = next.subtract(Duration(days: e.reminderDays));
+        final at = tz.TZDateTime(tz.local, day.year, day.month, day.day, 9);
+        if (!at.isAfter(now)) continue;
+        final account = e.account == null ? '' : ' · ${e.account!.short}';
+        await _plugin.zonedSchedule(
+          id: _idFor('e${e.id}'),
+          scheduledDate: at,
+          title: '${e.name} EMI ${_when(e.reminderDays)}',
+          body: '${inr(e.row.amountMinor)} on ${dayShort(next)}$account',
           notificationDetails: const NotificationDetails(android: _reminders),
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );

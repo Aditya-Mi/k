@@ -134,45 +134,57 @@ class MonthReport extends Equatable {
       final at = t.occurredAt;
       final key = DateTime(at.year, at.month);
       final inMonth = !at.isBefore(start) && at.isBefore(end);
-      if (!t.isDebit) {
-        if (inMonth) came += t.amountMinor;
+      if (t.inMinor > 0) {
+        if (inMonth) came += t.inMinor;
         continue;
       }
+      // Debits add; card refunds (negative) take back from the same
+      // month, category and payee, but aren't a spend of their own.
+      final a = t.spentMinor;
+      if (a == 0) continue;
       if (perMonth.containsKey(key)) {
-        perMonth[key] = perMonth[key]! + t.amountMinor;
+        perMonth[key] = perMonth[key]! + a;
       }
       if (!inMonth) continue;
 
-      final a = t.amountMinor;
+      final one = a > 0 ? 1 : 0;
       spent += a;
-      spends++;
-      dayTotals[at.day - 1] += a;
-      final band = Bands.of(a);
-      bandTotals[band] += a;
-      bandCounts[band]++;
+      spends += one;
+      if (a > 0) {
+        dayTotals[at.day - 1] += a;
+        final band = Bands.of(a);
+        bandTotals[band] += a;
+        bandCounts[band]++;
+      }
 
       final c = cats[t.category?.id];
-      cats[t.category?.id] = (t.category, (c?.$2 ?? 0) + a, (c?.$3 ?? 0) + 1);
+      cats[t.category?.id] = (t.category, (c?.$2 ?? 0) + a, (c?.$3 ?? 0) + one);
 
       final pk = t.merchantId ?? t.payee.toLowerCase();
       final p = payees[pk];
       final byCat = p?.$4 ?? <String?, (Category?, int)>{};
       final pc = byCat[t.category?.id];
-      byCat[t.category?.id] = (t.category, (pc?.$2 ?? 0) + 1);
-      payees[pk] = (t.payee, (p?.$2 ?? 0) + a, (p?.$3 ?? 0) + 1, byCat);
+      byCat[t.category?.id] = (t.category, (pc?.$2 ?? 0) + one);
+      payees[pk] = (t.payee, (p?.$2 ?? 0) + a, (p?.$3 ?? 0) + one, byCat);
     }
+    if (spent < 0) spent = 0;
+    perMonth.updateAll((_, v) => v < 0 ? 0 : v);
 
     final categories = [
-      for (final c in cats.values) CategorySpend(c.$1, c.$2, c.$3),
+      for (final c in cats.values)
+        if (c.$2 > 0) CategorySpend(c.$1, c.$2, c.$3),
     ]..sort((a, b) => b.spentMinor.compareTo(a.spentMinor));
     final ranked = [
       for (final p in payees.values)
-        PayeeSpend(
-          p.$1,
-          p.$2,
-          p.$3,
-          (p.$4.values.toList()..sort((a, b) => b.$2.compareTo(a.$2))).first.$1,
-        ),
+        if (p.$2 > 0 && p.$3 > 0)
+          PayeeSpend(
+            p.$1,
+            p.$2,
+            p.$3,
+            (p.$4.values.toList()..sort((a, b) => b.$2.compareTo(a.$2)))
+                .first
+                .$1,
+          ),
     ]..sort((a, b) => b.spentMinor.compareTo(a.spentMinor));
 
     return MonthReport(
