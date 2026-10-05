@@ -333,13 +333,46 @@ class LedgerRepository {
   });
 
   /// Merchant display name, for every payment to it.
-  Future<void> renameMerchant(String merchantId, String name) =>
-      (_db.update(_db.merchants)..where((m) => m.id.equals(merchantId))).write(
-        MerchantsCompanion(
-          displayName: Value(name.trim()),
-          updatedAt: Value(DateTime.now()),
-        ),
-      );
+  /// Renames the merchant everywhere. Giving it a name another merchant
+  /// already has makes them one (Summary's top payees, subscriptions and
+  /// "use for all" rules then see a single payee). Returns how many merged.
+  Future<int> renameMerchant(String merchantId, String name) =>
+      _db.transaction(() async {
+        final clean = name.trim();
+        await (_db.update(
+          _db.merchants,
+        )..where((m) => m.id.equals(merchantId))).write(
+          MerchantsCompanion(
+            displayName: Value(clean),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+        final same = await (_db.select(_db.merchants)..where(
+              (m) =>
+                  m.id.equals(merchantId).not() &
+                  m.deletedAt.isNull() &
+                  m.mergedIntoId.isNull() &
+                  m.displayName.lower().equals(clean.toLowerCase()),
+            ))
+            .get();
+        for (final o in same) {
+          await _db.mergeMerchant(o.id, merchantId);
+        }
+        if (same.isNotEmpty) {
+          _db.notifyUpdates({
+            for (final t in <TableInfo>[
+              _db.transactions,
+              _db.merchants,
+              _db.subscriptions,
+              _db.upcomingCharges,
+              _db.categoryRules,
+            ])
+              TableUpdate.onTable(t),
+          });
+          onRulesChanged?.call();
+        }
+        return same.length;
+      });
 
   Future<void> setNote(String txnId, String? note) => _updateTxn(
     txnId,

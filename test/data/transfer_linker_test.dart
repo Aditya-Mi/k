@@ -393,6 +393,7 @@ void main() {
       ..execute('ALTER TABLE accounts DROP COLUMN manual_balance_minor')
       ..execute('ALTER TABLE accounts DROP COLUMN manual_balance_at')
       ..execute('ALTER TABLE accounts DROP COLUMN merged_into_id')
+      ..execute('ALTER TABLE merchants DROP COLUMN merged_into_id')
       ..execute('PRAGMA user_version = 1')
       ..close();
 

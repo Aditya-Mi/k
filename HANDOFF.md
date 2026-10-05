@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Cash account added). Schema v6.
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Cash account added; same-name payees merge). Schema v7.
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -144,6 +144,12 @@ Owner's rule: an ATM withdrawal counts as spent (as before) and adds to cash; a 
 - `TxnView.countsInTotals` (= not a transfer, not cash) drives month panel, Summary report and day "out" totals. So cash payments don't show in Summary categories; the withdrawal stays under "ATM withdrawal".
 - Add payment: "Cash" is an account choice (lowers cash), "Not in k" replaces "Cash or not in k". Txn row shows a cash icon; detail says "from cash, counted at the ATM".
 - Designs: `10-accounts` (Cash in hand row), `09b-add-payment-account-sheet` (Cash / Not in k), Cash row in `06-settings`.
+
+## Payee merge (schema v7, 2026-10-05)
+Bug: renaming payees to the same name ("Zepto") only changed display names; separate merchant rows stayed, so Summary top payees split the amount (grouped by merchantId), and subscriptions/"use for all" rules saw separate payees too.
+- `merchants.merged_into_id`. `AppDatabase.mergeMerchant(source, target)`: transactions, subscriptions, upcoming charges, aliases move; the source's merchant category rule moves to the target unless it has one; source row stays as a pointer. Ingestion `_merchantFor` follows the pointer.
+- `LedgerRepository.renameMerchant` merges every other live merchant with the same name (case-insensitive) into the renamed one; detail shows "Now one payee with X".
+- v7 migration `mergeSameNameMerchants()` folds existing duplicates (most payments keeps its row). No unmerge yet.
 
 ## Next step: Phase 6 device test
 Google Cloud project stays in **Testing** (owner's choice: production needs homepage + privacy policy URLs); Gmail grant expires every 7 days.

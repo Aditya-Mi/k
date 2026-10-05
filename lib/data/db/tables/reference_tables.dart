@@ -39,6 +39,10 @@ class Categories extends Table with SyncColumns {
 class Merchants extends Table with SyncColumns {
   TextColumn get normalizedKey => text().unique()();
   TextColumn get displayName => text()();
+
+  /// Folded into another merchant (owner gave both the same name). Kept so
+  /// its key still resolves; ingestion follows this to the target.
+  TextColumn get mergedIntoId => text().nullable()();
 }
 
 /// Many raw payee strings ("swiggy.upi@axb", "SWIGGY BANGALORE") → one merchant.

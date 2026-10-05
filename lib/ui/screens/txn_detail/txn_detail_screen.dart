@@ -74,7 +74,7 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
 
   Future<void> setCategory(String id, {bool forMerchant = false}) =>
       _ledger.setCategory(txnId, id, applyToMerchant: forMerchant);
-  Future<void> renamePayee(String merchantId, String name) =>
+  Future<int> renamePayee(String merchantId, String name) =>
       _ledger.renameMerchant(merchantId, name);
   Future<void> unlinkTransfer() => _transfers.unlink(txnId);
   Future<void> markTransfer({String? partnerId, String? addOnAccountId}) =>
@@ -460,10 +460,17 @@ class _Loaded extends StatelessWidget {
       context,
       title: 'Rename payee',
       initial: txn.payee,
-      help: 'Changes every payment to them.',
+      help:
+          'Changes every payment to them. A name another payee already has '
+          'makes them one.',
     );
-    if (name != null && name.trim().isNotEmpty) {
-      await cubit.renamePayee(txn.merchantId!, name);
+    if (name == null || name.trim().isEmpty || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final merged = await cubit.renamePayee(txn.merchantId!, name);
+    if (merged > 0) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Now one payee with ${name.trim()}')),
+      );
     }
   }
 

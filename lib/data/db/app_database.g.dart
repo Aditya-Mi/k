@@ -1510,6 +1510,17 @@ class $MerchantsTable extends Merchants
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
+    'mergedIntoId',
+  );
+  @override
+  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
+    'merged_into_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1518,6 +1529,7 @@ class $MerchantsTable extends Merchants
     deletedAt,
     normalizedKey,
     displayName,
+    mergedIntoId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1574,6 +1586,15 @@ class $MerchantsTable extends Merchants
     } else if (isInserting) {
       context.missing(_displayNameMeta);
     }
+    if (data.containsKey('merged_into_id')) {
+      context.handle(
+        _mergedIntoIdMeta,
+        mergedIntoId.isAcceptableOrUnknown(
+          data['merged_into_id']!,
+          _mergedIntoIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1607,6 +1628,10 @@ class $MerchantsTable extends Merchants
         DriftSqlType.string,
         data['${effectivePrefix}display_name'],
       )!,
+      mergedIntoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merged_into_id'],
+      ),
     );
   }
 
@@ -1625,6 +1650,10 @@ class Merchant extends DataClass implements Insertable<Merchant> {
   final DateTime? deletedAt;
   final String normalizedKey;
   final String displayName;
+
+  /// Folded into another merchant (owner gave both the same name). Kept so
+  /// its key still resolves; ingestion follows this to the target.
+  final String? mergedIntoId;
   const Merchant({
     required this.id,
     required this.createdAt,
@@ -1632,6 +1661,7 @@ class Merchant extends DataClass implements Insertable<Merchant> {
     this.deletedAt,
     required this.normalizedKey,
     required this.displayName,
+    this.mergedIntoId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1644,6 +1674,9 @@ class Merchant extends DataClass implements Insertable<Merchant> {
     }
     map['normalized_key'] = Variable<String>(normalizedKey);
     map['display_name'] = Variable<String>(displayName);
+    if (!nullToAbsent || mergedIntoId != null) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId);
+    }
     return map;
   }
 
@@ -1657,6 +1690,9 @@ class Merchant extends DataClass implements Insertable<Merchant> {
           : Value(deletedAt),
       normalizedKey: Value(normalizedKey),
       displayName: Value(displayName),
+      mergedIntoId: mergedIntoId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mergedIntoId),
     );
   }
 
@@ -1672,6 +1708,7 @@ class Merchant extends DataClass implements Insertable<Merchant> {
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       normalizedKey: serializer.fromJson<String>(json['normalizedKey']),
       displayName: serializer.fromJson<String>(json['displayName']),
+      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
   @override
@@ -1684,6 +1721,7 @@ class Merchant extends DataClass implements Insertable<Merchant> {
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'normalizedKey': serializer.toJson<String>(normalizedKey),
       'displayName': serializer.toJson<String>(displayName),
+      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
 
@@ -1694,6 +1732,7 @@ class Merchant extends DataClass implements Insertable<Merchant> {
     Value<DateTime?> deletedAt = const Value.absent(),
     String? normalizedKey,
     String? displayName,
+    Value<String?> mergedIntoId = const Value.absent(),
   }) => Merchant(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -1701,6 +1740,7 @@ class Merchant extends DataClass implements Insertable<Merchant> {
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     normalizedKey: normalizedKey ?? this.normalizedKey,
     displayName: displayName ?? this.displayName,
+    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   Merchant copyWithCompanion(MerchantsCompanion data) {
     return Merchant(
@@ -1714,6 +1754,9 @@ class Merchant extends DataClass implements Insertable<Merchant> {
       displayName: data.displayName.present
           ? data.displayName.value
           : this.displayName,
+      mergedIntoId: data.mergedIntoId.present
+          ? data.mergedIntoId.value
+          : this.mergedIntoId,
     );
   }
 
@@ -1725,7 +1768,8 @@ class Merchant extends DataClass implements Insertable<Merchant> {
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('normalizedKey: $normalizedKey, ')
-          ..write('displayName: $displayName')
+          ..write('displayName: $displayName, ')
+          ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
   }
@@ -1738,6 +1782,7 @@ class Merchant extends DataClass implements Insertable<Merchant> {
     deletedAt,
     normalizedKey,
     displayName,
+    mergedIntoId,
   );
   @override
   bool operator ==(Object other) =>
@@ -1748,7 +1793,8 @@ class Merchant extends DataClass implements Insertable<Merchant> {
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt &&
           other.normalizedKey == this.normalizedKey &&
-          other.displayName == this.displayName);
+          other.displayName == this.displayName &&
+          other.mergedIntoId == this.mergedIntoId);
 }
 
 class MerchantsCompanion extends UpdateCompanion<Merchant> {
@@ -1758,6 +1804,7 @@ class MerchantsCompanion extends UpdateCompanion<Merchant> {
   final Value<DateTime?> deletedAt;
   final Value<String> normalizedKey;
   final Value<String> displayName;
+  final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const MerchantsCompanion({
     this.id = const Value.absent(),
@@ -1766,6 +1813,7 @@ class MerchantsCompanion extends UpdateCompanion<Merchant> {
     this.deletedAt = const Value.absent(),
     this.normalizedKey = const Value.absent(),
     this.displayName = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MerchantsCompanion.insert({
@@ -1775,6 +1823,7 @@ class MerchantsCompanion extends UpdateCompanion<Merchant> {
     this.deletedAt = const Value.absent(),
     required String normalizedKey,
     required String displayName,
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : normalizedKey = Value(normalizedKey),
        displayName = Value(displayName);
@@ -1785,6 +1834,7 @@ class MerchantsCompanion extends UpdateCompanion<Merchant> {
     Expression<DateTime>? deletedAt,
     Expression<String>? normalizedKey,
     Expression<String>? displayName,
+    Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1794,6 +1844,7 @@ class MerchantsCompanion extends UpdateCompanion<Merchant> {
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (normalizedKey != null) 'normalized_key': normalizedKey,
       if (displayName != null) 'display_name': displayName,
+      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1805,6 +1856,7 @@ class MerchantsCompanion extends UpdateCompanion<Merchant> {
     Value<DateTime?>? deletedAt,
     Value<String>? normalizedKey,
     Value<String>? displayName,
+    Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
     return MerchantsCompanion(
@@ -1814,6 +1866,7 @@ class MerchantsCompanion extends UpdateCompanion<Merchant> {
       deletedAt: deletedAt ?? this.deletedAt,
       normalizedKey: normalizedKey ?? this.normalizedKey,
       displayName: displayName ?? this.displayName,
+      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1839,6 +1892,9 @@ class MerchantsCompanion extends UpdateCompanion<Merchant> {
     if (displayName.present) {
       map['display_name'] = Variable<String>(displayName.value);
     }
+    if (mergedIntoId.present) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1854,6 +1910,7 @@ class MerchantsCompanion extends UpdateCompanion<Merchant> {
           ..write('deletedAt: $deletedAt, ')
           ..write('normalizedKey: $normalizedKey, ')
           ..write('displayName: $displayName, ')
+          ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -11447,6 +11504,7 @@ typedef $$MerchantsTableCreateCompanionBuilder = MerchantsCompanion Function({
   Value<DateTime?> deletedAt,
   required String normalizedKey,
   required String displayName,
+  Value<String?> mergedIntoId,
   Value<int> rowid,
 });
 typedef $$MerchantsTableUpdateCompanionBuilder = MerchantsCompanion Function({
@@ -11456,6 +11514,7 @@ typedef $$MerchantsTableUpdateCompanionBuilder = MerchantsCompanion Function({
   Value<DateTime?> deletedAt,
   Value<String> normalizedKey,
   Value<String> displayName,
+  Value<String?> mergedIntoId,
   Value<int> rowid,
 });
 
@@ -11576,6 +11635,11 @@ class $$MerchantsTableFilterComposer
 
   ColumnFilters<String> get displayName => $composableBuilder(
     column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11718,6 +11782,11 @@ class $$MerchantsTableOrderingComposer
     column: $table.displayName,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MerchantsTableAnnotationComposer
@@ -11748,6 +11817,11 @@ class $$MerchantsTableAnnotationComposer
 
   GeneratedColumn<String> get displayName => $composableBuilder(
     column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
     builder: (column) => column,
   );
 
@@ -11891,6 +11965,7 @@ class $$MerchantsTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> normalizedKey = const Value.absent(),
                 Value<String> displayName = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MerchantsCompanion(
                 id: id,
@@ -11899,6 +11974,7 @@ class $$MerchantsTableTableManager
                 deletedAt: deletedAt,
                 normalizedKey: normalizedKey,
                 displayName: displayName,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -11909,6 +11985,7 @@ class $$MerchantsTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String normalizedKey,
                 required String displayName,
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MerchantsCompanion.insert(
                 id: id,
@@ -11917,6 +11994,7 @@ class $$MerchantsTableTableManager
                 deletedAt: deletedAt,
                 normalizedKey: normalizedKey,
                 displayName: displayName,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

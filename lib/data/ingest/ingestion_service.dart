@@ -682,7 +682,7 @@ class IngestionService {
               ..limit(1))
             .map((r) => r.readTable(_db.merchants))
             .getSingleOrNull();
-    if (viaAlias != null) return viaAlias;
+    if (viaAlias != null) return _followMerged(viaAlias);
 
     final merchant =
         await (_db.select(
@@ -696,16 +696,30 @@ class IngestionService {
                 displayName: merchantDisplayName(payee, key),
               ),
             );
+    final target = await _followMerged(merchant);
     await _db
         .into(_db.merchantAliases)
         .insert(
           MerchantAliasesCompanion.insert(
             alias: alias,
-            merchantId: merchant.id,
+            merchantId: target.id,
           ),
           mode: InsertMode.insertOrIgnore,
         );
-    return merchant;
+    return target;
+  }
+
+  /// A renamed-together merchant points at the one that kept its row.
+  Future<Merchant> _followMerged(Merchant m) async {
+    var current = m;
+    for (var hops = 0; current.mergedIntoId != null && hops < 5; hops++) {
+      final next = await (_db.select(
+        _db.merchants,
+      )..where((o) => o.id.equals(current.mergedIntoId!))).getSingleOrNull();
+      if (next == null) break;
+      current = next;
+    }
+    return current;
   }
 }
 
