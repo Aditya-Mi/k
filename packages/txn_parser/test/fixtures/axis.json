@@ -2,14 +2,14 @@
   {
     "name": "Real: UPI P2M debit",
     "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-10-03T17:05:02",
-    "body": "     INR 75.00 debited\nA/c no. XX0640\n03-10-26, 17:04:51\nUPI/P2M/298833881599/RAMESH KUMAR\nNot you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank",
-    "expected": {"status": "parsed", "templateId": "axis_sms_upi", "amountMinor": 7500, "direction": "debit", "txnType": "upi", "last4": "0640", "payee": "RAMESH KUMAR", "ref": "298833881599", "occurredAt": "2026-10-03T17:04:51"}
+    "body": "     INR 75.00 debited\nA/c no. XX1111\n03-10-26, 17:04:51\nUPI/P2M/100000000011/GUPTA STORES\nNot you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank",
+    "expected": {"status": "parsed", "templateId": "axis_sms_upi", "amountMinor": 7500, "direction": "debit", "txnType": "upi", "last4": "1111", "payee": "GUPTA STORES", "ref": "100000000011", "occurredAt": "2026-10-03T17:04:51"}
   },
   {
     "name": "Real: UPI P2A debit, amount without comma",
     "channel": "sms", "sender": "VM-AXISBK-S", "receivedAt": "2026-10-01T20:52:40",
-    "body": "INR 15000.00 debited\nA/c no. XX0640\n01-10-26, 20:52:29\nUPI/P2A/166179587428/RAHUL SHARMA\nNot you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank",
-    "expected": {"status": "parsed", "templateId": "axis_sms_upi", "amountMinor": 1500000, "direction": "debit", "txnType": "upi", "last4": "0640", "payee": "RAHUL SHARMA", "ref": "166179587428", "occurredAt": "2026-10-01T20:52:29"}
+    "body": "INR 15000.00 debited\nA/c no. XX1111\n01-10-26, 20:52:29\nUPI/P2A/100000000012/RAHUL SHARMA\nNot you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank",
+    "expected": {"status": "parsed", "templateId": "axis_sms_upi", "amountMinor": 1500000, "direction": "debit", "txnType": "upi", "last4": "1111", "payee": "RAHUL SHARMA", "ref": "100000000012", "occurredAt": "2026-10-01T20:52:29"}
   },
   {
     "name": "UPI P2A credit with IST suffix",
@@ -26,8 +26,8 @@
   {
     "name": "Real: NEFT credit with Chk Bal link",
     "channel": "sms", "sender": "AX-AXISBK-S", "receivedAt": "2026-09-01T17:38:10",
-    "body": "INR 40060.00 credited to A/c no. XX0640 on 01-09-26 at 17:37:45 IST. Info - NEFT/IN42624456490226/FOOT. Chk Bal https://ccm.axis.bank.in/AXISBK/XXXXXXXX - Axis Bank",
-    "expected": {"status": "parsed", "templateId": "axis_sms_bank_transfer_credit", "amountMinor": 4006000, "direction": "credit", "txnType": "neft", "last4": "0640", "ref": "IN42624456490226", "payee": "FOOT", "occurredAt": "2026-09-01T17:37:45"}
+    "body": "INR 50000.00 credited to A/c no. XX1111 on 01-09-26 at 17:37:45 IST. Info - NEFT/IN26000000000001/ACME. Chk Bal https://ccm.axis.bank.in/AXISBK/XXXXXXXX - Axis Bank",
+    "expected": {"status": "parsed", "templateId": "axis_sms_bank_transfer_credit", "amountMinor": 5000000, "direction": "credit", "txnType": "neft", "last4": "1111", "ref": "IN26000000000001", "payee": "ACME", "occurredAt": "2026-09-01T17:37:45"}
   },
   {
     "name": "ATM withdrawal",
@@ -75,10 +75,10 @@
   {
     "name": "Real: UPI debit email (transaction summary)",
     "channel": "email", "sender": "Axis Bank <alerts@axis.bank.in>", "receivedAt": "2026-10-02T21:36:30",
-    "subject": "INR 25.00 was debited from your A/c no. XX0640",
-    "body": "02-10-2026\nDear Rahul Sharma,\n\nHere's the summary of your transaction:\n\n\nAccount Number:\nXX0640\n\nDate & Time:\n02-10-26, 21:36:02 IST\n\nTransaction Info:\nUPI/P2M/441151550312/RAMESH KUMAR\n\nIf this transaction was not initiated by you:\nTo block UPI:\n\nSMS BLOCKUPI <Customer ID> to +919951860002 from your registered mobile number.\n\nCall us at:\n18001035577 (Toll Free)\n18604195555 (Charges Applicable)\nAlways open to help you.\n\nRegards,\nAxis Bank Ltd.\n",
-    "expected": {"status": "parsed", "templateId": "axis_email_txn_summary", "amountMinor": 2500, "direction": "debit", "txnType": "upi", "last4": "0640", "ref": "441151550312", "payee": "RAMESH KUMAR", "occurredAt": "2026-10-02T21:36:02"}
+    "subject": "INR 25.00 was debited from your A/c no. XX1111",
+    "body": "02-10-2026\nDear Rahul Sharma,\n\nHere's the summary of your transaction:\n\n\nAccount Number:\nXX1111\n\nDate & Time:\n02-10-26, 21:36:02 IST\n\nTransaction Info:\nUPI/P2M/100000000013/GUPTA STORES\n\nIf this transaction was not initiated by you:\nTo block UPI:\n\nSMS BLOCKUPI <Customer ID> to +919951860002 from your registered mobile number.\n\nCall us at:\n18001035577 (Toll Free)\n18604195555 (Charges Applicable)\nAlways open to help you.\n\nRegards,\nAxis Bank Ltd.\n",
+    "expected": {"status": "parsed", "templateId": "axis_email_txn_summary", "amountMinor": 2500, "direction": "debit", "txnType": "upi", "last4": "1111", "ref": "100000000013", "payee": "GUPTA STORES", "occurredAt": "2026-10-02T21:36:02"}
   },
-  {"name": "Txn summary email, reworded subject (body only)", "channel": "email", "sender": "Axis Bank <alerts@axis.bank.in>", "receivedAt": "2026-10-02T21:36:30", "subject": "Transaction alert on your Axis Bank account", "body": "02-10-2026\nDear Rahul Sharma,\n\nHere's the summary of your transaction:\n\n\nAccount Number:\nXX0640\n\nAmount Debited:\nINR 25.00\n\nDate & Time:\n02-10-26, 21:36:02 IST\n\nTransaction Info:\nUPI/P2M/441151550312/RAMESH KUMAR\n\nIf this transaction was not initiated by you:\nTo block UPI:\n\nSMS BLOCKUPI <Customer ID> to +919951860002 from your registered mobile number.\n\nCall us at:\n18001035577 (Toll Free)\n18604195555 (Charges Applicable)\nAlways open to help you.\n\nRegards,\nAxis Bank Ltd.\n", "expected": {"status": "parsed", "templateId": "axis_email_txn_body", "amountMinor": 2500, "direction": "debit", "txnType": "upi", "last4": "0640", "ref": "441151550312", "payee": "RAMESH KUMAR", "occurredAt": "2026-10-02T21:36:02"}},
-  {"name": "E-statement email is ignored", "channel": "email", "sender": "Axis Bank <statements@axis.bank.in>", "receivedAt": "2026-10-03T07:05:00", "subject": "AXIS BANK : Statement for September 2026", "body": "Dear Customer,\n\nPlease find attached your account statement for XX0640 for the period 01-09-2026 to 30-09-2026.\n\nRegards,\nAxis Bank Ltd.\n", "expected": {"status": "nonTransaction", "kind": "ignore", "templateId": "axis_email_statement"}}
+  {"name": "Txn summary email, reworded subject (body only)", "channel": "email", "sender": "Axis Bank <alerts@axis.bank.in>", "receivedAt": "2026-10-02T21:36:30", "subject": "Transaction alert on your Axis Bank account", "body": "02-10-2026\nDear Rahul Sharma,\n\nHere's the summary of your transaction:\n\n\nAccount Number:\nXX1111\n\nAmount Debited:\nINR 25.00\n\nDate & Time:\n02-10-26, 21:36:02 IST\n\nTransaction Info:\nUPI/P2M/100000000013/GUPTA STORES\n\nIf this transaction was not initiated by you:\nTo block UPI:\n\nSMS BLOCKUPI <Customer ID> to +919951860002 from your registered mobile number.\n\nCall us at:\n18001035577 (Toll Free)\n18604195555 (Charges Applicable)\nAlways open to help you.\n\nRegards,\nAxis Bank Ltd.\n", "expected": {"status": "parsed", "templateId": "axis_email_txn_body", "amountMinor": 2500, "direction": "debit", "txnType": "upi", "last4": "1111", "ref": "100000000013", "payee": "GUPTA STORES", "occurredAt": "2026-10-02T21:36:02"}},
+  {"name": "E-statement email is ignored", "channel": "email", "sender": "Axis Bank <statements@axis.bank.in>", "receivedAt": "2026-10-03T07:05:00", "subject": "AXIS BANK : Statement for September 2026", "body": "Dear Customer,\n\nPlease find attached your account statement for XX1111 for the period 01-09-2026 to 30-09-2026.\n\nRegards,\nAxis Bank Ltd.\n", "expected": {"status": "nonTransaction", "kind": "ignore", "templateId": "axis_email_statement"}}
 ]

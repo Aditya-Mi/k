@@ -2,20 +2,20 @@
   {
     "name": "Real: UPI sent (date only, borrows received time)",
     "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-09-25T08:41:10",
-    "body": "Sent Rs.50.00 from Kotak Bank A/c X5543 to DMRC on 25-09-26. UPI Ref 884020308019. Not done by you? Tap https://kotak.bank.in/KBANKT/Fraud",
-    "expected": {"status": "parsed", "templateId": "kotak_sms_upi_sent", "amountMinor": 5000, "direction": "debit", "txnType": "upi", "last4": "5543", "payee": "DMRC", "ref": "884020308019", "occurredAt": "2026-09-25T08:41:10"}
+    "body": "Sent Rs.50.00 from Kotak Bank A/c X2222 to DMRC on 25-09-26. UPI Ref 100000000017. Not done by you? Tap https://kotak.bank.in/KBANKT/Fraud",
+    "expected": {"status": "parsed", "templateId": "kotak_sms_upi_sent", "amountMinor": 5000, "direction": "debit", "txnType": "upi", "last4": "2222", "payee": "DMRC", "ref": "100000000017", "occurredAt": "2026-09-25T08:41:10"}
   },
   {
     "name": "Real: UPI sent, multi-word payee, received next day",
     "channel": "sms", "sender": "AD-KOTAKB-S", "receivedAt": "2026-10-03T00:02:00",
-    "body": " Sent Rs.208.00 from Kotak Bank A/c X5543 to ZEPTO MARKETPLACE PR on 02-10-26. UPI Ref 801397544523. Not done by you? Tap https://kotak.bank.in/KBANKT/Fraud",
-    "expected": {"status": "parsed", "templateId": "kotak_sms_upi_sent", "amountMinor": 20800, "direction": "debit", "txnType": "upi", "last4": "5543", "payee": "ZEPTO MARKETPLACE PR", "ref": "801397544523", "occurredAt": "2026-10-02T00:00:00"}
+    "body": " Sent Rs.208.00 from Kotak Bank A/c X2222 to ZEPTO MARKETPLACE PR on 02-10-26. UPI Ref 100000000018. Not done by you? Tap https://kotak.bank.in/KBANKT/Fraud",
+    "expected": {"status": "parsed", "templateId": "kotak_sms_upi_sent", "amountMinor": 20800, "direction": "debit", "txnType": "upi", "last4": "2222", "payee": "ZEPTO MARKETPLACE PR", "ref": "100000000018", "occurredAt": "2026-10-02T00:00:00"}
   },
   {
     "name": "Real: UPI received, account without X prefix",
     "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-09-28T11:02:30",
-    "body": "Received Rs.200.00 in your Kotak Bank AC 5543 from RAHUL SHARMA on 28-09-26.UPI Ref:123456789012",
-    "expected": {"status": "parsed", "templateId": "kotak_sms_upi_received", "amountMinor": 20000, "direction": "credit", "txnType": "upi", "last4": "5543", "payee": "RAHUL SHARMA", "ref": "123456789012", "occurredAt": "2026-09-28T11:02:30"}
+    "body": "Received Rs.200.00 in your Kotak Bank AC 2222 from RAHUL SHARMA on 28-09-26.UPI Ref:123456789012",
+    "expected": {"status": "parsed", "templateId": "kotak_sms_upi_received", "amountMinor": 20000, "direction": "credit", "txnType": "upi", "last4": "2222", "payee": "RAHUL SHARMA", "ref": "123456789012", "occurredAt": "2026-09-28T11:02:30"}
   },
   {
     "name": "Credit card spend",
@@ -63,8 +63,8 @@
     "name": "Real: UPI payment email (Kotak811)",
     "channel": "email", "sender": "Kotak Mahindra Bank <no-reply@kotak.com>", "receivedAt": "2026-10-02T13:20:00",
     "subject": "Payment of INR 306.00 successful",
-    "body": "Dear customer,\n\nYou have successfully made a UPI payment of INR 306.00 towards SWIGGY through the Kotak811 App.\n\nMore details below.\n\nUPI ID: upiswiggy@icici\nDate: 02-Oct-26\nUPI Reference Number: 627509642167\n",
-    "expected": {"status": "parsed", "templateId": "kotak_email_upi_payment", "amountMinor": 30600, "direction": "debit", "txnType": "upi", "payee": "SWIGGY", "ref": "627509642167", "occurredAt": "2026-10-02T13:20:00"}
+    "body": "Dear customer,\n\nYou have successfully made a UPI payment of INR 306.00 towards SWIGGY through the Kotak811 App.\n\nMore details below.\n\nUPI ID: upiswiggy@icici\nDate: 02-Oct-26\nUPI Reference Number: 100000000019\n",
+    "expected": {"status": "parsed", "templateId": "kotak_email_upi_payment", "amountMinor": 30600, "direction": "debit", "txnType": "upi", "payee": "SWIGGY", "ref": "100000000019", "occurredAt": "2026-10-02T13:20:00"}
   },
   {
     "name": "Card spend email",
@@ -76,8 +76,8 @@
   {
     "name": "Real: debit card spend",
     "channel": "sms", "sender": "AX-KOTAKB-T", "receivedAt": "2026-10-01T19:45:12",
-    "body": "Rs.1504.00 spent via Kotak Debit Card XX4192 at WWW AMAZON IN on 01/10/2026. Avl bal Rs.18751.33 Not you?Tap https://kotak.bank.in/KBANKT/Fraud",
-    "expected": {"status": "parsed", "kind": "transaction", "templateId": "kotak_sms_debit_card", "amountMinor": 150400, "direction": "debit", "txnType": "card", "last4": "4192", "payee": "WWW AMAZON IN", "balanceMinor": 1875133, "occurredAt": "2026-10-01T19:45:12"}
+    "body": "Rs.1504.00 spent via Kotak Debit Card XX4444 at WWW AMAZON IN on 01/10/2026. Avl bal Rs.9500.75 Not you?Tap https://kotak.bank.in/KBANKT/Fraud",
+    "expected": {"status": "parsed", "kind": "transaction", "templateId": "kotak_sms_debit_card", "amountMinor": 150400, "direction": "debit", "txnType": "card", "last4": "4444", "payee": "WWW AMAZON IN", "balanceMinor": 950075, "occurredAt": "2026-10-01T19:45:12"}
   },
   {
     "name": "Real: UPI AutoPay executed",

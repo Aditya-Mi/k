@@ -2,20 +2,20 @@
   {
     "name": "Real: UPI debit Dr/Cr to personal VPA",
     "channel": "sms", "sender": "JD-BOBSMS-S", "receivedAt": "2026-10-01T10:23:05",
-    "body": " Rs.25.00 Dr. from A/C XXXXXX5359 and Cr. to rameshk01@ybl. Ref:315894910199. AvlBal:Rs18361.03(2026:10:01 10:22:47). Not you? Call 18005700/5000-BOB",
-    "expected": {"status": "parsed", "templateId": "bob_sms_upi_debit", "amountMinor": 2500, "direction": "debit", "txnType": "upi", "last4": "5359", "payee": "rameshk01@ybl", "ref": "315894910199", "balanceMinor": 1836103, "occurredAt": "2026-10-01T10:22:47"}
+    "body": " Rs.25.00 Dr. from A/C XXXXXX3333 and Cr. to guptastores@ybl. Ref:100000000014. AvlBal:Rs12000.50(2026:10:01 10:22:47). Not you? Call 18005700/5000-BOB",
+    "expected": {"status": "parsed", "templateId": "bob_sms_upi_debit", "amountMinor": 2500, "direction": "debit", "txnType": "upi", "last4": "3333", "payee": "guptastores@ybl", "ref": "100000000014", "balanceMinor": 1200050, "occurredAt": "2026-10-01T10:22:47"}
   },
   {
     "name": "Real: UPI debit Dr/Cr to merchant VPA",
     "channel": "sms", "sender": "JK-BOBSMS-S", "receivedAt": "2026-09-29T10:18:50",
-    "body": "Rs.199.00 Dr. from A/C XXXXXX5359 and Cr. to zeptonowcashfree@hdfcbank. Ref:665138182518. AvlBal:Rs18746.03(2026:09:29 10:18:34). Not you? Call 18005700/5000-BOB",
-    "expected": {"status": "parsed", "templateId": "bob_sms_upi_debit", "amountMinor": 19900, "direction": "debit", "txnType": "upi", "last4": "5359", "payee": "zeptonowcashfree@hdfcbank", "ref": "665138182518", "balanceMinor": 1874603, "occurredAt": "2026-09-29T10:18:34"}
+    "body": "Rs.199.00 Dr. from A/C XXXXXX3333 and Cr. to zeptonowcashfree@hdfcbank. Ref:100000000015. AvlBal:Rs12199.50(2026:09:29 10:18:34). Not you? Call 18005700/5000-BOB",
+    "expected": {"status": "parsed", "templateId": "bob_sms_upi_debit", "amountMinor": 19900, "direction": "debit", "txnType": "upi", "last4": "3333", "payee": "zeptonowcashfree@hdfcbank", "ref": "100000000015", "balanceMinor": 1219950, "occurredAt": "2026-09-29T10:18:34"}
   },
   {
     "name": "Real: UPI credit, year-first date with 12h time",
     "channel": "sms", "sender": "JD-BOBSMS-S", "receivedAt": "2026-01-10T23:33:52",
-    "body": "Dear BOB UPI User: Your account is credited with INR 28000.00 on 2026-01-10 11:33:39 PM by UPI Ref No 292586577667; AvlBal: Rs30162.87 - BOB",
-    "expected": {"status": "parsed", "templateId": "bob_sms_upi_credit", "amountMinor": 2800000, "direction": "credit", "txnType": "upi", "ref": "292586577667", "balanceMinor": 3016287, "occurredAt": "2026-01-10T23:33:39"}
+    "body": "Dear BOB UPI User: Your account is credited with INR 28000.00 on 2026-01-10 11:33:39 PM by UPI Ref No 100000000016; AvlBal: Rs25000.40 - BOB",
+    "expected": {"status": "parsed", "templateId": "bob_sms_upi_credit", "amountMinor": 2800000, "direction": "credit", "txnType": "upi", "ref": "100000000016", "balanceMinor": 2500040, "occurredAt": "2026-01-10T23:33:39"}
   },
   {
     "name": "BOBCARD spend",
