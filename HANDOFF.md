@@ -26,7 +26,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 | Phase 3: review queue, save & learn, category rules | **Done.** Owner tested on device (fixes: dialog crash, slash words, learned formats screen) |
 | Phase 4: subscriptions + reminders | **Done** (code). Owner can't set up the device checks; don't ask again |
 | Phase 5: email + dedup | **Done.** Device-tested: Gmail sign-in (Testing mode, owner is a test user), email ingest, SMS+email merge, Save & learn on email, Add payment. Later checks: hourly background sync with app swiped away; 7-day Gmail expiry → re-sign-in. Owner keeps an app-password inbox on the same address as backup (content hash stops double logging) |
-| Phase 6 | **Code done, awaiting device test.** Summary (05), app lock (07/07b), Drive backup + export + import/restore (06e–06h). `flutter test` 79 pass, debug APK builds |
+| Phase 6 | **Device-tested on release 1.0.1** (2026-10-05): app lock, Drive backup (Back up now), import/restore. Not yet: overnight backup worker, wrong-passphrase, CSV export. Summary (05), app lock (07/07b), Drive backup + export + import/restore (06e–06h) |
 
 ## Phase 2: what was built
 **Android** (`android/app/src/main/kotlin/dev/adityamittal/k/sms/`)
@@ -134,7 +134,7 @@ Phase 6 device checks:
 1. Settings → Privacy → App lock on (prompt once). Swipe away + reopen → lock screen + prompt; cancel → Unlock button; success → rosette draws, fades into home. Leave <1 min (e.g. Export save dialog) → no lock; >1 min → lock.
 2. Settings → Backup switch → passphrase → Google account (Drive consent; unverified-app warning again) → "Backed up to Drive"; Drive shows "k backups/k-…kbackup". Backup screen lists it.
 3. Next morning: Last backup ~03:xx (worker). Battery saver may delay it.
-4. Export CSV opens in Sheets; Export backup file → Import it (should say "Opens with your current backup passphrase") → Restore → data back.
+4. ✓ Import of a backup file restored on 1.0.1 (2026-10-05). Export CSV opens in Sheets; Export backup file → Import it (should say "Opens with your current backup passphrase") → Restore → data back.
 5. Wrong passphrase on a file from another salt → "That passphrase doesn't open this backup".
 
 ## Cash in hand (schema v6, 2026-10-05)
@@ -191,7 +191,13 @@ Repo goes public; `design/k.pen` untracked (`*.pen` ignored; stays local, still 
 - Signing: `build.gradle.kts` uses `K_KEYSTORE`/`K_KEYSTORE_PASSWORD`/`K_KEY_ALIAS`/`K_KEY_PASSWORD` env in CI, else the debug key. Owner chose to reuse the Mac's `~/.android/debug.keystore` (alias androiddebugkey, password android; SHA-256 A5:F5:A7:DF:2A:45:28:5E:7F:2D:6C:31:91:25:46:87:3C:F9:1E:49:AF:16:55:1F:37:50:D9:FC:28:1A:79:69) so releases install over the current install and Gmail sign-in (debug SHA-1) keeps working.
 - App: `lib/data/update/update_service.dart` (fetch manifest with cache-bust, compare version codes, download to cache/updates, SHA-256 check), `lib/platform/update_bridge.dart` + `android/.../update/UpdateChannel.kt` (`k/update`: appVersion, canInstall, openInstallSettings, install via FileProvider `${applicationId}.updates`), `REQUEST_INSTALL_PACKAGES`. `lib/app/updates.dart`: launch check after unlock (once per launch; "Later" skips that version via `device.update.skipped` unless required), dialog (design `11-update-available`), Settings → About (design 06: version, last check, Check for updates). Local builds have no manifest URL → no checks.
 - Setup the owner does once: make the repo public, create the gist (file `k-update.json`, content `{}`), add a PAT with gist scope as `GIST_TOKEN`, the four `K_*` secrets and the two vars. Then Release with bump `none` → 1.0.0.
-- Release builds were never device-tested before this: check app lock, SMS worker, email worker, backup worker, Gmail sign-in on 1.0.0. Back up before installing it.
+- 1.0.0 crashed on start (R8, see Gotchas); **1.0.1** (build 2) is the first working release. Device-tested on 1.0.1: SMS logged with app swiped away + notification, app lock, Drive backup now, import of a backup file, Settings → About update check. Still to check: Gmail sign-in/hourly email worker, overnight backup worker, an in-app update install (Play Protect may block it).
+
+## Second tester (2026-10-05)
+Initial development is done. The owner tests on their phone, and a friend installs releases on theirs (different Google account, different banks). Fixes and enhancements ship as releases.
+- Google Cloud project is in **Testing**: each tester's Gmail address must be added under OAuth consent screen → Test users, or Gmail sign-in and Drive backup fail.
+- Install steps for a new phone: Play Protect scanning off to install from the browser → App info → ⋮ → Allow restricted settings (SMS) → Battery Unrestricted.
+- The friend's banks that k doesn't know arrive as "New sender" in Review; samples they share (masked) feed the parser session.
 
 ## Parser session task: bank catalogue, second guess, wallets (from `transaction_sms_parser`)
 Owner wants all three. Source: [`transaction_sms_parser`](https://github.com/MabudAlam/transaction_sms_parser) (pub.dev 0.0.1, MIT, pure Dart, 2 commits, keyword heuristics: `TransactionEngine.getTransactionInfo(msg)` → account/transaction/balance, no confidence score). Not a replacement for our templates: it guesses and never says "unsure", can't learn, SMS only. Use it as data + a fallback, never to auto-log.
