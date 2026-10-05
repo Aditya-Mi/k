@@ -31,11 +31,11 @@ colors:
   on-ink-light: "#FFFFFF"
   alert-light: "#B23A1B"
   alert-bg-light: "#FBE3DA"
-  ink-10-light: "#7A4A2A"
-  ink-20-light: "#626E14"
+  ink-10-light: "#6A3A26"
+  ink-20-light: "#557018"
   ink-50-light: "#0F7486"
   ink-100-light: "#5845B0"
-  ink-200-light: "#835F00"
+  ink-200-light: "#8A6300"
   ink-500-light: "#66635A"
   ink-2000-light: "#A51E5E"
 typography:
@@ -193,7 +193,7 @@ The system has no brand accent. The primary action colour is the text colour its
 - **Five Hundred Stone** (ink-500): ₹500–1,999.
 - **Two Thousand Magenta** (ink-2000): ₹2,000 and up.
 
-Each ink has a deepened light-theme twin (`-light` keys) that holds at least 4.9:1 on the paper ground.
+Each ink has a deepened light-theme twin (`-light` keys) that holds at least 4.9:1 on the paper ground. Deepening pulls the warm inks together, so the twins are also kept at least ΔE2000 20 apart: ₹10 is a darker chocolate, ₹20 a greener lime, ₹200 a brighter ochre.
 
 ### Tertiary
 - **Coral Alert** (alert on alert-bg): a changed fact, such as a subscription price rise. Rare by design.
