@@ -237,6 +237,7 @@ Then Phase 3: review queue + fix-by-selection + learned templates + category rul
 - Two sessions share the tree: `git add <own paths>` only, never `-A`.
 - Pinned `SliverPersistentHeader` child must fill its extent (alignment), or geometry asserts.
 - `timeout` is not installed in this shell; long flutter runs → Bash `run_in_background`.
+- Release builds are R8-shrunk (debug never is): 1.0.0 crashed on start (`NoSuchMethodException: androidx.work.impl.WorkDatabase_Impl.<init>`) and lost `ic_stat_k` (notifications off). Fixed by `android/app/proguard-rules.pro` + `res/raw/keep.xml`. Test release APKs on the emulator (`Medium_Phone_API_36.1`, `adb emu sms send AXISBK "…"` for SMS) before publishing. Android in India blocks browser-installed APKs asking for SMS: owner turns off Play Protect scanning to install.
 - `.impeccable/review/` is gitignored scratch; `.impeccable/questions/*.state.json` may show as modified — harmless.
 
 ## Open items
