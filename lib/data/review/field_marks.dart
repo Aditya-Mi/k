@@ -46,7 +46,7 @@ final _directionWords = RegExp(
 
 /// Narrows a selection to what the field can hold: "XX1234" → "1234",
 /// "Rs.99.00" → "99.00", "03-10-26." → "03-10-26", "SWIGGY," → "SWIGGY",
-/// "NEFT/IN827459235/FOOT" → "IN827459235".
+/// "NEFT/IN26000000000001/ACME" → "IN26000000000001".
 (int, int)? trimToField(String text, MarkField field, int start, int end) {
   final s = text.substring(start, end);
   RegExpMatch? m;
@@ -62,7 +62,7 @@ final _directionWords = RegExp(
     case MarkField.balance:
       m = _number.firstMatch(s);
     case MarkField.ref:
-      // Longest run with a digit: "NEFT/IN827459235/FOOT" → "IN827459235".
+      // Longest run with a digit: "NEFT/IN26000000000001/ACME" → "IN26000000000001".
       final runs = RegExp('[A-Za-z0-9]{4,}').allMatches(s).toList();
       final withDigit = runs.where((r) => r[0]!.contains(RegExp(r'\d')));
       final pool = withDigit.isEmpty ? runs : withDigit;

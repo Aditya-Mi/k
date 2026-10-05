@@ -69,7 +69,7 @@ Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs pay
 
 ## Phase 3 device-test fixes
 - Text dialogs crashed on close (`_dependents.isEmpty`): controller was disposed while the dialog animated out. All prompts now use `promptText` (`lib/ui/widgets/text_prompt.dart`, dialog owns its controller).
-- Review: slash-joined words (`NEFT/IN827459235/NAME`) are pressable part by part; ref trim keeps the longest digit-bearing run.
+- Review: slash-joined words (`NEFT/IN26000000000001/NAME`) are pressable part by part; ref trim keeps the longest digit-bearing run.
 - Learned formats screen (Settings → Message formats): sample message with what the format reads, uses count, pause (`enabled`), forget (soft delete). Service `lib/data/review/learned_formats.dart`.
 - Right-overflow while growing a selection in Review was the slash-split Row; fixed (Wrap).
 
@@ -184,7 +184,7 @@ Device checks:
 - Skip formats the owner teaches are `ignore` templates in `parser_templates`; recurring ones are worth built-in ignore templates.
 
 ## Releases + in-app updates (2026-10-05)
-Repo goes public; `design/k.pen` untracked (`*.pen` ignored; stays local, still in old history by owner's choice). Real account digits masked everywhere (parser fixtures `4b4dadf`; app tests/docs/designs: 0640→1111, 5543→2222, 5359→3333, 4192→4444, 4410→5555).
+Repo goes public; `design/k.pen` untracked (`*.pen` ignored; stays local, still in old history by owner's choice). Real account digits masked everywhere (parser fixtures `4b4dadf`; app tests, docs and designs: real last-4s replaced with 1111–5555).
 - **Versioning:** semver in `pubspec.yaml`; versionCode = x·10000 + y·100 + z (`versionCodeOf`), parts 0–99. First release **1.0.0** (code 10000; pubspec `1.0.0+10000`). Fixes Baka's problems: build number was always 1 (pubspec `+1`, no `--build-number`), a tag/pubspec mismatch only warned, the gist was edited by hand, and in the other Flutter repo a tag pushed with GITHUB_TOKEN never triggers the tag workflow. Here one workflow does everything.
 - `.github/workflows/ci.yml`: push/PR → analyze, app tests, parser tests.
 - `.github/workflows/release.yml` (manual, main only): bump (patch/minor/major/none) + notes + required → version/code → analyze + both test suites → signed release APK (`--dart-define=UPDATE_MANIFEST_URL=<raw gist>`) → apksigner cert must equal `vars.SIGNING_CERT_SHA256` → commit pubspec + annotated tag, atomic push → `gh release create` with `k-x.y.z.apk` → PATCH gist `k-update.json` `{version, version_code, apk_url, sha256, size_bytes, notes, min_version_code}` (required release raises min; else previous min kept).

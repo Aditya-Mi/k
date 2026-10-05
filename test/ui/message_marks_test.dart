@@ -7,7 +7,7 @@ import 'package:k/ui/theme/k_theme.dart';
 void main() {
   const text =
       'INR 50,000.00 credited to A/c no. XX1111 on 03-10-26. '
-      'Info- NEFT/IN827459235/FOOTPRINTSCHILDHOODEDUCATIONPRIVATELIMITEDVIEW. '
+      'Info- NEFT/IN26000000000001/ACMETECHNOLOGIESPRIVATELIMITEDVIEW. '
       'Avl Bal- INR 1,12,000.50. Not you? Call 18001035577 - Axis Bank';
   final info = text.indexOf('Info-');
 
