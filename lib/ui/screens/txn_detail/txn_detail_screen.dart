@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:txn_parser/txn_parser.dart';
 
+import '../categories/category_edit_screen.dart';
 import '../../../data/db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../../../data/db/enums.dart';
 import '../../../data/repositories/ledger_models.dart';
@@ -437,6 +438,7 @@ class _Loaded extends StatelessWidget {
                               : null,
                           onTap: () => Navigator.pop(context, cat.id),
                         ),
+                      newCategoryTile(context, (c) => c.id),
                     ],
                   ),
                 ),

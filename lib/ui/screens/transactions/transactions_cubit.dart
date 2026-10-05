@@ -109,7 +109,9 @@ class TransactionsCubit extends Cubit<TransactionsState> {
       _ledger.watchUpcoming(today).listen((u) => _emit(upcoming: u)),
       _ledger.watchReviewCount().listen((n) => _emit(reviewCount: n)),
       _ledger.watchAccounts().listen((a) => _emit(accounts: a)),
-      _ledger.watchCategories().listen((c) => _emit(categories: c)),
+      _ledger
+          .watchCategories(includeHidden: true)
+          .listen((c) => _emit(categories: c)),
       _settings
           .watchDate(SettingsRepository.smsLastSyncAt)
           .listen((d) => _emit(lastSync: d)),

@@ -1,6 +1,6 @@
 # Handoff — k
 
-Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Cash account added; same-name payees merge). Schema v7.
+Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Cash account added; same-name payees merge; custom categories). Schema v8.
 
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
@@ -150,6 +150,15 @@ Bug: renaming payees to the same name ("Zepto") only changed display names; sepa
 - `merchants.merged_into_id`. `AppDatabase.mergeMerchant(source, target)`: transactions, subscriptions, upcoming charges, aliases move; the source's merchant category rule moves to the target unless it has one; source row stays as a pointer. Ingestion `_merchantFor` follows the pointer.
 - `LedgerRepository.renameMerchant` merges every other live merchant with the same name (case-insensitive) into the renamed one; detail shows "Now one payee with X".
 - v7 migration `mergeSameNameMerchants()` folds existing duplicates (most payments keeps its row). No unmerge yet.
+
+## Custom categories (schema v8, 2026-10-06)
+- Designs `06i-categories`, `06j-new-category`. Categories stay neutral (DESIGN.md): name + icon only, no colour picker (`color` column written 0).
+- `categories.hidden`: hidden ones keep past payments, are left out of pickers (`watchCategories()`; filters pass `includeHidden: true`), and `CategoryResolver.load` skips rules filing into them.
+- `LedgerRepository`: `addCategory` (last in sort order), `updateCategory` (name/icon, built-ins too), `setCategoryHidden`, `watchCategoryUse` (payment counts). Icon set `categoryIcons` in `widgets/common.dart` (30 Material Symbols).
+- Settings → Categories (list: yours / built in / hidden; + adds). Every category picker (detail, add payment, review, subscription) ends with "New category" (`newCategoryTile`).
+
+## Next: unknown-sender learning (agreed, not built)
+SMS from an unknown alphanumeric sender that reads like a payment (amount + debited/credited/a/c/UPI, not OTP/promo) → Review as "unknown sender" instead of dropped; Save & learn asks the bank name once → new bank + sender rule + learned format. "Not a bank" blocks the sender. Email can't learn this way (k only fetches known senders); offer adding the bank's mail domain after learning it from SMS. Needs design first.
 
 ## Next step: Phase 6 device test
 Google Cloud project stays in **Testing** (owner's choice: production needs homepage + privacy policy URLs); Gmail grant expires every 7 days.

@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   /// Alerts that name no account used to create a "no last4" account even when
   /// the bank had exactly one savings/current account; move those rows over.
@@ -220,6 +220,7 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(merchants, merchants.mergedIntoId);
         await mergeSameNameMerchants();
       }
+      if (from < 8) await m.addColumn(categories, categories.hidden);
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

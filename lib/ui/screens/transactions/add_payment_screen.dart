@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:txn_parser/txn_parser.dart' show Direction, parseAmountMinor;
 
+import '../categories/category_edit_screen.dart';
 import '../../../data/db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../../../data/ingest/ingestion_service.dart';
 import '../../../data/repositories/ledger_models.dart';
@@ -270,6 +271,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                       : null,
                   onTap: () => Navigator.pop(context, cat),
                 ),
+              newCategoryTile(context, (c) => c),
             ],
           ),
         ),

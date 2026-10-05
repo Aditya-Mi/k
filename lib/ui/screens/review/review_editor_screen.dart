@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:txn_parser/txn_parser.dart';
 
+import '../categories/category_edit_screen.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../data/review/field_marks.dart';
 import '../../../data/review/review_service.dart';
@@ -596,11 +597,16 @@ class _Editor extends StatelessWidget {
                       : null,
                   onTap: () => Navigator.pop(context, cat.id),
                 ),
+              newCategoryTile(context, (c) => c.id),
             ],
           ),
         ),
       ),
     );
-    if (picked != null) cubit.setCategory(picked);
+    if (picked == null) return;
+    if (!state.categories.any((c) => c.id == picked)) {
+      await cubit.reloadCategories();
+    }
+    cubit.setCategory(picked);
   }
 }

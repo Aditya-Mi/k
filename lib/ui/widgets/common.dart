@@ -4,23 +4,46 @@ import '../../data/db/app_database.dart' show Category;
 import '../theme/k_theme.dart';
 import 'rosette.dart';
 
+/// Icons a category can use (design 06j), by the Material Symbols name
+/// stored on the row. Built-ins use the first ones too.
+const categoryIcons = <String, IconData>{
+  'home': Icons.home_rounded,
+  'restaurant': Icons.restaurant_rounded,
+  'shopping_basket': Icons.shopping_basket_rounded,
+  'shopping_bag': Icons.shopping_bag_outlined,
+  'flight': Icons.flight_rounded,
+  'local_gas_station': Icons.local_gas_station_rounded,
+  'directions_car': Icons.directions_car_rounded,
+  'local_taxi': Icons.local_taxi_rounded,
+  'receipt_long': Icons.receipt_long_rounded,
+  'call': Icons.call_rounded,
+  'wifi': Icons.wifi_rounded,
+  'autorenew': Icons.autorenew_rounded,
+  'movie': Icons.movie_rounded,
+  'sports_esports': Icons.sports_esports_rounded,
+  'medical_services': Icons.medical_services_rounded,
+  'fitness_center': Icons.fitness_center_rounded,
+  'spa': Icons.spa_rounded,
+  'school': Icons.school_rounded,
+  'child_care': Icons.child_care_rounded,
+  'pets': Icons.pets_rounded,
+  'redeem': Icons.redeem_rounded,
+  'volunteer_activism': Icons.volunteer_activism_rounded,
+  'account_balance': Icons.account_balance_rounded,
+  'savings': Icons.savings_rounded,
+  'trending_up': Icons.trending_up_rounded,
+  'local_cafe': Icons.local_cafe_rounded,
+  'checkroom': Icons.checkroom_rounded,
+  'build': Icons.build_rounded,
+  'celebration': Icons.celebration_rounded,
+  'payments': Icons.payments_rounded,
+};
+
 /// Material Symbols Rounded names stored on categories → icons.
 IconData categoryIcon(String? name) => switch (name) {
-  'restaurant' => Icons.restaurant_rounded,
-  'shopping_basket' => Icons.shopping_basket_rounded,
-  'shopping_bag' => Icons.shopping_bag_outlined,
-  'flight' => Icons.flight_rounded,
-  'local_gas_station' => Icons.local_gas_station_rounded,
-  'receipt_long' => Icons.receipt_long_rounded,
-  'autorenew' => Icons.autorenew_rounded,
-  'movie' => Icons.movie_rounded,
-  'medical_services' => Icons.medical_services_rounded,
-  'school' => Icons.school_rounded,
-  'trending_up' => Icons.trending_up_rounded,
   'swap_horiz' => Icons.swap_horiz_rounded,
   'local_atm' => Icons.local_atm_rounded,
-  'payments' => Icons.payments_rounded,
-  _ => Icons.help_outline_rounded,
+  _ => categoryIcons[name] ?? Icons.help_outline_rounded,
 };
 
 /// 32dp outlined chip with a trailing dropdown arrow.

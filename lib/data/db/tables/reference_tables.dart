@@ -34,6 +34,9 @@ class Categories extends Table with SyncColumns {
   IntColumn get color => integer()();
   BoolColumn get isSystem => boolean().withDefault(const Constant(false))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  /// Owner hid it: past payments keep it, pickers and rules skip it.
+  BoolColumn get hidden => boolean().withDefault(const Constant(false))();
 }
 
 class Merchants extends Table with SyncColumns {

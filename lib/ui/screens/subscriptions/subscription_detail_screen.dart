@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
 
+import '../categories/category_edit_screen.dart';
 import '../../../data/db/app_database.dart' show Category;
 import '../../../data/db/enums.dart';
 import '../../../data/repositories/ledger_models.dart';
@@ -163,6 +164,7 @@ class SubscriptionDetailScreen extends StatelessWidget {
                       : null,
                   onTap: () => Navigator.pop(context, cat.id),
                 ),
+              newCategoryTile(context, (c) => c.id),
             ],
           ),
         ),

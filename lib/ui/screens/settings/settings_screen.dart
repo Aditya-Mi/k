@@ -10,7 +10,9 @@ import '../../../di.dart';
 import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/date_pick.dart';
+import '../../../data/db/app_database.dart' show Category;
 import '../accounts/accounts_screen.dart';
+import '../categories/categories_screen.dart';
 import '../review/learned_formats_screen.dart';
 import 'appearance_settings.dart';
 import 'backup_settings.dart';
@@ -43,6 +45,29 @@ class SettingsScreen extends StatelessWidget {
         children: [
           const _AccountsSection(),
           const BankSettings(),
+          const SettingsHead('Categories'),
+          StreamBuilder<List<Category>>(
+            stream: getIt<LedgerRepository>().watchCategories(),
+            builder: (context, snap) {
+              final mine = (snap.data ?? const <Category>[])
+                  .where((c) => !c.isSystem)
+                  .length;
+              return SettingsItem(
+                icon: Icons.category_outlined,
+                title: 'Categories',
+                subtitle: mine == 0
+                    ? 'Add your own, rename or hide built-in ones'
+                    : '$mine of your own · add, rename or hide',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => const CategoriesScreen(),
+                  ),
+                ),
+                trailing: const SettingsChevron(),
+              );
+            },
+          ),
           const EmailSettings(),
           const _SyncSection(),
           const NotificationSettings(),

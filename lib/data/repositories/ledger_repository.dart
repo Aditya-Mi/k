@@ -224,11 +224,75 @@ class LedgerRepository {
     for (final b in await _db.select(_db.banks).get()) b.id: b.name,
   };
 
-  Stream<List<Category>> watchCategories() =>
+  /// Categories to pick from; [includeHidden] for filters over the past.
+  Stream<List<Category>> watchCategories({bool includeHidden = false}) =>
       (_db.select(_db.categories)
-            ..where((c) => c.deletedAt.isNull())
+            ..where(
+              (c) =>
+                  c.deletedAt.isNull() &
+                  (includeHidden ? const Constant(true) : c.hidden.not()),
+            )
             ..orderBy([(c) => OrderingTerm.asc(c.sortOrder)]))
           .watch();
+
+  /// Every category with how many live payments it holds (Categories screen).
+  Stream<List<(Category, int)>> watchCategoryUse() {
+    final c = _db.categories;
+    final t = _db.transactions;
+    final n = t.id.count();
+    return (_db.select(c).join([
+            leftOuterJoin(
+              t,
+              t.categoryId.equalsExp(c.id) & t.deletedAt.isNull(),
+            ),
+          ])
+          ..where(c.deletedAt.isNull())
+          ..addColumns([n])
+          ..groupBy([c.id])
+          ..orderBy([OrderingTerm.asc(c.sortOrder)]))
+        .watch()
+        .map(
+          (rows) => [for (final r in rows) (r.readTable(c), r.read(n) ?? 0)],
+        );
+  }
+
+  /// Owner-made category, last in every list.
+  Future<Category> addCategory(String name, String icon) async {
+    final max = await _db
+        .customSelect(
+          'SELECT COALESCE(MAX(sort_order), 0) AS m FROM categories',
+        )
+        .getSingle();
+    return _db
+        .into(_db.categories)
+        .insertReturning(
+          CategoriesCompanion.insert(
+            name: name.trim(),
+            icon: icon,
+            color: 0,
+            sortOrder: Value(max.read<int>('m') + 1),
+          ),
+        );
+  }
+
+  Future<void> updateCategory(String id, {String? name, String? icon}) =>
+      (_db.update(_db.categories)..where((c) => c.id.equals(id))).write(
+        CategoriesCompanion(
+          name: name == null ? const Value.absent() : Value(name.trim()),
+          icon: icon == null ? const Value.absent() : Value(icon),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+
+  Future<void> setCategoryHidden(String id, bool hidden) async {
+    await (_db.update(_db.categories)..where((c) => c.id.equals(id))).write(
+      CategoriesCompanion(
+        hidden: Value(hidden),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+    onRulesChanged?.call();
+  }
 
   /// AutoPay / mandate alerts due today or later.
   Stream<List<UpcomingView>> watchUpcoming(DateTime now) {
@@ -347,14 +411,15 @@ class LedgerRepository {
             updatedAt: Value(DateTime.now()),
           ),
         );
-        final same = await (_db.select(_db.merchants)..where(
-              (m) =>
-                  m.id.equals(merchantId).not() &
-                  m.deletedAt.isNull() &
-                  m.mergedIntoId.isNull() &
-                  m.displayName.lower().equals(clean.toLowerCase()),
-            ))
-            .get();
+        final same =
+            await (_db.select(_db.merchants)..where(
+                  (m) =>
+                      m.id.equals(merchantId).not() &
+                      m.deletedAt.isNull() &
+                      m.mergedIntoId.isNull() &
+                      m.displayName.lower().equals(clean.toLowerCase()),
+                ))
+                .get();
         for (final o in same) {
           await _db.mergeMerchant(o.id, merchantId);
         }

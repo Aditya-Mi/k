@@ -987,6 +987,19 @@ class $CategoriesTable extends Categories
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _hiddenMeta = const VerificationMeta('hidden');
+  @override
+  late final GeneratedColumn<bool> hidden = GeneratedColumn<bool>(
+    'hidden',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("hidden" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -998,6 +1011,7 @@ class $CategoriesTable extends Categories
     color,
     isSystem,
     sortOrder,
+    hidden,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1068,6 +1082,12 @@ class $CategoriesTable extends Categories
         sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
       );
     }
+    if (data.containsKey('hidden')) {
+      context.handle(
+        _hiddenMeta,
+        hidden.isAcceptableOrUnknown(data['hidden']!, _hiddenMeta),
+      );
+    }
     return context;
   }
 
@@ -1113,6 +1133,10 @@ class $CategoriesTable extends Categories
         DriftSqlType.int,
         data['${effectivePrefix}sort_order'],
       )!,
+      hidden: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}hidden'],
+      )!,
     );
   }
 
@@ -1138,6 +1162,9 @@ class Category extends DataClass implements Insertable<Category> {
   final int color;
   final bool isSystem;
   final int sortOrder;
+
+  /// Owner hid it: past payments keep it, pickers and rules skip it.
+  final bool hidden;
   const Category({
     required this.id,
     required this.createdAt,
@@ -1148,6 +1175,7 @@ class Category extends DataClass implements Insertable<Category> {
     required this.color,
     required this.isSystem,
     required this.sortOrder,
+    required this.hidden,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1163,6 +1191,7 @@ class Category extends DataClass implements Insertable<Category> {
     map['color'] = Variable<int>(color);
     map['is_system'] = Variable<bool>(isSystem);
     map['sort_order'] = Variable<int>(sortOrder);
+    map['hidden'] = Variable<bool>(hidden);
     return map;
   }
 
@@ -1179,6 +1208,7 @@ class Category extends DataClass implements Insertable<Category> {
       color: Value(color),
       isSystem: Value(isSystem),
       sortOrder: Value(sortOrder),
+      hidden: Value(hidden),
     );
   }
 
@@ -1197,6 +1227,7 @@ class Category extends DataClass implements Insertable<Category> {
       color: serializer.fromJson<int>(json['color']),
       isSystem: serializer.fromJson<bool>(json['isSystem']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      hidden: serializer.fromJson<bool>(json['hidden']),
     );
   }
   @override
@@ -1212,6 +1243,7 @@ class Category extends DataClass implements Insertable<Category> {
       'color': serializer.toJson<int>(color),
       'isSystem': serializer.toJson<bool>(isSystem),
       'sortOrder': serializer.toJson<int>(sortOrder),
+      'hidden': serializer.toJson<bool>(hidden),
     };
   }
 
@@ -1225,6 +1257,7 @@ class Category extends DataClass implements Insertable<Category> {
     int? color,
     bool? isSystem,
     int? sortOrder,
+    bool? hidden,
   }) => Category(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -1235,6 +1268,7 @@ class Category extends DataClass implements Insertable<Category> {
     color: color ?? this.color,
     isSystem: isSystem ?? this.isSystem,
     sortOrder: sortOrder ?? this.sortOrder,
+    hidden: hidden ?? this.hidden,
   );
   Category copyWithCompanion(CategoriesCompanion data) {
     return Category(
@@ -1247,6 +1281,7 @@ class Category extends DataClass implements Insertable<Category> {
       color: data.color.present ? data.color.value : this.color,
       isSystem: data.isSystem.present ? data.isSystem.value : this.isSystem,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      hidden: data.hidden.present ? data.hidden.value : this.hidden,
     );
   }
 
@@ -1261,7 +1296,8 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('icon: $icon, ')
           ..write('color: $color, ')
           ..write('isSystem: $isSystem, ')
-          ..write('sortOrder: $sortOrder')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('hidden: $hidden')
           ..write(')'))
         .toString();
   }
@@ -1277,6 +1313,7 @@ class Category extends DataClass implements Insertable<Category> {
     color,
     isSystem,
     sortOrder,
+    hidden,
   );
   @override
   bool operator ==(Object other) =>
@@ -1290,7 +1327,8 @@ class Category extends DataClass implements Insertable<Category> {
           other.icon == this.icon &&
           other.color == this.color &&
           other.isSystem == this.isSystem &&
-          other.sortOrder == this.sortOrder);
+          other.sortOrder == this.sortOrder &&
+          other.hidden == this.hidden);
 }
 
 class CategoriesCompanion extends UpdateCompanion<Category> {
@@ -1303,6 +1341,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<int> color;
   final Value<bool> isSystem;
   final Value<int> sortOrder;
+  final Value<bool> hidden;
   final Value<int> rowid;
   const CategoriesCompanion({
     this.id = const Value.absent(),
@@ -1314,6 +1353,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.color = const Value.absent(),
     this.isSystem = const Value.absent(),
     this.sortOrder = const Value.absent(),
+    this.hidden = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CategoriesCompanion.insert({
@@ -1326,6 +1366,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     required int color,
     this.isSystem = const Value.absent(),
     this.sortOrder = const Value.absent(),
+    this.hidden = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name),
        icon = Value(icon),
@@ -1340,6 +1381,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Expression<int>? color,
     Expression<bool>? isSystem,
     Expression<int>? sortOrder,
+    Expression<bool>? hidden,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1352,6 +1394,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       if (color != null) 'color': color,
       if (isSystem != null) 'is_system': isSystem,
       if (sortOrder != null) 'sort_order': sortOrder,
+      if (hidden != null) 'hidden': hidden,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1366,6 +1409,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Value<int>? color,
     Value<bool>? isSystem,
     Value<int>? sortOrder,
+    Value<bool>? hidden,
     Value<int>? rowid,
   }) {
     return CategoriesCompanion(
@@ -1378,6 +1422,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       color: color ?? this.color,
       isSystem: isSystem ?? this.isSystem,
       sortOrder: sortOrder ?? this.sortOrder,
+      hidden: hidden ?? this.hidden,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1412,6 +1457,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
+    if (hidden.present) {
+      map['hidden'] = Variable<bool>(hidden.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1430,6 +1478,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('color: $color, ')
           ..write('isSystem: $isSystem, ')
           ..write('sortOrder: $sortOrder, ')
+          ..write('hidden: $hidden, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -10935,6 +10984,7 @@ typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
   required int color,
   Value<bool> isSystem,
   Value<int> sortOrder,
+  Value<bool> hidden,
   Value<int> rowid,
 });
 typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
@@ -10947,6 +10997,7 @@ typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
   Value<int> color,
   Value<bool> isSystem,
   Value<int> sortOrder,
+  Value<bool> hidden,
   Value<int> rowid,
 });
 
@@ -11060,6 +11111,11 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hidden => $composableBuilder(
+    column: $table.hidden,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11192,6 +11248,11 @@ class $$CategoriesTableOrderingComposer
     column: $table.sortOrder,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get hidden => $composableBuilder(
+    column: $table.hidden,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CategoriesTableAnnotationComposer
@@ -11229,6 +11290,9 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<int> get sortOrder =>
       $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get hidden =>
+      $composableBuilder(column: $table.hidden, builder: (column) => column);
 
   Expression<T> categoryRulesRefs<T extends Object>(
     Expression<T> Function($$CategoryRulesTableAnnotationComposer a) f,
@@ -11347,6 +11411,7 @@ class $$CategoriesTableTableManager
                 Value<int> color = const Value.absent(),
                 Value<bool> isSystem = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
+                Value<bool> hidden = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CategoriesCompanion(
                 id: id,
@@ -11358,6 +11423,7 @@ class $$CategoriesTableTableManager
                 color: color,
                 isSystem: isSystem,
                 sortOrder: sortOrder,
+                hidden: hidden,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -11371,6 +11437,7 @@ class $$CategoriesTableTableManager
                 required int color,
                 Value<bool> isSystem = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
+                Value<bool> hidden = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CategoriesCompanion.insert(
                 id: id,
@@ -11382,6 +11449,7 @@ class $$CategoriesTableTableManager
                 color: color,
                 isSystem: isSystem,
                 sortOrder: sortOrder,
+                hidden: hidden,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

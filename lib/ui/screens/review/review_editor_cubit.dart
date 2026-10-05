@@ -236,6 +236,13 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
   void setRef(String v) => emit(state.copyWith(ref: () => v));
   void setDate(DateTime d) => emit(state.copyWith(occurredAt: () => d));
   void setAccount(String? id) => emit(state.copyWith(accountId: () => id));
+
+  /// After "New category" in the picker.
+  Future<void> reloadCategories() async {
+    final categories = await _ledger.watchCategories().first;
+    if (!isClosed) emit(state.copyWith(categories: categories));
+  }
+
   void setCategory(String id) => emit(state.copyWith(categoryId: () => id));
   void setLearn(bool v) => emit(state.copyWith(learn: v));
 

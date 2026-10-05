@@ -700,10 +700,7 @@ class IngestionService {
     await _db
         .into(_db.merchantAliases)
         .insert(
-          MerchantAliasesCompanion.insert(
-            alias: alias,
-            merchantId: target.id,
-          ),
+          MerchantAliasesCompanion.insert(alias: alias, merchantId: target.id),
           mode: InsertMode.insertOrIgnore,
         );
     return target;

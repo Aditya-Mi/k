@@ -32,12 +32,22 @@ class CategoryResolver {
               return p != 0 ? p : b.$1.length.compareTo(a.$1.length);
             });
 
-  static Future<CategoryResolver> load(AppDatabase db) async =>
-      CategoryResolver(
-        await (db.select(
-          db.categoryRules,
-        )..where((r) => r.deletedAt.isNull())).get(),
-      );
+  /// Rules filing into a hidden category are skipped.
+  static Future<CategoryResolver> load(AppDatabase db) async {
+    final hidden = {
+      for (final c in await (db.select(
+        db.categories,
+      )..where((c) => c.hidden.equals(true))).get())
+        c.id,
+    };
+    final rules = await (db.select(
+      db.categoryRules,
+    )..where((r) => r.deletedAt.isNull())).get();
+    return CategoryResolver([
+      for (final r in rules)
+        if (!hidden.contains(r.categoryId)) r,
+    ]);
+  }
 
   final Map<String, String> _merchant;
   final List<(String, String, int)> _keywords;

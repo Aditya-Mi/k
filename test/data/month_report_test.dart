@@ -14,6 +14,7 @@ Category cat(String id) => Category(
   color: 0,
   isSystem: true,
   sortOrder: 0,
+  hidden: false,
 );
 
 var _n = 0;
