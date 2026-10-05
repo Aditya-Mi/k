@@ -18,13 +18,25 @@ LOG=$(mktemp)
 fail() {
   echo "SMOKE FAIL: $*"
   echo "---- logcat (k, flutter, crashes) ----"
-  adb logcat -d | grep -E "AndroidRuntime|flutter|$PKG|WM-|FATAL" | tail -150 || true
+  adb logcat -d -b crash | tail -80 || true
+  adb logcat -d -s flutter:* | tail -80 || true
   exit 1
 }
 
+# Only k counts: the crash buffer (Java + native crashes) naming k, and
+# k's own Dart errors / "k: … failed" lines. Other apps on the emulator
+# log plenty of "failed" and crash on their own.
 crashed() {
-  adb logcat -d >"$LOG"
-  grep -qE "FATAL EXCEPTION|Fatal signal|E/flutter|k: .* failed" "$LOG"
+  {
+    adb logcat -d -b crash | grep -F "$PKG"
+    adb logcat -d -s flutter:* | grep -E " E flutter|flutter *: k: .*failed"
+  } >"$LOG" || true
+  if [ -s "$LOG" ]; then
+    echo "---- matched ----"
+    cat "$LOG"
+    return 0
+  fi
+  return 1
 }
 
 running() { adb shell pidof "$PKG" >/dev/null 2>&1; }
@@ -40,7 +52,7 @@ for p in RECEIVE_SMS READ_SMS POST_NOTIFICATIONS; do
 done
 
 echo "== cold start"
-adb logcat -c
+adb logcat -b all -c
 adb shell am start -W -n "$PKG/.MainActivity" >/dev/null
 sleep 20
 running || fail "app is not running after cold start"
@@ -51,7 +63,7 @@ adb shell input keyevent KEYCODE_HOME
 sleep 2
 adb shell am kill "$PKG"
 sleep 2
-adb logcat -c
+adb logcat -b all -c
 # One line: the emulator console cuts an SMS at the first newline.
 adb emu sms send AXISBK "INR 2,000.00 withdrawn at ATM S1ANDL123 from A/c no. XX1234 on 02-10-26 18:44:12. Avl Bal INR 10,345.67 - Axis Bank"
 for _ in $(seq 1 45); do
@@ -65,7 +77,7 @@ adb logcat -d | grep -q "k: background SMS drained, logged 1" ||
 crashed && fail "crash in the background SMS worker"
 
 echo "== start again"
-adb logcat -c
+adb logcat -b all -c
 adb shell am start -W -n "$PKG/.MainActivity" >/dev/null
 sleep 15
 running || fail "app is not running after restart"
