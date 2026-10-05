@@ -31,7 +31,7 @@ class UpdateManifest extends Equatable {
 
   final String version;
 
-  /// Monotonic: major·10000 + minor·100 + patch (1.2.3 → 10203).
+  /// Build number: 1 for the first release, +1 per release.
   final int versionCode;
   final String apkUrl;
   final String sha256;
@@ -43,16 +43,6 @@ class UpdateManifest extends Equatable {
 
   @override
   List<Object?> get props => [version, versionCode, apkUrl, sha256];
-}
-
-/// 1.2.3 → 10203. The release workflow uses the same rule for versionCode,
-/// so versions and codes always agree and only ever go up.
-int versionCodeOf(String version) {
-  final p = version.split('.').map(int.parse).toList();
-  if (p.length != 3 || p.any((n) => n < 0 || n > 99)) {
-    throw FormatException('not x.y.z with parts 0–99: $version');
-  }
-  return p[0] * 10000 + p[1] * 100 + p[2];
 }
 
 class UpdateCheck {

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 class UpdateBridge {
   static const _channel = MethodChannel('k/update');
 
-  /// Installed versionName ("1.0.0") and versionCode (10000).
+  /// Installed versionName ("1.0.0") and build number (1).
   Future<({String name, int code})> appVersion() async {
     final m = await _channel.invokeMapMethod<String, Object?>('appVersion');
     return (name: m!['name']! as String, code: (m['code']! as num).toInt());

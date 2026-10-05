@@ -5,11 +5,10 @@ name: Release
 #   next version → analyze + tests → signed APK → signing-key check
 #   → commit pubspec + tag → GitHub release → update gist.
 #
-# Versioning: semver x.y.z in pubspec.yaml is the source of truth.
-# versionCode = x·10000 + y·100 + z (1.2.3 → 10203), so it rises with every
-# version and is the same for anyone who builds that version. Parts stay
-# 0–99. "none" releases the version already in pubspec (the first release,
-# 1.0.0).
+# Versioning: semver x.y.z in pubspec.yaml is the version name. The build
+# number (Android versionCode) counts releases: 1 for the first, then +1 per
+# release, from the number of v* tags (only this workflow makes them).
+# "none" releases the version already in pubspec (the first release, 1.0.0).
 #
 # Needs (Settings → Secrets and variables → Actions):
 #   secrets  K_KEYSTORE_BASE64, K_KEYSTORE_PASSWORD, K_KEY_ALIAS,
@@ -89,14 +88,8 @@ jobs:
             patch) patch=$((patch + 1)) ;;
             none) ;;
           esac
-          for part in "$major" "$minor" "$patch"; do
-            if [ "$part" -gt 99 ]; then
-              echo "::error::Version parts must stay 0–99 (versionCode scheme)."
-              exit 1
-            fi
-          done
           next="$major.$minor.$patch"
-          code=$((major * 10000 + minor * 100 + patch))
+          code=$(( $(git tag -l 'v*' | wc -l) + 1 ))
           if git rev-parse -q --verify "refs/tags/v$next" >/dev/null; then
             echo "::error::v$next is already released. Pick a bump."
             exit 1
@@ -104,7 +97,7 @@ jobs:
           sed -i -E "s/^version: .*/version: $next+$code/" pubspec.yaml
           echo "version=$next" >> "$GITHUB_OUTPUT"
           echo "code=$code" >> "$GITHUB_OUTPUT"
-          echo "$current -> $next (versionCode $code)"
+          echo "$current -> $next (build $code)"
 
       - uses: actions/setup-java@v4
         with:

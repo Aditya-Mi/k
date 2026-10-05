@@ -24,4 +24,4 @@ flutter run
 
 Actions → **Release** → Run workflow (from `main`): choose the bump (patch, minor, major; `none` only for the version already in `pubspec.yaml`) and write the notes shown in the app's update dialog. The workflow tests, builds a signed APK, checks the signing key, commits the version, tags `vx.y.z`, publishes the GitHub release and updates the update gist.
 
-Versions are semver `x.y.z` (parts 0–99); the Android versionCode is `x·10000 + y·100 + z`, so 1.2.3 is 10203.
+Versions are semver `x.y.z`; the build number counts releases (1, 2, 3…).
