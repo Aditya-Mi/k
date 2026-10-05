@@ -53,8 +53,9 @@ k.iml
 # Impeccable review scratch
 .impeccable/review/
 
-# Design source stays local (Pencil); exported PNGs in design/screens are public
+# Design stays local: the Pencil source and its exported PNGs
 *.pen
+design/screens/
 
 # Signing material and local secrets (CI reads these from repo secrets)
 *.jks

@@ -22,7 +22,7 @@ Flutter (Dart 3.13) · flutter_bloc + get_it · drift + SQLite3MultipleCiphers (
 - `lib/platform/` — `SmsBridge` (channels `k/sms`, `k/sms_events`); native side in `android/.../k/sms/`.
 - `lib/data/ingest/` — `IngestionService` (message → raw_messages → transaction), `SmsSync` (queue drain, inbox catch-up, history). `lib/data/repositories/` — read models + edits.
 - `lib/ui/` — `theme/` (KColors, KText, Bands), `widgets/`, `screens/`; `lib/app/` — app shell + `SmsController`.
-- `design/k.pen` — Pencil design, local only (gitignored; open only via Pencil MCP tools; file is encrypted). `design/screens/*.png` — exported screens. `DESIGN.md` — design system (tokens, type, components, rules) to implement in Flutter; `PRODUCT.md` — product context.
+- `design/k.pen` — Pencil design, local only (gitignored; open only via Pencil MCP tools; file is encrypted). `design/screens/*.png` — exported screens, local only (gitignored). `DESIGN.md` — design system (tokens, type, components, rules) to implement in Flutter; `PRODUCT.md` — product context.
 
 ## Commands
 ```
