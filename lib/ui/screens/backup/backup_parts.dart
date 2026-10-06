@@ -28,10 +28,7 @@ class FieldLabel extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: 6),
     child: Text(
       text,
-      style: context.kt.meta.copyWith(
-        fontSize: 12.5,
-        fontWeight: FontWeight.w500,
-      ),
+      style: context.kt.meta.copyWith(fontWeight: FontWeight.w500),
     ),
   );
 }

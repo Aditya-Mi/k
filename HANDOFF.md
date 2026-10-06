@@ -2,6 +2,8 @@
 
 Read this first in a new session, then `CLAUDE.md` (rules, layout, commands), `PRODUCT.md` (product truth) and `DESIGN.md` (design system). Updated 2026-10-05 (Phases 2–5 done and device-tested; Phase 6 code done: app lock, Drive backup, export/import — awaiting device test; Cash account added; same-name payees merge; custom categories; unknown-sender learning, AutoPay/skip learning, review undo, sync-problem banners, overdrawn balances). Schema v9.
 
+> **Next: one commit + release (motion and polish done); see "NEXT SESSION" below. Working tree has uncommitted work since `ca4de66`.**
+
 ## What k is
 Personal, sideloaded Android app (Flutter + native Kotlin for SMS) that logs payments by parsing bank SMS and bank alert emails (Axis, Kotak, BOB), dedups SMS+email, categorizes, detects subscriptions. All data on-device, encrypted DB. Owner works in two sessions: **main** (design + app phases) and **parser** (`packages/txn_parser/` only).
 
@@ -203,6 +205,35 @@ Owner has no credit card yet: no real card samples; card bill / payment-received
 - Upcoming on Transactions shows only alerts due in the next 30 days (`LedgerRepository.upcomingWindow`).
 - Review: switching to AutoPay due (or a parser-guessed AutoPay) turns a DATE mark into DUE ON only if it's after the day the message came; otherwise "Mark or pick".
 - Not fixed: AutoPay-alert suggestions are always monthly (the alert doesn't say how often).
+
+## NEXT SESSION: commit, then release
+State: everything since `ca4de66` is **uncommitted** (critique fixes, copy trim follow-ups, type scale, Summary drill-ins, quick actions sheet, motion pass; ~40 files incl. DESIGN.md + HANDOFF.md). Owner wants polish done, then a **single commit**. `flutter analyze` clean, `flutter test` 126 pass. Release 1.1.1 (run 37359149330) published fine; CI warns setup-java v4 / Node 20 deprecated and ubuntu-latest → Ubuntu 26 on Oct 19.
+
+**Motion pass done (2026-10-06)**, DESIGN.md Motion updated. All in `lib/ui/motion.dart` (`Motion` tokens 150/220/300ms, emphasized easing, `Motion.off`/`Motion.of` for Remove animations):
+1. Tabs: `FadeThroughStack` replaces IndexedStack in `home_shell.dart` (all tabs stay mounted).
+2. Pages: `KPageTransitionsBuilder` in theme (predictive back + fade-forwards, instant when animations off); manifest `enableOnBackInvokedCallback="true"`.
+3. Live arrival: `Arrival` wraps Transactions rows; `_noteArrivals` in `transactions_screen.dart` marks ids new under the same filter (≤3, occurred <2 days ago, never first load). Row opens + fades, surface-2 wash clears at 1.6s.
+4. Month panel: `RollingAmount` total, rosette ink `ColorTween`, `SpendRibbon` now a CustomPainter tweening shares (`SpendRibbon.shares`).
+5. Review: `SharedAxisSwitcher` on the editor body (next item slides in); queue is `_AnimatedQueue` (SliverAnimatedList diff: cards collapse out, Undo slides back, mounted even when empty).
+6. Summary: trend bars `AnimatedContainer`, category bars tween, calendar fades (AnimatedSwitcher + AnimatedSize keyed by month).
+Also: `learned_formats_screen.dart` AnimatedOpacity honours Remove animations.
+Emulator-checked (release arm64 APK on `Medium_Phone_API_36.1`; it is arm64, x64 APK won't start): live SMS → row opens, total rolled mid-frame, wash cleared; tab switch, Summary month change; no crashes. Not exercised on emulator: Review queue/editor motion (no review items), predictive back gesture (needs real swipe).
+**Polish pass done (2026-10-06):** Review editor header puts the reason on its own line (time no longer truncates; Pencil 03b not yet synced); card screen rows follow 12b (`TxnRow(onCard: true)`: date on every row, no account, bill = "Bill payment · Axis ··1234 · 2 Oct · not spent", no swap icon); Accounts balance meta drops "00:00" for date-only messages. Colour-blind ink collisions: owner accepted as is (DESIGN.md Do's). Emulator round (dark): all 5 tabs, review editor, detail, Settings look right.
+Next: commit (owner approves first), then release.
+
+## Design critique fixes (2026-10-06)
+`/impeccable critique` of the main screens scored 28/40 (snapshot `.impeccable/critique/`). Fixed, design first (01, 01d new, 02*, 03a, 05, 05b/05c new, 12b; DESIGN.md components: FAB, Quick Actions Sheet, Upcoming/Unknown Chip, Upcoming Row, Review Card, Drill-in Row):
+- Add payment is a bottom-right "Add" FAB on Transactions only (`home_shell.dart`); top bar = search + settings. List ends with 88dp clearance.
+- Long-press a Transactions row → `showTxnQuickActions` (in `txn_detail_screen.dart`, reuses the detail's category / not-a-transaction / self-transfer flows via a throwaway `TxnDetailCubit`; `_remove(popAfter: false)`).
+- Upcoming AutoPay rows: dashed text-3 chip with a clock (`NoteChipStyle.upcoming`), title/amount text-2. Review card with no amount: dashed "?" (`NoteChipStyle.unknown`). Chips are `ExcludeSemantics` (rows carry the spoken label).
+- Pinned bar shows only the ascending span ("3–5 Oct", `daySpan` in `format.dart`); no "Transactions" heading.
+- Summary order: In your accounts, Last 6 months, Where it went, Day by day, then "Top payees" / "By spend size" drill-in rows → full screens (`MonthReport.topPayees` = 10). Panel: "₹X in · Net ₹X" (no budget word "left").
+- Review: "N to review" count; reasons "k couldn't read this message" / "Amount not found" / "Account not found" / "Paid or received unclear".
+- Detail: band range line dropped (hero chip says it); Delete is an alert-colour text button.
+- Account names: `long` = "Axis credit card ··5678" (short bank name, no "Bank") for detail/Accounts/card title; `short` = "Axis card ··5678" in row meta.
+- Type scale: 63 `fontSize:` overrides → 2 (both inside fixed-size chips); new KText `heroSecondary` (32) and `chartFigure` (12); nothing under 12dp. Emulator-checked.
+- Not fixed: colour-blind collisions in light inks (protan ₹20↔₹200 ΔE 1.5, deutan ₹500↔₹2,000 1.9; dark deutan ₹50↔₹100 4.9) — amounts are always also text; owner to decide. Card screen bill row wording differs from 12b. Review editor header truncates the time next to the reason.
+- Emulator gotcha: `-no-snapshot-save` boots the last saved snapshot, so installs/data from the previous run vanish (looks like data loss; it isn't). Its storage is near full: use release APKs (26 MB), not debug.
 
 ## Settings on Transactions, accounts total, copy trim (2026-10-06)
 - Settings gear moved from the Accounts tab to the Transactions top bar (+, search, gear). Owner's choice: Transactions only.

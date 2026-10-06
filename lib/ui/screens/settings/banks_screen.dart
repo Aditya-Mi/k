@@ -50,7 +50,7 @@ class _BanksScreenState extends State<BanksScreen> {
                 padding: const EdgeInsets.fromLTRB(0, 16, 0, 24),
                 child: Text(
                   'Tap a bank to add a sender.',
-                  style: t.meta.copyWith(fontSize: 13, color: c.text2),
+                  style: t.meta.copyWith(color: c.text2),
                 ),
               ),
             ],

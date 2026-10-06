@@ -19,14 +19,10 @@ class SettingsHead extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: context.kt.meta.copyWith(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.kt.meta.copyWith(fontWeight: FontWeight.w600),
           ),
         ),
-        if (note != null)
-          Text(note!, style: context.kt.meta.copyWith(fontSize: 12.5)),
+        if (note != null) Text(note!, style: context.kt.meta),
       ],
     ),
   );
@@ -80,19 +76,12 @@ class SettingsItem extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: t.body.copyWith(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: t.body.copyWith(fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: t.meta.copyWith(
-                      fontSize: 13,
-                      height: 1.35,
-                      color: subtitleColor,
-                    ),
+                    style: t.meta.copyWith(height: 1.35, color: subtitleColor),
                   ),
                 ],
               ),

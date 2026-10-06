@@ -45,6 +45,12 @@ typography:
     fontWeight: 700
     fontFeature: "tnum"
     fontVariation: "'wdth' 112"
+  hero-secondary:
+    fontFamily: "Archivo, Roboto, sans-serif"
+    fontSize: "32dp"
+    fontWeight: 700
+    fontFeature: "tnum"
+    fontVariation: "'wdth' 112"
   headline:
     fontFamily: "Archivo, Roboto, sans-serif"
     fontSize: "22dp"
@@ -78,6 +84,12 @@ typography:
     fontFamily: "Roboto, sans-serif"
     fontSize: "12dp"
     fontWeight: 500
+  chart-figure:
+    fontFamily: "Archivo, Roboto, sans-serif"
+    fontSize: "12dp"
+    fontWeight: 500
+    fontFeature: "tnum"
+    fontVariation: "'wdth' 112"
 rounded:
   chip: "2dp"
   chip-lg: "4dp"
@@ -209,7 +221,7 @@ Each ink has a deepened light-theme twin (`-light` keys) that holds at least 4.9
 ### Named Rules
 **The One Job Rule.** A denomination ink appears only where it encodes the band of a specific amount: note chips, the denomination ribbon, band bars, the summary calendar's day cells (the day's total), the guilloche of the month total, and the amount mark in a message being reviewed. Never for categories, accounts, status, focus, selection or decoration.
 
-**The Fill Means Out Rule.** Debit is a filled chip; credit is the same chip outlined in its band ink with a +₹ amount; pending, upcoming and unparsed amounts are the filled chip at 45% opacity. Direction is never carried by red and green.
+**The Fill Means Out Rule.** Debit is a filled chip; credit is the same chip outlined in its band ink with a +₹ amount; pending and unparsed amounts are the filled chip at 45% opacity; upcoming (not yet paid) amounts use the dashed Upcoming Chip instead (see Chips). Direction is never carried by red and green.
 
 **The Calm Count Rule.** Review counts, badges and the review banner are neutral. Coral alert is reserved for a changed fact (a price rise), never for a queue waiting on the user.
 
@@ -222,6 +234,7 @@ Each ink has a deepened light-theme twin (`-light` keys) that holds at least 4.9
 
 ### Hierarchy
 - **Amount Hero** (Archivo 700, 40dp, tabular): the month total on the note panel and the amount on transaction detail.
+- **Hero Secondary** (Archivo 700, 32dp, tabular): the second-largest figure on a screen, the Accounts total.
 - **Headline** (Archivo 600, 22dp): screen titles (Subscriptions, Review, Settings, the summary month).
 - **Title** (Archivo 600, 16dp): section heads ("Transactions", "Next charges", "Where it went") and the numeral on the large note chip.
 - **Amount Row** (Archivo 600, 16dp, tabular): right-aligned amounts in every list row.
@@ -229,6 +242,7 @@ Each ink has a deepened light-theme twin (`-light` keys) that holds at least 4.9
 - **Meta** (Roboto 400, 12.5dp, text-2): category · account · time lines under payees.
 - **Day Header** (Roboto 500, 12.5dp, text-2): day group labels with their right-aligned "₹702 out" totals.
 - **Label** (Roboto 500, 12dp): navigation labels; the selected destination steps up to text colour and a heavier weight.
+- **Chart Figure** (Archivo 500, 12dp, tabular): figures inside charts, the month bars' values and the calendar's day numbers. Chart axis and caption text uses Label. Nothing is set under 12dp.
 
 ### Named Rules
 **The Counted Figure Rule.** Every amount set as a figure (row, hero, column total) is Archivo at wdth 112 with tabular figures, so columns of amounts align digit for digit. The Pencil renders could not carry the width axis or tnum; the Flutter build must.
@@ -237,7 +251,7 @@ Each ink has a deepened light-theme twin (`-light` keys) that holds at least 4.9
 
 ## Layout
 
-A single column on a 412dp-wide phone with a 16dp gutter. Sections are separated by 16–24dp. List rows use 10dp vertical padding and a 14dp gap between chip, text block and amount; the amount column is right-aligned at the gutter. Lists group by day with a day header carrying the day's total out; the list section head shows the date span currently in view and sticks while scrolling. Primary actions sit at the bottom of the screen in thumb reach, full-width or as a pair (outlined secondary left, filled primary right). Bottom navigation has five destinations: Transactions, Review, Recurring (subscriptions and EMIs), Accounts, Summary. Settings opens from the Accounts tab's top bar. Detail screens use label-left, value-right field rows separated by hairlines.
+A single column on a 412dp-wide phone with a 16dp gutter. The Transactions list has no section heading; its sticky head is only the date span in view, ascending ("3–5 Oct"). Sections are separated by 16–24dp. List rows use 10dp vertical padding and a 14dp gap between chip, text block and amount; the amount column is right-aligned at the gutter. Lists group by day with a day header carrying the day's total out; the list section head shows the date span currently in view and sticks while scrolling. Primary actions sit at the bottom of the screen in thumb reach (Transactions: the Add FAB), full-width or as a pair (outlined secondary left, filled primary right). Bottom navigation has five destinations: Transactions, Review, Recurring (subscriptions and EMIs), Accounts, Summary. Settings opens from the Transactions top bar (gear). Detail screens use label-left, value-right field rows separated by hairlines.
 
 ## Elevation & Depth
 
@@ -263,9 +277,11 @@ Small, banknote-proportioned rectangles for anything inked; soft 12dp cards for 
 - **States:** pressed and focus states follow Material 3 defaults over these colours; not yet specified beyond that.
 
 ### Chips
-- **Note Chip:** 24×12dp, 2dp corners. Filled in band ink for debit, 1.5dp outline in band ink for credit, filled at 45% for pending, upcoming and unparsed.
+- **Note Chip:** 24×12dp, 2dp corners. Filled in band ink for debit, 1.5dp outline in band ink for credit, filled at 45% for pending and unparsed.
 - **Large Note Chip:** 60×28dp, 4dp corners, carrying the band's lower bound, e.g. "500+" ("500") in on-ink; leads the hero amount on detail.
 - **Filter Chip:** 32dp high, 8dp corners, hairline outline, text label with a trailing dropdown arrow; scrolls horizontally off the gutter.
+- **Upcoming Chip:** 24×12dp, same footprint as the note chip but no ink: a 1dp dashed outline in text-3 with a small clock glyph (schedule, 8dp) centred. It marks an AutoPay charge that is due but not paid; the row's amount drops to text-2. Never filled, never inked, so it cannot be read as a ₹500–1,999 payment.
+- **Unknown Chip:** the same dashed text-3 outline carrying a "?", for a Review card where the parser found no amount. A guessed amount keeps its 45% band-ink chip.
 - **Status tags:** "Marked unused" is an outlined 8dp tag in text-3, and the whole row dims; "Price up" is an alert-badge (alert text on alert-bg) with an up arrow.
 
 ### Cards / Containers
@@ -283,7 +299,22 @@ Small, banknote-proportioned rectangles for anything inked; soft 12dp cards for 
 
 ### Navigation
 - **Bottom Nav:** Material 3 navigation bar on surface-1, five destinations with Material Symbols Rounded icons over 12dp labels. Selected destination: surface-3 indicator (64×32dp) behind the icon, label in text colour. Unselected: icon and label in text-2. The Review badge is neutral: a small text-coloured disc with a bg-coloured count.
-- **Top App Bar:** home shows the lowercase "k" wordmark in Archivo with add and search actions; inner screens show a back or close icon, an Archivo 22dp title, and actions on the right.
+- **Top App Bar:** home shows the lowercase "k" wordmark in Archivo with search and settings actions (Add lives on the FAB); inner screens show a back or close icon, an Archivo 22dp title, and actions on the right.
+
+### FAB (Add payment)
+The one place Add payment lives. An extended M3 FAB, 56dp high, 16dp corners, filled in the text colour with an on-ink plus icon and the label "Add" (Archivo 600, 16dp); bottom-right, 16dp from the edge and 16dp above the navigation bar. Neutral, no ink, no shadow. Only on Transactions. The list ends with 88dp of clearance so the last row clears it.
+
+### Quick Actions Sheet
+Long-pressing a Transactions row opens an M3 modal bottom sheet (surface-1, 28dp top corners, 40% black scrim, handle). A header repeats the row (ink chip, payee, "account · time", amount), then a hairline, then one-line 56dp actions with a text-2 icon on the left: Category (current value in text-2 and a chevron), Not a transaction, Mark as self transfer, Open details.
+
+### Upcoming Row
+A Txn Row whose chip is the Upcoming Chip and whose amount is text-2 (payee also text-2). Meta reads "Due Wed 8 Oct · UPI AutoPay · Kotak ··5555". Sits under an "Upcoming · AutoPay" day header, above Today.
+
+### Review Card
+Outlined 12dp card: chip, sender, guessed amount; the snippet; then the reason (left, text-3) and time (right). The chip is the guessed amount's band ink at 45% (outlined for a credit), or the Unknown Chip when no amount was found. Under the Review title a one-line neutral count ("3 to review"). Reasons in plain words: "k couldn't read this message", "Amount not found", "Account not found", "Paid or received unclear".
+
+### Drill-in Row
+On Summary, Top payees and By spend size are single rows (label, "See all" in text-2, chevron) like "In your accounts"; they push full-list screens with a back arrow and the list reusing the block design.
 
 ### Txn Row
 Note chip · payee (Body) over meta (Meta) · amount (Amount Row) right-aligned. An optional merged icon sits before the amount when the row came from more than one message. Row states (pending, unused, merged) restyle the chip and text tone without moving the columns.
@@ -323,7 +354,16 @@ In the review editor the raw message is tokenised: each recognised field value s
 App lock defers to Android's BiometricPrompt, which the app does not draw. The app owns only the lock screen behind it: the locked note panel, "k is locked", and a bottom primary Unlock button.
 
 ### Motion
-One authored moment: **the rosette draws itself.** Each hypotrochoid band and ring is stroked from 0 to 100% of its path length (Flutter: `PathMetric.extractPath`), bands staggered by 40ms, 600ms total, emphasized-decelerate easing. It holds 400ms, then the card fades out over 200ms. Used when a review correction teaches k a new format (in the amount's ink, over a scrim card stating what was saved) and on successful unlock (neutral, on the locked note panel, then the panel cross-fades into home). With Android "Remove animations" on, the rosette appears fully drawn with no stroke animation. Everything else uses standard Material 3 transitions; there is no other decorative motion.
+One authored moment: **the rosette draws itself.** Each hypotrochoid band and ring is stroked from 0 to 100% of its path length (Flutter: `PathMetric.extractPath`), bands staggered by 40ms, 600ms total, emphasized-decelerate easing. It holds 400ms, then the card fades out over 200ms. Used when a review correction teaches k a new format (in the amount's ink, over a scrim card stating what was saved) and on successful unlock (neutral, on the locked note panel, then the panel cross-fades into home). With Android "Remove animations" on, the rosette appears fully drawn with no stroke animation.
+
+Everything else is functional motion only: it explains a change, never decorates. Tokens in `lib/ui/motion.dart` (`Motion`): short 150ms (feedback), medium 220ms (routine change), long 300ms (values settling); M3 emphasized-decelerate in, emphasized-accelerate out. Exits are faster than entrances. No bounce, no stagger, no load choreography.
+- **Tabs:** M3 fade-through (old tab out over the first 35%, new tab in from 92% scale), every tab kept mounted.
+- **Pages:** one transition app-wide, Android's fade-forwards with the predictive back gesture (`enableOnBackInvokedCallback`).
+- **A payment arriving live:** its row opens its space and fades in, then holds a surface-2 wash for about a second before it clears. Only rows that appear while the list shows the same filter, at most three at once, never on first load or an import. Answers "did it log" without a toast.
+- **Month totals:** the hero figure rolls to its new value (tabular figures, so nothing jitters); spend ribbon segments slide to their new widths; the rosette's ink shifts with the total's band.
+- **Review:** saving or skipping slides the next message in from the right (shared axis X); a read card collapses out of the queue; Undo slides it back.
+- **Summary month change:** trend bars and category bars tween to the new month; the calendar fades to the new month's days.
+- **Remove animations:** every one of these is instant. The live-arrival wash still shows (it is state, not movement) and cuts after 1.2s.
 
 ## Do's and Don'ts
 
@@ -334,6 +374,7 @@ One authored moment: **the rosette draws itself.** Each hypotrochoid band and ri
 - **Do** make depth with surface steps (bg, surface-1, surface-2, surface-3) and 1dp hairlines.
 - **Do** make the one primary action a text-coloured pill with a bg-coloured label, at the bottom in thumb reach.
 - **Do** keep the raw bank message one tap from any transaction, verbatim.
+- **Do** print every amount as text beside its ink. Inks are a glance aid, never the only carrier: some light-theme pairs collide for colour-blind eyes (protan ₹20↔₹200, deutan ₹500↔₹2,000) and the owner accepted that (2026-10-06) because the figure always says it.
 
 ### Don't:
 - **Don't** use a denomination ink for a category, account, status, selection, focus ring or decoration.

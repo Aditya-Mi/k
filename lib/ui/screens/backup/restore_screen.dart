@@ -110,8 +110,8 @@ class _RestoreScreenState extends State<RestoreScreen> {
       padding: const EdgeInsets.only(top: 10),
       child: Row(
         children: [
-          Expanded(child: Text(l, style: t.meta.copyWith(fontSize: 13))),
-          Text(v, style: t.amountRow.copyWith(fontSize: 13.5)),
+          Expanded(child: Text(l, style: t.meta)),
+          Text(v, style: t.amountRow),
         ],
       ),
     );
@@ -139,10 +139,7 @@ class _RestoreScreenState extends State<RestoreScreen> {
               children: [
                 Text(
                   '${_cap(whenShort(m.createdAt))} · ${widget.source}',
-                  style: t.body.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: t.body.copyWith(fontWeight: FontWeight.w600),
                 ),
                 row('Payments', grouped(m.payments)),
                 row('Accounts', '${m.accounts}'),
@@ -175,10 +172,7 @@ class _RestoreScreenState extends State<RestoreScreen> {
             ),
             const SizedBox(height: 20),
           ] else if (_savedKeyOpens == true) ...[
-            Text(
-              'Opens with your current passphrase.',
-              style: t.meta.copyWith(fontSize: 13),
-            ),
+            Text('Opens with your current passphrase.', style: t.meta),
             const SizedBox(height: 20),
           ],
           if (_error != null) ...[

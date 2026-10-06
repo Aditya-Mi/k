@@ -92,7 +92,6 @@ class SubscriptionsScreen extends StatelessWidget {
                           '${emis.length} ${emis.length == 1 ? 'EMI' : 'EMIs'}',
                       ].join('  ·  '),
                       style: t.title.copyWith(
-                        fontSize: 15,
                         fontWeight: FontWeight.w500,
                         color: context.k.text2,
                       ),
@@ -208,7 +207,7 @@ class _SuggestionCard extends StatelessWidget {
                       style: t.body.copyWith(fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 2),
-                    Text('$what$account', style: t.meta.copyWith(fontSize: 13)),
+                    Text('$what$account', style: t.meta),
                   ],
                 ),
               ),

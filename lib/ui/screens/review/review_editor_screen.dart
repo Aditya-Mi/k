@@ -10,6 +10,7 @@ import '../../../data/review/field_marks.dart';
 import '../../../data/review/review_service.dart';
 import '../../../di.dart';
 import '../../format.dart';
+import '../../motion.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/note_chip.dart';
@@ -138,210 +139,238 @@ class _Editor extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: [
-          const SizedBox(height: 8),
-          if (item.unknownSender) ...[
-            Text("A sender k doesn't know", style: t.title),
-            const SizedBox(height: 4),
-            Text(
-              "If it's from your bank, pick the bank.",
-              style: t.body.copyWith(color: c.text2, fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-          ],
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(color: c.outline),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      isSms ? Icons.sms_outlined : Icons.mail_outline_rounded,
-                      size: 20,
-                      color: c.text2,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '${item.raw.sender} · ${dayMonth(item.raw.receivedAt)}, '
-                        '${hhmm(item.raw.receivedAt)}',
-                        style: t.body.copyWith(fontWeight: FontWeight.w500),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(item.reason, style: t.meta.copyWith(color: c.text3)),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                MessageMarks(
-                  text: item.text,
-                  marks: state.marks,
-                  onLongPressWord: (s, e) => _markSheet(context, s, e, null),
-                  onTapMark: (m) => _markSheet(context, m.start, m.end, m),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'Long-press a word in the message to mark it as a field.',
-                  style: t.meta.copyWith(color: c.text3),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (item.unknownSender)
-            FieldRow(
-              label: 'Bank',
-              value: SelectButton(
-                label: cubit.bankLabel(),
-                onPressed: () => _pickBank(context),
+      // Save or skip slides the next message in (DESIGN.md Motion).
+      body: SharedAxisSwitcher(
+        child: ListView(
+          key: ValueKey(item.raw.id),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          children: [
+            const SizedBox(height: 8),
+            if (item.unknownSender) ...[
+              Text("A sender k doesn't know", style: t.title),
+              const SizedBox(height: 4),
+              Text(
+                "If it's from your bank, pick the bank.",
+                style: t.body.copyWith(color: c.text2),
               ),
-            ),
-          FieldRow(
-            label: 'Message',
-            value: SegmentedButton<TemplateKind>(
-              segments: const [
-                ButtonSegment(
-                  value: TemplateKind.transaction,
-                  label: Text('Payment'),
-                ),
-                ButtonSegment(
-                  value: TemplateKind.mandate,
-                  label: Text('AutoPay due'),
-                ),
-              ],
-              selected: {state.kind},
-              onSelectionChanged: (v) => cubit.setKind(v.single),
-            ),
-          ),
-          FieldRow(
-            label: 'Amount',
-            onTap: () => _editAmount(context, f.amountMinor),
-            value: f.amountMinor == null
-                ? Text('Mark or enter', style: t.body.copyWith(color: c.text3))
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
+              const SizedBox(height: 16),
+            ],
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: c.outline),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      NoteChip(
-                        amountMinor: f.amountMinor!,
-                        style: mandate
-                            ? NoteChipStyle.pending
-                            : state.direction == Direction.debit
-                            ? NoteChipStyle.filled
-                            : NoteChipStyle.outlined,
+                      Icon(
+                        isSms ? Icons.sms_outlined : Icons.mail_outline_rounded,
+                        size: 20,
+                        color: c.text2,
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        inr(f.amountMinor!, paise: true),
-                        style: t.amountRow.copyWith(fontSize: 18),
+                      // Reason on its own line, so the time never truncates.
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${item.raw.sender} · '
+                              '${dayMonth(item.raw.receivedAt)}, '
+                              '${hhmm(item.raw.receivedAt)}',
+                              style: t.body.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              item.reason,
+                              style: t.meta.copyWith(color: c.text3),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-          ),
-          if (!mandate) ...[
-            FieldRow(
-              label: 'Direction',
-              value: SegmentedButton<Direction>(
-                segments: const [
-                  ButtonSegment(value: Direction.debit, label: Text('Debit')),
-                  ButtonSegment(value: Direction.credit, label: Text('Credit')),
+                  const SizedBox(height: 14),
+                  MessageMarks(
+                    text: item.text,
+                    marks: state.marks,
+                    onLongPressWord: (s, e) => _markSheet(context, s, e, null),
+                    onTapMark: (m) => _markSheet(context, m.start, m.end, m),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Long-press a word in the message to mark it as a field.',
+                    style: t.meta.copyWith(color: c.text3),
+                  ),
                 ],
-                selected: {state.direction},
-                onSelectionChanged: (v) => cubit.setDirection(v.single),
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (item.unknownSender)
+              FieldRow(
+                label: 'Bank',
+                value: SelectButton(
+                  label: cubit.bankLabel(),
+                  onPressed: () => _pickBank(context),
+                ),
+              ),
+            FieldRow(
+              label: 'Message',
+              value: SegmentedButton<TemplateKind>(
+                segments: const [
+                  ButtonSegment(
+                    value: TemplateKind.transaction,
+                    label: Text('Payment'),
+                  ),
+                  ButtonSegment(
+                    value: TemplateKind.mandate,
+                    label: Text('AutoPay due'),
+                  ),
+                ],
+                selected: {state.kind},
+                onSelectionChanged: (v) => cubit.setKind(v.single),
               ),
             ),
             FieldRow(
-              label: 'Account',
-              onTap: () => _pickAccount(context),
+              label: 'Amount',
+              onTap: () => _editAmount(context, f.amountMinor),
+              value: f.amountMinor == null
+                  ? Text(
+                      'Mark or enter',
+                      style: t.body.copyWith(color: c.text3),
+                    )
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        NoteChip(
+                          amountMinor: f.amountMinor!,
+                          style: mandate
+                              ? NoteChipStyle.pending
+                              : state.direction == Direction.debit
+                              ? NoteChipStyle.filled
+                              : NoteChipStyle.outlined,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          inr(f.amountMinor!, paise: true),
+                          style: t.amountRow,
+                        ),
+                      ],
+                    ),
+            ),
+            if (!mandate) ...[
+              FieldRow(
+                label: 'Direction',
+                value: SegmentedButton<Direction>(
+                  segments: const [
+                    ButtonSegment(value: Direction.debit, label: Text('Debit')),
+                    ButtonSegment(
+                      value: Direction.credit,
+                      label: Text('Credit'),
+                    ),
+                  ],
+                  selected: {state.direction},
+                  onSelectionChanged: (v) => cubit.setDirection(v.single),
+                ),
+              ),
+              FieldRow(
+                label: 'Account',
+                onTap: () => _pickAccount(context),
+                value: Text(
+                  cubit.accountLabel(),
+                  style: t.body,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+            FieldRow(
+              label: 'Payee',
+              onTap: () => _editText(context, 'Payee', f.payee, cubit.setPayee),
               value: Text(
-                cubit.accountLabel(),
-                style: t.body,
+                f.payee ?? 'None',
+                style: t.body.copyWith(
+                  color: f.payee == null ? c.text3 : c.text,
+                ),
                 textAlign: TextAlign.right,
               ),
             ),
-          ],
-          FieldRow(
-            label: 'Payee',
-            onTap: () => _editText(context, 'Payee', f.payee, cubit.setPayee),
-            value: Text(
-              f.payee ?? 'None',
-              style: t.body.copyWith(color: f.payee == null ? c.text3 : c.text),
-              textAlign: TextAlign.right,
-            ),
-          ),
-          if (mandate)
-            FieldRow(
-              label: 'Due on',
-              onTap: () => _pickDueDate(context, f.dueDate),
-              value: Text(
-                f.dueDate == null ? 'Mark or pick' : dayShortYear(f.dueDate!),
-                style: t.body.copyWith(
-                  color: f.dueDate == null ? c.text3 : c.text,
+            if (mandate)
+              FieldRow(
+                label: 'Due on',
+                onTap: () => _pickDueDate(context, f.dueDate),
+                value: Text(
+                  f.dueDate == null ? 'Mark or pick' : dayShortYear(f.dueDate!),
+                  style: t.body.copyWith(
+                    color: f.dueDate == null ? c.text3 : c.text,
+                  ),
+                ),
+              )
+            else ...[
+              FieldRow(
+                label: 'Reference',
+                onTap: () =>
+                    _editText(context, 'Reference', f.ref, cubit.setRef),
+                value: Text(
+                  f.ref ?? 'None',
+                  style: t.body.copyWith(
+                    color: f.ref == null ? c.text3 : c.text,
+                  ),
                 ),
               ),
-            )
-          else ...[
-            FieldRow(
-              label: 'Reference',
-              onTap: () => _editText(context, 'Reference', f.ref, cubit.setRef),
-              value: Text(
-                f.ref ?? 'None',
-                style: t.body.copyWith(color: f.ref == null ? c.text3 : c.text),
-              ),
-            ),
-            FieldRow(
-              label: 'Date',
-              onTap: () =>
-                  _pickDate(context, f.occurredAt ?? item.raw.receivedAt),
-              value: Text(
-                fullStamp(f.occurredAt ?? item.raw.receivedAt),
-                style: t.body,
-              ),
-            ),
-            FieldRow(
-              label: 'Category',
-              value: SelectButton(
-                label: category?.name,
-                icon: category == null ? null : categoryIcon(category.icon),
-                onPressed: () => _pickCategory(context),
-              ),
-            ),
-          ],
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Learn this format', style: t.title),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.unknownSender
-                          ? 'k reads ${item.raw.sender} as '
-                                '${cubit.bankLabel() ?? 'that bank'} from now '
-                                'on.'
-                          : mandate
-                          ? 'Similar AutoPay alerts go to Upcoming on their own.'
-                          : 'Similar messages are read on their own.',
-                      style: t.body.copyWith(color: c.text2),
-                    ),
-                  ],
+              FieldRow(
+                label: 'Date',
+                onTap: () =>
+                    _pickDate(context, f.occurredAt ?? item.raw.receivedAt),
+                value: Text(
+                  fullStamp(f.occurredAt ?? item.raw.receivedAt),
+                  style: t.body,
                 ),
               ),
-              const SizedBox(width: 16),
-              Switch(value: state.learn, onChanged: cubit.setLearn),
+              FieldRow(
+                label: 'Category',
+                value: SelectButton(
+                  label: category?.name,
+                  icon: category == null ? null : categoryIcon(category.icon),
+                  onPressed: () => _pickCategory(context),
+                ),
+              ),
             ],
-          ),
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Learn this format', style: t.title),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.unknownSender
+                            ? 'k reads ${item.raw.sender} as '
+                                  '${cubit.bankLabel() ?? 'that bank'} from now '
+                                  'on.'
+                            : mandate
+                            ? 'Similar AutoPay alerts go to Upcoming on their own.'
+                            : 'Similar messages are read on their own.',
+                        style: t.body.copyWith(color: c.text2),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Switch(value: state.learn, onChanged: cubit.setLearn),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
@@ -790,12 +819,9 @@ class _NotATransactionSheetState extends State<_NotATransactionSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Not a transaction', style: t.title.copyWith(fontSize: 18)),
+            Text('Not a transaction', style: t.title),
             const SizedBox(height: 4),
-            Text(
-              "k keeps the message but won't log a payment.",
-              style: t.meta.copyWith(fontSize: 13),
-            ),
+            Text("k keeps the message but won't log a payment.", style: t.meta),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -811,7 +837,7 @@ class _NotATransactionSheetState extends State<_NotATransactionSheet> {
                       Text(
                         'Similar ${widget.bank} messages skip Review. '
                         'Undo in Settings → Message formats.',
-                        style: t.meta.copyWith(fontSize: 13, color: c.text2),
+                        style: t.meta.copyWith(color: c.text2),
                       ),
                     ],
                   ),
@@ -883,11 +909,11 @@ class _NewBankSheetState extends State<_NewBankSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('A bank not in k', style: t.title.copyWith(fontSize: 18)),
+            Text('A bank not in k', style: t.title),
             const SizedBox(height: 4),
             Text(
               'k reads ${widget.sender} as this bank from now on.',
-              style: t.meta.copyWith(fontSize: 13),
+              style: t.meta,
             ),
             const SizedBox(height: 16),
             TextField(
@@ -909,7 +935,7 @@ class _NewBankSheetState extends State<_NewBankSheet> {
             const SizedBox(height: 8),
             Text(
               'Add its address or domain to read its emails too.',
-              style: t.meta.copyWith(fontSize: 13, color: c.text2),
+              style: t.meta.copyWith(color: c.text2),
             ),
             const SizedBox(height: 16),
             Row(

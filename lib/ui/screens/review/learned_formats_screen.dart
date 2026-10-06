@@ -3,6 +3,7 @@ import 'package:txn_parser/txn_parser.dart' show Channel, TemplateKind;
 
 import '../../../data/review/learned_formats.dart';
 import '../../../di.dart';
+import '../../motion.dart';
 import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
@@ -122,7 +123,7 @@ class _FormatCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 150),
+              duration: Motion.of(context, Motion.short),
               opacity: row.enabled ? 1 : 0.45,
               child: format.sampleText == null
                   ? Text(

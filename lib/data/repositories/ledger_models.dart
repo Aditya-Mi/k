@@ -57,13 +57,14 @@ class AccountView extends Equatable {
 
   String get _digits => last4 == null ? '' : ' ··$last4';
 
-  /// Row meta: "Axis ··1234", "Axis card ··5678".
+  /// Row meta, where width is short: "Axis ··1234", "Axis card ··5678".
   String get short =>
       nickname ??
       (isCash ? 'Cash' : null) ??
       '${bankShortName(bankId, bankName)}${isCard ? ' card' : ''}$_digits';
 
-  /// Detail: "Axis Bank credit card ··5678".
+  /// The account's name everywhere else (detail, Accounts, card screen):
+  /// "Axis ··1234", "Axis credit card ··5678". A nickname wins.
   String get long {
     if (nickname != null) return nickname!;
     if (isCash) return 'Cash in hand';
@@ -74,7 +75,7 @@ class AccountView extends Equatable {
       AccountType.wallet => ' wallet',
       _ => '',
     };
-    return '$bankName$kind$_digits';
+    return '${bankShortName(bankId, bankName)}$kind$_digits';
   }
 
   @override

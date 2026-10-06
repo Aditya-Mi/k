@@ -347,7 +347,6 @@ class _DirectionToggle extends StatelessWidget {
                   Text(
                     label,
                     style: t.body.copyWith(
-                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: on ? c.text : c.text2,
                     ),

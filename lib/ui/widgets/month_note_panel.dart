@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../format.dart';
+import '../motion.dart';
 import '../theme/k_theme.dart';
 import 'rosette.dart';
 
@@ -59,7 +60,8 @@ class MonthNotePanel extends StatelessWidget {
   /// since its top bar already names the month).
   final String? label;
 
-  /// Adds "₹X left" (came in − spent) to the in/out line.
+  /// Adds "net ₹X" (came in − spent; "net −₹X" when more went out). Not
+  /// "left": k has no budgets.
   final bool showLeft;
 
   @override
@@ -90,7 +92,17 @@ class MonthNotePanel extends StatelessWidget {
                 Positioned(
                   right: 7 * unit,
                   top: 0,
-                  child: Rosette(size: rosette, color: ink, strokeWidth: 0.5),
+                  // The ink moves with the total's band.
+                  child: TweenAnimationBuilder<Color?>(
+                    tween: ColorTween(end: ink),
+                    duration: Motion.of(context, Motion.long),
+                    curve: Motion.standard,
+                    builder: (context, color, _) => Rosette(
+                      size: rosette,
+                      color: color ?? ink,
+                      strokeWidth: 0.5,
+                    ),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -122,7 +134,11 @@ class MonthNotePanel extends StatelessWidget {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
-                        child: Text(inr(s.spentMinor), style: t.amountHero),
+                        child: RollingAmount(
+                          minor: s.spentMinor,
+                          format: inr,
+                          style: t.amountHero,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -130,9 +146,13 @@ class MonthNotePanel extends StatelessWidget {
                           label != null || !_isOpen(s.month)
                               ? 'spent'
                               : 'spent so far',
-                          if (s.inMinor > 0) '${inr(s.inMinor)} came in',
-                          if (showLeft && s.inMinor > s.spentMinor)
-                            '${inr(s.inMinor - s.spentMinor)} left',
+                          if (s.inMinor > 0)
+                            showLeft
+                                ? '${inr(s.inMinor)} in'
+                                : '${inr(s.inMinor)} came in',
+                          if (showLeft && s.inMinor > 0)
+                            'Net ${s.inMinor < s.spentMinor ? '−' : ''}'
+                                '${inr(s.inMinor - s.spentMinor)}',
                         ].join('  ·  '),
                         style: t.body.copyWith(color: c.text2),
                       ),
@@ -172,39 +192,106 @@ class MonthNotePanel extends StatelessWidget {
 }
 
 /// One rounded bar split into band segments, proportional to spend share.
+/// Segments slide to their new widths when the month's spend changes.
 class SpendRibbon extends StatelessWidget {
   const SpendRibbon({super.key, required this.bandTotals, this.height = 8});
 
   final List<int> bandTotals;
   final double height;
 
+  /// Each band's share of the bar; thin bands still show as a sliver.
+  static List<double> shares(List<int> bandTotals) {
+    final total = bandTotals.fold(0, (a, b) => a + b);
+    if (total == 0) return List.filled(bandTotals.length, 0);
+    final raw = [
+      for (final b in bandTotals) b == 0 ? 0.0 : (b / total).clamp(0.008, 1.0),
+    ];
+    final sum = raw.fold(0.0, (a, b) => a + b);
+    return [for (final r in raw) r / sum];
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.k;
-    final total = bandTotals.fold(0, (a, b) => a + b);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(height),
-      child: SizedBox(
+    return TweenAnimationBuilder<List<double>>(
+      tween: _SharesTween(end: shares(bandTotals)),
+      duration: Motion.of(context, Motion.long),
+      curve: Motion.enter,
+      builder: (context, s, _) => SizedBox(
         height: height,
-        child: total == 0
-            ? ColoredBox(color: c.surface3)
-            : Row(
-                // Stretch, or childless ColoredBoxes collapse to zero height.
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (var i = 0; i < bandTotals.length; i++)
-                    if (bandTotals[i] > 0)
-                      Expanded(
-                        // Thin bands still show as a sliver.
-                        flex: (bandTotals[i] * 1000 ~/ total).clamp(8, 1000),
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 2),
-                          child: ColoredBox(color: c.ink(i)),
-                        ),
-                      ),
-                ],
-              ),
+        width: double.infinity,
+        child: CustomPaint(
+          painter: _RibbonPainter(
+            shares: s,
+            inks: [for (var i = 0; i < s.length; i++) c.ink(i)],
+            track: c.surface3,
+          ),
+        ),
       ),
     );
+  }
+}
+
+class _SharesTween extends Tween<List<double>> {
+  _SharesTween({super.end});
+
+  @override
+  List<double> lerp(double t) {
+    final a = begin!, b = end!;
+    if (a.length != b.length) return b;
+    return [for (var i = 0; i < b.length; i++) a[i] + (b[i] - a[i]) * t];
+  }
+}
+
+class _RibbonPainter extends CustomPainter {
+  _RibbonPainter({
+    required this.shares,
+    required this.inks,
+    required this.track,
+  });
+
+  final List<double> shares;
+  final List<Color> inks;
+  final Color track;
+
+  static const _gap = 2.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = Radius.circular(size.height);
+    canvas.clipRRect(RRect.fromRectAndRadius(Offset.zero & size, r));
+    final total = shares.fold(0.0, (a, b) => a + b);
+    if (total < 0.001) {
+      canvas.drawRect(Offset.zero & size, Paint()..color = track);
+      return;
+    }
+    var x = 0.0;
+    for (var i = 0; i < shares.length; i++) {
+      final w = size.width * shares[i] / total;
+      // The gap shrinks with the segment, so a band growing from nothing
+      // never pops in.
+      final drawn = w - (w < _gap * 2 ? w / 2 : _gap);
+      if (drawn > 0) {
+        canvas.drawRect(
+          Rect.fromLTWH(x, 0, drawn, size.height),
+          Paint()..color = inks[i],
+        );
+      }
+      x += w;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RibbonPainter old) =>
+      old.track != track ||
+      !_same(old.shares, shares) ||
+      !_same(old.inks, inks);
+
+  static bool _same<T>(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 }

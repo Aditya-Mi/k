@@ -84,7 +84,7 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
           Text(
             "k reads only your banks' alert mail, on this phone. "
             'Nothing leaves it.',
-            style: t.body.copyWith(color: c.text2, fontSize: 14),
+            style: t.body.copyWith(color: c.text2),
           ),
           const SizedBox(height: 16),
           _Option(
@@ -189,10 +189,7 @@ class _Option extends StatelessWidget {
                         children: [
                           Text(
                             title,
-                            style: t.body.copyWith(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: t.body.copyWith(fontWeight: FontWeight.w500),
                           ),
                           if (tag != null)
                             Container(
@@ -206,19 +203,13 @@ class _Option extends StatelessWidget {
                               ),
                               child: Text(
                                 tag!,
-                                style: t.label.copyWith(
-                                  fontSize: 11.5,
-                                  color: c.text2,
-                                ),
+                                style: t.label.copyWith(color: c.text2),
                               ),
                             ),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: t.meta.copyWith(fontSize: 13, height: 1.35),
-                      ),
+                      Text(subtitle, style: t.meta.copyWith(height: 1.35)),
                     ],
                   ),
                 ),
@@ -288,10 +279,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
     );
     Widget label(String s) => Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        s,
-        style: t.meta.copyWith(fontSize: 12.5, fontWeight: FontWeight.w500),
-      ),
+      child: Text(s, style: t.meta.copyWith(fontWeight: FontWeight.w500)),
     );
     return Scaffold(
       appBar: AppBar(
@@ -349,10 +337,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
               children: [
                 Text(
                   'Get one from Google',
-                  style: t.body.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: t.body.copyWith(fontWeight: FontWeight.w600),
                 ),
                 for (final (i, s) in const [
                   'Turn on 2-Step Verification for your Google account.',
@@ -365,15 +350,10 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
                     children: [
                       Text(
                         '${i + 1}',
-                        style: t.amountRow.copyWith(
-                          fontSize: 14,
-                          color: c.text3,
-                        ),
+                        style: t.amountRow.copyWith(color: c.text3),
                       ),
                       const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(s, style: t.meta.copyWith(fontSize: 13)),
-                      ),
+                      Expanded(child: Text(s, style: t.meta)),
                     ],
                   ),
                 ],

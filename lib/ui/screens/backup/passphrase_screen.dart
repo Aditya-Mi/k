@@ -127,10 +127,7 @@ class _PassphraseScreenState extends State<PassphraseScreen> {
               children: [
                 Text(
                   "Pick one you'll remember",
-                  style: t.body.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: t.body.copyWith(fontWeight: FontWeight.w600),
                 ),
                 for (final s in const [
                   'At least 4 words or 12 characters.',
@@ -143,9 +140,7 @@ class _PassphraseScreenState extends State<PassphraseScreen> {
                     children: [
                       Text('•', style: t.meta.copyWith(color: c.text3)),
                       const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(s, style: t.meta.copyWith(fontSize: 13)),
-                      ),
+                      Expanded(child: Text(s, style: t.meta)),
                     ],
                   ),
                 ],

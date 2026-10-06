@@ -84,13 +84,10 @@ class _BankPickerState extends State<_BankPicker> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.title, style: t.title.copyWith(fontSize: 18)),
+                    Text(widget.title, style: t.title),
                     if (widget.subtitle != null) ...[
                       const SizedBox(height: 4),
-                      Text(
-                        widget.subtitle!,
-                        style: t.meta.copyWith(fontSize: 13),
-                      ),
+                      Text(widget.subtitle!, style: t.meta),
                     ],
                   ],
                 ),
@@ -193,9 +190,6 @@ class BankListLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: EdgeInsets.fromLTRB(horizontal, 16, horizontal, 4),
-    child: Text(
-      text,
-      style: context.kt.label.copyWith(fontSize: 12.5, color: context.k.text2),
-    ),
+    child: Text(text, style: context.kt.label.copyWith(color: context.k.text2)),
   );
 }

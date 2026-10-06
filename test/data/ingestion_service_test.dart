@@ -210,7 +210,7 @@ void main() {
     final txn = await db.select(db.transactions).getSingle();
     final detail = await ledger.watchDetail(txn.id).first;
     expect(detail!.sources.single.sender, 'AX-AXISBK-T');
-    expect(detail.txn.account?.long, 'Axis Bank credit card ··5678');
+    expect(detail.txn.account?.long, 'Axis credit card ··5678');
   });
 
   group('CategoryResolver', () {

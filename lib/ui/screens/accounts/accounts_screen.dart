@@ -123,7 +123,7 @@ class AccountsScreen extends StatelessWidget {
             padding: const EdgeInsets.only(top: 20, bottom: 4),
             child: Text(
               text,
-              style: t.meta.copyWith(fontSize: 13, fontWeight: FontWeight.w600),
+              style: t.meta.copyWith(fontWeight: FontWeight.w600),
             ),
           );
           void open(AccountRowData r) => r.account.isCreditCard
@@ -141,7 +141,7 @@ class AccountsScreen extends StatelessWidget {
               Text('Total', style: t.meta),
               Text(
                 signedInr(total.totalMinor, paise: true),
-                style: t.amountHero.copyWith(fontSize: 34),
+                style: t.heroSecondary,
               ),
               if (total.owedMinor > 0)
                 Text(
@@ -441,7 +441,9 @@ class _AccountRow extends StatelessWidget {
     ),
   );
 
-  String _when(DateTime d) => '${dayMonth(d)}, ${hhmm(d)}';
+  // Date-only messages (NEFT credits) land at midnight: no "00:00".
+  String _when(DateTime d) =>
+      d.hour == 0 && d.minute == 0 ? dayMonth(d) : '${dayMonth(d)}, ${hhmm(d)}';
 }
 
 /// How much of a card's limit is used: text-coloured fill on surface-3

@@ -179,7 +179,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                     ? 'Messages naming ··${digits.isEmpty ? '1234' : digits} '
                           'land here.'
                     : 'Wallet messages land here.',
-                style: t.meta.copyWith(fontSize: 13, color: c.text2),
+                style: t.meta.copyWith(color: c.text2),
               ),
               const SizedBox(height: 24),
             ],
@@ -302,9 +302,6 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      text,
-      style: context.kt.label.copyWith(fontSize: 13, color: context.k.text2),
-    ),
+    child: Text(text, style: context.kt.label.copyWith(color: context.k.text2)),
   );
 }

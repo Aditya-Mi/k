@@ -23,6 +23,15 @@ class KText {
         height: 1.1,
         color: c.text,
       ),
+      heroSecondary = TextStyle(
+        fontFamily: _archivo,
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        fontVariations: _axes(700),
+        fontFeatures: _tnum,
+        height: 1.1,
+        color: c.text,
+      ),
       headline = TextStyle(
         fontFamily: _archivo,
         fontSize: 22,
@@ -68,6 +77,15 @@ class KText {
         height: 1.3,
         color: c.text2,
       ),
+      chartFigure = TextStyle(
+        fontFamily: _archivo,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        fontVariations: _axes(500),
+        fontFeatures: _tnum,
+        height: 1.3,
+        color: c.text2,
+      ),
       wordmark = TextStyle(
         fontFamily: _archivo,
         fontSize: 28,
@@ -77,6 +95,7 @@ class KText {
       );
 
   final TextStyle amountHero;
+  final TextStyle heroSecondary;
   final TextStyle headline;
   final TextStyle title;
   final TextStyle amountRow;
@@ -84,5 +103,6 @@ class KText {
   final TextStyle meta;
   final TextStyle dayHeader;
   final TextStyle label;
+  final TextStyle chartFigure;
   final TextStyle wordmark;
 }

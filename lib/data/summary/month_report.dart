@@ -81,7 +81,7 @@ class MonthReport extends Equatable {
   final int inMinor;
   final int spends;
 
-  static const topPayees = 5;
+  static const topPayees = 10;
   static const trendMonths = 6;
 
   /// Average of the complete months in the trend that had any spend.

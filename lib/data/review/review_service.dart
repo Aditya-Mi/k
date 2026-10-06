@@ -34,10 +34,12 @@ class ReviewItem {
   /// Short reason shown on the queue card.
   String get reason {
     if (unknownSender) return 'New sender · reads like a payment';
-    if (guess.missing.contains('template')) return 'No format matched';
-    if (guess.fields.amountMinor == null) return 'Amount missing';
-    if (guess.fields.direction == null) return 'Debit or credit unclear';
-    if (guess.fields.last4 == null) return 'Account missing';
+    if (guess.missing.contains('template')) {
+      return "k couldn't read this message";
+    }
+    if (guess.fields.amountMinor == null) return 'Amount not found';
+    if (guess.fields.direction == null) return 'Paid or received unclear';
+    if (guess.fields.last4 == null) return 'Account not found';
     return 'Needs a look';
   }
 }

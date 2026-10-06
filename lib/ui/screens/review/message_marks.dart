@@ -27,7 +27,7 @@ class MessageMarks extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.kt;
     final c = context.k;
-    final style = t.body.copyWith(fontSize: 17, height: 1.3);
+    final style = t.body.copyWith(height: 1.3);
     final children = <Widget>[];
 
     Widget word(int s, int e) => GestureDetector(
@@ -121,7 +121,6 @@ class _Mark extends StatelessWidget {
               child: Text(
                 mark.field.caption,
                 style: context.kt.label.copyWith(
-                  fontSize: 10.5,
                   letterSpacing: 1.4,
                   fontWeight: FontWeight.w600,
                   color: minor == null ? c.text3 : accent,

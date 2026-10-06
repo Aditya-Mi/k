@@ -97,7 +97,6 @@ class EmailSettings extends StatelessWidget {
                   Text(
                     a.error ?? '${_method(a)} · ${_checked(a)}',
                     style: t.meta.copyWith(
-                      fontSize: 13,
                       color: a.error == null ? null : c.alert,
                     ),
                   ),

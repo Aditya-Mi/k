@@ -120,7 +120,6 @@ class PriceUpBadge extends StatelessWidget {
           Text(
             'Price up, was ${inr(was)}',
             style: context.kt.label.copyWith(
-              fontSize: 11.5,
               fontWeight: FontWeight.w600,
               color: c.alert,
             ),
@@ -146,7 +145,7 @@ class UnusedTag extends StatelessWidget {
       ),
       child: Text(
         'Marked unused',
-        style: context.kt.label.copyWith(fontSize: 11.5, color: c.text2),
+        style: context.kt.label.copyWith(color: c.text2),
       ),
     );
   }

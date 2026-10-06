@@ -47,7 +47,7 @@ class CardScreen extends StatelessWidget {
               icon: const Icon(Icons.arrow_back_rounded),
               onPressed: () => Navigator.pop(context),
             ),
-            title: Text(a.nickname ?? a.short),
+            title: Text(a.long),
             actions: [
               IconButton(
                 tooltip: 'More',
@@ -74,7 +74,7 @@ class CardScreen extends StatelessWidget {
                       children: [
                         Text(
                           owed == null ? 'Available limit' : 'You owe',
-                          style: t.meta.copyWith(fontSize: 13),
+                          style: t.meta,
                         ),
                         const SizedBox(height: 6),
                         Text(
@@ -146,7 +146,11 @@ class CardScreen extends StatelessWidget {
                     ),
                   ),
                   for (final x in txns.take(30))
-                    TxnRow(txn: x, onTap: () => _open(context, x.id)),
+                    TxnRow(
+                      txn: x,
+                      onCard: true,
+                      onTap: () => _open(context, x.id),
+                    ),
                 ],
               );
             },

@@ -264,10 +264,7 @@ class _Header extends StatelessWidget {
                           style: t.body.copyWith(fontWeight: FontWeight.w500),
                         ),
                       ),
-                      Text(
-                        dueIn(next, DateTime.now()),
-                        style: t.meta.copyWith(fontSize: 13),
-                      ),
+                      Text(dueIn(next, DateTime.now()), style: t.meta),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -410,7 +407,7 @@ class _Charges extends StatelessWidget {
             Text(
               '${rows.length} ${rows.length == 1 ? 'payment' : 'payments'} '
               'matched',
-              style: t.meta.copyWith(fontSize: 13),
+              style: t.meta,
             ),
             const SizedBox(height: 4),
             for (final r in rows)

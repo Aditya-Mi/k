@@ -7,11 +7,13 @@ import '../../data/emis/emi_service.dart';
 import '../../data/repositories/ledger_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../di.dart';
+import '../motion.dart';
 import '../theme/k_theme.dart';
 import 'accounts/accounts_screen.dart';
 import 'review/review_queue_screen.dart';
 import 'subscriptions/subscriptions_screen.dart';
 import 'summary/summary_screen.dart';
+import 'transactions/add_payment_screen.dart';
 import 'transactions/transactions_cubit.dart';
 import 'transactions/transactions_screen.dart';
 
@@ -48,7 +50,7 @@ class _HomeShellState extends State<HomeShell> {
       child: Scaffold(
         body: SafeArea(
           bottom: false,
-          child: IndexedStack(
+          child: FadeThroughStack(
             index: _tab,
             children: [
               TransactionsScreen(
@@ -62,6 +64,8 @@ class _HomeShellState extends State<HomeShell> {
             ],
           ),
         ),
+        // Add payment in thumb reach, Transactions only (DESIGN.md FAB).
+        floatingActionButton: _tab == 0 ? const _AddFab() : null,
         bottomNavigationBar:
             BlocSelector<TransactionsCubit, TransactionsState, int>(
               selector: (s) => s.reviewCount,
@@ -97,6 +101,33 @@ class _HomeShellState extends State<HomeShell> {
                 ],
               ),
             ),
+      ),
+    );
+  }
+}
+
+class _AddFab extends StatelessWidget {
+  const _AddFab();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.k;
+    return FloatingActionButton.extended(
+      tooltip: 'Add payment',
+      elevation: 0,
+      focusElevation: 0,
+      hoverElevation: 0,
+      highlightElevation: 0,
+      backgroundColor: c.text,
+      foregroundColor: c.onInk,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      icon: const Icon(Icons.add_rounded),
+      label: Text('Add', style: context.kt.title.copyWith(color: c.onInk)),
+      onPressed: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (_) => const AddPaymentScreen(),
+        ),
       ),
     );
   }

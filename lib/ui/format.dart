@@ -64,3 +64,11 @@ String dayLabel(DateTime day, DateTime now) {
     _ => day.year == now.year ? base : '$base ${day.year}',
   };
 }
+
+/// Oldest to newest: "3–5 Oct", "28 Sep – 5 Oct", "5 Oct" for one day.
+String daySpan(DateTime from, DateTime to) {
+  if (from.year == to.year && from.month == to.month) {
+    return from.day == to.day ? dayMonth(to) : '${from.day}–${dayMonth(to)}';
+  }
+  return '${dayMonth(from)} – ${dayMonth(to)}';
+}

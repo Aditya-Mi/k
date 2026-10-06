@@ -8,6 +8,7 @@ import '../../../data/summary/month_report.dart';
 import '../../../data/emis/emi_service.dart';
 import '../../../di.dart';
 import '../../format.dart';
+import '../../motion.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/month_note_panel.dart';
@@ -156,29 +157,43 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     ] else ...[
                       const SizedBox(height: 28),
                       _Section(
-                        title: 'Day by day',
-                        meta: _bigDays(r),
-                        child: _Calendar(
-                          report: r,
-                          onDay: (day) => _openDay(context, day, txns),
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      _Section(
                         title: 'Where it went',
                         child: _Categories(report: r),
                       ),
                       const SizedBox(height: 28),
                       _Section(
-                        title: 'Top payees',
-                        meta:
-                            '${r.payeeCount} ${r.payeeCount == 1 ? 'payee' : 'payees'}',
-                        child: _Payees(report: r),
+                        title: 'Day by day',
+                        meta: _bigDays(r),
+                        // A new month's days fade in over the old ones.
+                        child: AnimatedSize(
+                          duration: Motion.of(context, Motion.medium),
+                          curve: Motion.standard,
+                          alignment: Alignment.topCenter,
+                          child: AnimatedSwitcher(
+                            duration: Motion.of(context, Motion.medium),
+                            switchInCurve: Motion.enter,
+                            switchOutCurve: Motion.exit,
+                            layoutBuilder: (top, previous) => Stack(
+                              alignment: Alignment.topCenter,
+                              children: [...previous, ?top],
+                            ),
+                            child: _Calendar(
+                              key: ValueKey(r.month),
+                              report: r,
+                              onDay: (day) => _openDay(context, day, txns),
+                            ),
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 28),
-                      _Section(
-                        title: 'By spend size',
-                        child: _SpendSizes(report: r),
+                      const SizedBox(height: 20),
+                      _DrillRow(
+                        label: 'Top payees',
+                        open: () => _push(context, _PayeesScreen(report: r)),
+                      ),
+                      _DrillRow(
+                        label: 'By spend size',
+                        open: () =>
+                            _push(context, _SpendSizesScreen(report: r)),
                       ),
                     ],
                   ],
@@ -190,6 +205,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
       ],
     );
   }
+
+  void _push(BuildContext context, Widget screen) =>
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => screen));
 
   String? _bigDays(MonthReport r) {
     final n = r.dayTotals.where((d) => d >= Bands.lowerMinor.last).length;
@@ -279,6 +298,87 @@ class _AccountsTotal extends StatelessWidget {
   }
 }
 
+/// "Top payees · See all ›" (design 05): opens the full list.
+class _DrillRow extends StatelessWidget {
+  const _DrillRow({required this.label, required this.open});
+
+  final String label;
+  final VoidCallback open;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.k;
+    return FieldRow(
+      label: label,
+      onTap: open,
+      value: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('See all', style: context.kt.body.copyWith(color: c.text2)),
+          Icon(Icons.chevron_right_rounded, color: c.text2),
+        ],
+      ),
+    );
+  }
+}
+
+/// Back arrow, title, then [children] (designs 05b, 05c).
+class _ListScreen extends StatelessWidget {
+  const _ListScreen({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      leading: IconButton(
+        tooltip: 'Back',
+        icon: const Icon(Icons.arrow_back_rounded),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: Text(title),
+    ),
+    body: ListView(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      children: children,
+    ),
+  );
+}
+
+/// Design 05b: the month's payees, biggest first.
+class _PayeesScreen extends StatelessWidget {
+  const _PayeesScreen({required this.report});
+
+  final MonthReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    final n = report.payeeCount;
+    return _ListScreen(
+      title: 'Top payees',
+      children: [
+        Text('$n ${n == 1 ? 'payee' : 'payees'}', style: context.kt.meta),
+        const SizedBox(height: 4),
+        _Payees(report: report),
+      ],
+    );
+  }
+}
+
+/// Design 05c: spend per band, with the small-vs-big line.
+class _SpendSizesScreen extends StatelessWidget {
+  const _SpendSizesScreen({required this.report});
+
+  final MonthReport report;
+
+  @override
+  Widget build(BuildContext context) => _ListScreen(
+    title: 'By spend size',
+    children: [_SpendSizes(report: report)],
+  );
+}
+
 class _Section extends StatelessWidget {
   const _Section({required this.title, required this.child, this.meta});
 
@@ -355,11 +455,7 @@ class _TrendChart extends StatelessWidget {
                             Text(
                               m.spentMinor == 0 ? '–' : _short(m.spentMinor),
                               maxLines: 1,
-                              style: t.meta.copyWith(
-                                fontFamily: t.amountRow.fontFamily,
-                                fontVariations: t.amountRow.fontVariations,
-                                fontFeatures: t.amountRow.fontFeatures,
-                                fontSize: 11.5,
+                              style: t.chartFigure.copyWith(
                                 fontWeight: last
                                     ? FontWeight.w600
                                     : FontWeight.w500,
@@ -368,7 +464,9 @@ class _TrendChart extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Container(
+                          AnimatedContainer(
+                            duration: Motion.of(context, Motion.medium),
+                            curve: Motion.enter,
                             width: 30,
                             height: h < 2 ? 2 : h,
                             decoration: BoxDecoration(
@@ -391,8 +489,7 @@ class _TrendChart extends StatelessWidget {
                               '${DateFormat('MMM').format(m.month)}'
                               '${open ? ' so far' : ''}',
                               maxLines: 1,
-                              style: t.meta.copyWith(
-                                fontSize: 12,
+                              style: t.label.copyWith(
                                 fontWeight: last
                                     ? FontWeight.w600
                                     : FontWeight.w400,
@@ -431,7 +528,7 @@ class _TrendChart extends StatelessWidget {
 
 /// The month as rows of note-shaped days, each in the ink of its spend.
 class _Calendar extends StatelessWidget {
-  const _Calendar({required this.report, required this.onDay});
+  const _Calendar({super.key, required this.report, required this.onDay});
 
   final MonthReport report;
   final ValueChanged<int> onDay;
@@ -462,11 +559,7 @@ class _Calendar extends StatelessWidget {
           : null;
       final label = Text(
         '$day',
-        style: t.meta.copyWith(
-          fontFamily: t.amountRow.fontFamily,
-          fontVariations: t.amountRow.fontVariations,
-          fontFeatures: t.amountRow.fontFeatures,
-          fontSize: 11.5,
+        style: t.chartFigure.copyWith(
           fontWeight: FontWeight.w600,
           color: spent > 0 && !future ? c.onInk : c.text3,
         ),
@@ -519,7 +612,7 @@ class _Calendar extends StatelessWidget {
                 child: Text(
                   w,
                   textAlign: TextAlign.center,
-                  style: t.label.copyWith(fontSize: 11.5, color: c.text3),
+                  style: t.label.copyWith(color: c.text3),
                 ),
               ),
             ],
@@ -548,7 +641,13 @@ class _Calendar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text('small', style: t.meta.copyWith(fontSize: 11, color: c.text3)),
+            Text(
+              'small',
+              style: t.label.copyWith(
+                fontWeight: FontWeight.w400,
+                color: c.text3,
+              ),
+            ),
             const SizedBox(width: 4),
             for (var b = 0; b < Bands.count; b++)
               Container(
@@ -561,7 +660,13 @@ class _Calendar extends StatelessWidget {
                 ),
               ),
             const SizedBox(width: 1),
-            Text('big', style: t.meta.copyWith(fontSize: 11, color: c.text3)),
+            Text(
+              'big',
+              style: t.label.copyWith(
+                fontWeight: FontWeight.w400,
+                color: c.text3,
+              ),
+            ),
           ],
         ),
       ],
@@ -591,10 +696,7 @@ class _Categories extends StatelessWidget {
               Expanded(
                 child: Text(
                   s.category?.name ?? 'Uncategorized',
-                  style: t.body.copyWith(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: t.body.copyWith(fontWeight: FontWeight.w500),
                 ),
               ),
               Text(
@@ -602,10 +704,7 @@ class _Categories extends StatelessWidget {
                 style: t.meta.copyWith(color: c.text3),
               ),
               const SizedBox(width: 10),
-              Text(
-                inr(s.spentMinor),
-                style: t.amountRow.copyWith(fontSize: 14.5),
-              ),
+              Text(inr(s.spentMinor), style: t.amountRow),
             ],
           ),
           const SizedBox(height: 6),
@@ -613,8 +712,12 @@ class _Categories extends StatelessWidget {
             padding: const EdgeInsets.only(left: 30),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: FractionallySizedBox(
-                widthFactor: (s.spentMinor / max).clamp(0.02, 1.0),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(end: (s.spentMinor / max).clamp(0.02, 1.0)),
+                duration: Motion.of(context, Motion.medium),
+                curve: Motion.enter,
+                builder: (context, w, bar) =>
+                    FractionallySizedBox(widthFactor: w, child: bar),
                 child: Container(
                   height: 6,
                   decoration: BoxDecoration(
@@ -701,14 +804,14 @@ class _SpendSizes extends StatelessWidget {
     final smallTotal = r.spentMinor - r.bandTotals[bigIndex];
     final caption = bigCount == 0 || smallCount == 0
         ? null
-        : '$smallCount small ${smallCount == 1 ? 'spend' : 'spends'} under '
-              '₹2,000 add up to ${smallTotal < r.bandTotals[bigIndex] ? 'less' : 'more'} '
+        : '$smallCount small ${smallCount == 1 ? 'spend' : 'spends'} add up '
+              'to ${smallTotal < r.bandTotals[bigIndex] ? 'less' : 'more'} '
               'than the $bigCount big ${bigCount == 1 ? 'one' : 'ones'}.';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (caption != null) ...[
-          Text(caption, style: t.body.copyWith(fontSize: 13.5, color: c.text2)),
+          Text(caption, style: t.meta),
           const SizedBox(height: 10),
         ],
         for (var b = 0; b < Bands.count; b++)
@@ -725,14 +828,11 @@ class _SpendSizes extends StatelessWidget {
                       children: [
                         FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text(
-                            Bands.rowLabels[b],
-                            style: t.amountRow.copyWith(fontSize: 13.5),
-                          ),
+                          child: Text(Bands.rowLabels[b], style: t.amountRow),
                         ),
                         Text(
                           '${r.bandCounts[b]} ${r.bandCounts[b] == 1 ? 'spend' : 'spends'}',
-                          style: t.meta.copyWith(fontSize: 12),
+                          style: t.meta,
                         ),
                       ],
                     ),
@@ -762,10 +862,7 @@ class _SpendSizes extends StatelessWidget {
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerRight,
-                      child: Text(
-                        inr(r.bandTotals[b]),
-                        style: t.amountRow.copyWith(fontSize: 14.5),
-                      ),
+                      child: Text(inr(r.bandTotals[b]), style: t.amountRow),
                     ),
                   ),
                 ],

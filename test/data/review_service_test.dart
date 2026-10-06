@@ -62,7 +62,7 @@ void main() {
       ),
     );
     final item = (await review.watchQueue().first).single;
-    expect(item.reason, 'No format matched');
+    expect(item.reason, "k couldn't read this message");
     final marks = prefillMarks(item.text, item.guess.fields);
     String? v(MarkField f) =>
         marks.where((m) => m.field == f).firstOrNull?.valueIn(item.text);

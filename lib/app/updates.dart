@@ -208,20 +208,20 @@ class _UpdateDialogState extends State<_UpdateDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (m.notes.trim().isNotEmpty) ...[
-              Text(m.notes.trim(), style: t.body.copyWith(fontSize: 14.5)),
+              Text(m.notes.trim(), style: t.body),
               const SizedBox(height: 12),
             ],
             Text(
               '${_installed == null ? '' : 'You have $_installed. '}'
               'Your payments and settings stay.'
               '$mb${widget.check.required ? ' This version is required.' : ''}',
-              style: t.meta.copyWith(fontSize: 13, color: c.text2),
+              style: t.meta.copyWith(color: c.text2),
             ),
             if (_backup == _Backup.off && !busy) ...[
               const SizedBox(height: 12),
               Text(
                 "Backup is off, so there's no copy to go back to.",
-                style: t.meta.copyWith(fontSize: 13, color: c.text2),
+                style: t.meta.copyWith(color: c.text2),
               ),
               // In the content, not the actions: three actions don't fit
               // one row on a phone-width dialog.

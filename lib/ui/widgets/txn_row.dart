@@ -7,21 +7,47 @@ import 'note_chip.dart';
 
 /// Chip · payee over meta · amount. Columns never move between row states.
 class TxnRow extends StatelessWidget {
-  const TxnRow({super.key, required this.txn, this.onTap, this.title});
+  const TxnRow({
+    super.key,
+    required this.txn,
+    this.onTap,
+    this.onLongPress,
+    this.title,
+    this.onCard = false,
+  });
 
   final TxnView txn;
   final VoidCallback? onTap;
 
+  /// Quick actions sheet (Transactions, design 01d).
+  final VoidCallback? onLongPress;
+
   /// Replaces the payee (a subscription's charges list shows the date).
   final String? title;
 
+  /// Card screen (design 12b): no day headers, so rows carry the date, and
+  /// the bill reads "Bill payment · Axis ··1234 · 2 Oct · not spent".
+  final bool onCard;
+
   @override
   Widget build(BuildContext context) {
-    final meta = txn.isTransfer
+    final cardBill = onCard && txn.isCardBill;
+    final when = onCard
+        ? '${dayMonth(txn.occurredAt)}, ${hhmm(txn.occurredAt)}'
+        : hhmm(txn.occurredAt);
+    final meta = cardBill
+        ? [
+            txn.isDebit
+                ? txn.account?.short
+                : txn.partnerAccount?.short ?? 'From your bank',
+            dayMonth(txn.occurredAt),
+            'not spent',
+          ].nonNulls.join(' · ')
+        : txn.isTransfer
         ? [
             txn.transferRoute,
             if (txn.addedByUser) 'added by you',
-            hhmm(txn.occurredAt),
+            when,
           ].join(' · ')
         : [
             if (txn.isRefund)
@@ -30,18 +56,21 @@ class TxnRow extends StatelessWidget {
               txn.category?.name ?? 'Uncategorized',
             if (txn.emi != null)
               txn.emi!.isPurchase ? 'EMI ×${txn.emi!.count}' : 'EMI',
-            if (txn.account != null) txn.account!.short,
-            hhmm(txn.occurredAt),
+            if (txn.account != null && !onCard) txn.account!.short,
+            when,
           ].join(' · ');
     final title =
         this.title ??
-        (txn.isCardBill
+        (cardBill
+            ? 'Bill payment'
+            : txn.isCardBill
             ? 'Card bill payment'
             : txn.isTransfer
             ? 'Self transfer'
             : txn.payee);
     return _RowShell(
       onTap: onTap,
+      onLongPress: onLongPress,
       chip: NoteChip(
         amountMinor: txn.amountMinor,
         style: txn.isDebit ? NoteChipStyle.filled : NoteChipStyle.outlined,
@@ -49,7 +78,7 @@ class TxnRow extends StatelessWidget {
       title: title,
       meta: meta,
       trailing: [
-        if (txn.isTransfer)
+        if (txn.isTransfer && !cardBill)
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Tooltip(
@@ -119,9 +148,10 @@ class UpcomingRow extends StatelessWidget {
     return _RowShell(
       chip: NoteChip(
         amountMinor: charge.amountMinor,
-        style: NoteChipStyle.pending,
+        style: NoteChipStyle.upcoming,
       ),
       title: charge.name,
+      titleColor: context.k.text2,
       meta: meta,
       trailing: [
         Text(
@@ -142,7 +172,9 @@ class _RowShell extends StatelessWidget {
     required this.meta,
     required this.trailing,
     required this.semantics,
+    this.titleColor,
     this.onTap,
+    this.onLongPress,
   });
 
   final Widget chip;
@@ -150,6 +182,10 @@ class _RowShell extends StatelessWidget {
   final String meta;
   final List<Widget> trailing;
   final String semantics;
+
+  /// text-2 for an upcoming row (not paid yet).
+  final Color? titleColor;
+  final VoidCallback? onLongPress;
   final VoidCallback? onTap;
 
   @override
@@ -161,6 +197,7 @@ class _RowShell extends StatelessWidget {
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
@@ -173,7 +210,9 @@ class _RowShell extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: t.body,
+                      style: titleColor == null
+                          ? t.body
+                          : t.body.copyWith(color: titleColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

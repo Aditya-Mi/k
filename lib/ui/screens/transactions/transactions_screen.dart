@@ -11,6 +11,7 @@ import '../../../data/email/email_sync.dart';
 
 import '../../../data/repositories/ledger_models.dart';
 import '../../format.dart';
+import '../../motion.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/month_note_panel.dart';
@@ -19,7 +20,6 @@ import '../../../di.dart';
 import '../settings/connect_inbox_screen.dart';
 import '../settings/settings_screen.dart';
 import '../txn_detail/txn_detail_screen.dart';
-import 'add_payment_screen.dart';
 import 'transactions_cubit.dart';
 
 class TransactionsScreen extends StatefulWidget {
@@ -41,6 +41,38 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   bool _searching = false;
   Timer? _debounce;
   final _inboxes = getIt<EmailSync>().watch();
+
+  // Live arrivals (DESIGN.md Motion): rows that appear while the list shows
+  // the same filter. A filter change, first load or bulk import marks none.
+  final _seen = <String>{};
+  TxnFilter? _seenFilter;
+  final _arrived = <String, DateTime>{};
+
+  void _noteArrivals(TransactionsState s) {
+    if (!s.loaded) return;
+    final ids = {for (final t in s.txns) t.id};
+    if (s.filter != _seenFilter) {
+      _seenFilter = s.filter;
+      _seen
+        ..clear()
+        ..addAll(ids);
+      return;
+    }
+    final now = DateTime.now();
+    final fresh = [
+      for (final t in s.txns)
+        if (!_seen.contains(t.id) &&
+            now.difference(t.occurredAt) < const Duration(days: 2))
+          t.id,
+    ];
+    if (fresh.length <= 3) {
+      for (final id in fresh) {
+        _arrived[id] = now;
+      }
+    }
+    _seen.addAll(ids);
+    _arrived.removeWhere((_, at) => now.difference(at) > Arrival.window);
+  }
 
   /// Banner "Turn on": the system prompt, or app settings once Android stops
   /// asking. The controller re-checks when k comes back to the front.
@@ -90,6 +122,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     return BlocBuilder<TransactionsCubit, TransactionsState>(
       builder: (context, s) {
         final cubit = context.read<TransactionsCubit>();
+        _noteArrivals(s);
         final showUpcoming =
             s.isCurrentMonth && !s.narrowed && s.upcoming.isNotEmpty;
         return CustomScrollView(
@@ -111,17 +144,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     )
                   : Text('k', style: t.wordmark),
               actions: [
-                if (!_searching)
-                  IconButton(
-                    tooltip: 'Add payment',
-                    icon: const Icon(Icons.add_rounded),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        fullscreenDialog: true,
-                        builder: (_) => const AddPaymentScreen(),
-                      ),
-                    ),
-                  ),
                 if (_searching)
                   IconButton(
                     tooltip: 'Close search',
@@ -221,8 +243,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               delegate: _SectionHead(
                 span: s.txns.isEmpty
                     ? null
-                    : '${dayMonth(s.txns.first.occurredAt)} — '
-                          '${dayMonth(s.txns.last.occurredAt)}',
+                    : daySpan(s.txns.last.occurredAt, s.txns.first.occurredAt),
                 background: c.bg,
                 style: t.title,
                 spanStyle: t.meta,
@@ -250,7 +271,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               )
             else
               ..._dayGroups(context, s.txns),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            // The last row clears the Add FAB.
+            const SliverToBoxAdapter(child: SizedBox(height: 88)),
           ],
         );
       },
@@ -273,12 +295,17 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ),
         SliverList.builder(
           itemCount: rows.length,
-          itemBuilder: (context, i) => TxnRow(
-            txn: rows[i],
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => TxnDetailScreen(txnId: rows[i].id),
+          itemBuilder: (context, i) => Arrival(
+            key: ValueKey(rows[i].id),
+            arrivedAt: _arrived[rows[i].id],
+            child: TxnRow(
+              txn: rows[i],
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => TxnDetailScreen(txnId: rows[i].id),
+                ),
               ),
+              onLongPress: () => showTxnQuickActions(context, rows[i]),
             ),
           ),
         ),
@@ -319,7 +346,8 @@ class _SectionHead extends SliverPersistentHeaderDelegate {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
         child: Row(
           children: [
-            Expanded(child: Text('Transactions', style: style)),
+            // Only the span in view, ascending (DESIGN.md Layout); the
+            // panel above already counts the payments.
             if (span != null) Text(span!, style: spanStyle),
           ],
         ),

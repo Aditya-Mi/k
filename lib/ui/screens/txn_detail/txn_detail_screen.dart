@@ -11,6 +11,7 @@ import '../../../data/repositories/ledger_models.dart';
 import '../../../data/ingest/transfer_linker.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../di.dart';
+import '../../widgets/txn_row.dart';
 import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
@@ -230,17 +231,18 @@ class _Loaded extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${txn.isDebit ? 'Debit' : 'Credit'} · '
-                      '${fullStamp(txn.occurredAt)} · '
-                      '${txn.isTransfer
-                          ? 'not counted as spent'
-                          : txn.isCash
-                          ? 'from cash, counted at the ATM'
-                          : txn.isRefund
-                          ? 'refund, lowers spent'
-                          : txn.emi?.isPurchase == true && txn.emi!.spread
-                          ? 'spread over ${txn.emi!.count} EMIs'
-                          : '${Bands.ranges[band]} range'}',
+                      [
+                        txn.isDebit ? 'Debit' : 'Credit',
+                        fullStamp(txn.occurredAt),
+                        if (txn.isTransfer)
+                          'not counted as spent'
+                        else if (txn.isCash)
+                          'from cash, counted at the ATM'
+                        else if (txn.isRefund)
+                          'refund, lowers spent'
+                        else if (txn.emi?.isPurchase == true && txn.emi!.spread)
+                          'spread over ${txn.emi!.count} EMIs',
+                      ].join(' · '),
                       style: t.body.copyWith(color: c.text2),
                     ),
                     const SizedBox(height: 24),
@@ -344,7 +346,7 @@ class _Loaded extends StatelessWidget {
                           : sources.length > 1
                           ? 'Came from ${sources.length} bank messages'
                           : 'Came from this bank message',
-                      style: t.title.copyWith(fontSize: 18),
+                      style: t.title,
                     ),
                     if (txn.addedByUser) ...[
                       const SizedBox(height: 4),
@@ -433,7 +435,10 @@ class _Loaded extends StatelessWidget {
                           onPressed: () =>
                               _remove(context, cubit, notATransaction: true),
                         ),
-                        OutlinedButton.icon(
+                        // Quieter than Not a transaction: deleting is
+                        // rarely the right fix.
+                        TextButton.icon(
+                          style: TextButton.styleFrom(foregroundColor: c.alert),
                           icon: const Icon(
                             Icons.delete_outline_rounded,
                             size: 20,
@@ -668,6 +673,7 @@ class _Loaded extends StatelessWidget {
     BuildContext context,
     TxnDetailCubit cubit, {
     required bool notATransaction,
+    bool popAfter = true,
   }) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -694,7 +700,109 @@ class _Loaded extends StatelessWidget {
     );
     if (ok != true) return;
     await cubit.remove(notATransaction: notATransaction);
-    if (context.mounted) Navigator.pop(context);
+    if (popAfter && context.mounted) Navigator.pop(context);
+  }
+}
+
+enum _Quick { category, notATransaction, selfTransfer, open }
+
+/// Long-press on a Transactions row (design 01d): the fixes you make most,
+/// without opening the payment. Reuses the detail screen's own flows.
+Future<void> showTxnQuickActions(BuildContext context, TxnView txn) async {
+  final cubit = TxnDetailCubit(
+    getIt<LedgerRepository>(),
+    getIt<TransferLinker>(),
+    txn.id,
+  );
+  try {
+    final s = await cubit.stream
+        .firstWhere((s) => s.loaded && s.categories.isNotEmpty)
+        .timeout(const Duration(seconds: 3));
+    final detail = s.detail;
+    if (detail == null || !context.mounted) return;
+    final helpers = _Loaded(detail: detail, categories: s.categories);
+    final row = detail.txn;
+    final canTransfer = !row.isTransfer && !row.isCash;
+    final action = await showModalBottomSheet<_Quick>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        final c = context.k;
+        Widget tile(_Quick q, IconData icon, String label, {Widget? end}) =>
+            ListTile(
+              minTileHeight: 56,
+              leading: Icon(icon, color: c.text2),
+              title: Text(label),
+              trailing: end,
+              onTap: () => Navigator.pop(context, q),
+            );
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TxnRow(txn: row),
+              Divider(height: 1, color: c.outline),
+              tile(
+                _Quick.category,
+                Icons.label_outline_rounded,
+                'Category',
+                end: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      row.category?.name ?? 'Uncategorized',
+                      style: context.kt.body.copyWith(color: c.text2),
+                    ),
+                    Icon(Icons.chevron_right_rounded, color: c.text2),
+                  ],
+                ),
+              ),
+              tile(
+                _Quick.notATransaction,
+                Icons.block_rounded,
+                'Not a transaction',
+              ),
+              if (canTransfer)
+                tile(
+                  _Quick.selfTransfer,
+                  Icons.swap_horiz_rounded,
+                  'Mark as self transfer',
+                ),
+              tile(_Quick.open, Icons.open_in_full_rounded, 'Open details'),
+            ],
+          ),
+        );
+      },
+    );
+    if (action == null || !context.mounted) return;
+    switch (action) {
+      case _Quick.category:
+        await helpers._pickCategory(context, cubit, row);
+      case _Quick.notATransaction:
+        await helpers._remove(
+          context,
+          cubit,
+          notATransaction: true,
+          popAfter: false,
+        );
+      case _Quick.selfTransfer:
+        await helpers._markTransfer(context, cubit, row);
+      case _Quick.open:
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => TxnDetailScreen(txnId: txn.id),
+          ),
+        );
+    }
+  } on TimeoutException {
+    // Couldn't load the payment: fall back to the full screen.
+    if (context.mounted) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => TxnDetailScreen(txnId: txn.id)),
+      );
+    }
+  } finally {
+    await cubit.close();
   }
 }
 

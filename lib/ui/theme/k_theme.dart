@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../motion.dart';
 import 'k_colors.dart';
 import 'k_text.dart';
 
@@ -56,6 +57,10 @@ ThemeData buildTheme(Brightness brightness) {
     dividerColor: c.outline,
     extensions: [c],
     splashFactory: InkSparkle.splashFactory,
+    // One page transition app-wide, with Android predictive back.
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {TargetPlatform.android: KPageTransitionsBuilder()},
+    ),
     textTheme: TextTheme(
       headlineSmall: t.headline,
       titleMedium: t.title,

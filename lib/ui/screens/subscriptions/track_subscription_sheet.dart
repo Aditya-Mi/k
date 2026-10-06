@@ -71,7 +71,7 @@ class _TrackSheetState extends State<_TrackSheet> {
                       const SizedBox(height: 2),
                       Text(
                         '${txn.payee} · ${inr(txn.amountMinor)}$account',
-                        style: t.meta.copyWith(fontSize: 13),
+                        style: t.meta,
                       ),
                     ],
                   ),
