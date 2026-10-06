@@ -4,6 +4,7 @@ import '../../../app/updates.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../../data/email/email_sync.dart';
 import '../../../data/ingest/sms_sync.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
@@ -188,6 +189,7 @@ class _SyncSection extends StatefulWidget {
 
 class _SyncSectionState extends State<_SyncSection> {
   final _settings = getIt<SettingsRepository>();
+  final _inboxes = getIt<EmailSync>().watch();
   PermissionStatus? _sms;
   PermissionStatus? _battery;
   bool _checking = false;
@@ -249,6 +251,16 @@ class _SyncSectionState extends State<_SyncSection> {
     if (day == null || !mounted) return;
     await _run(() => getIt<SmsSync>().importHistory(day));
   }
+
+  Future<void> _importOlderEmail() async {
+    final day = await pickImportStart(context);
+    if (day == null || !mounted) return;
+    await _run(() => getIt<EmailSync>().importSince(day));
+  }
+
+  static String _when(DateTime d) => dateOnly(d) == dateOnly(DateTime.now())
+      ? hhmm(d)
+      : '${dayMonth(d)}, ${hhmm(d)}';
 
   Future<void> _pickWindow(int current) async {
     final picked = await showModalBottomSheet<int>(
@@ -349,10 +361,35 @@ class _SyncSectionState extends State<_SyncSection> {
           onTap: _checking || !smsOk ? null : _importOlder,
           trailing: const SettingsChevron(),
         ),
-        const SettingsItem(
-          icon: Icons.schedule_rounded,
-          title: 'Check email',
-          subtitle: 'Hourly and when k opens',
+        StreamBuilder<List<EmailAccountView>>(
+          stream: _inboxes,
+          builder: (context, inboxes) {
+            if (inboxes.data?.isEmpty ?? true) return const SizedBox.shrink();
+            return Column(
+              children: [
+                // The hourly worker's own stamp: app-open syncs would make
+                // "last checked" always look fresh.
+                StreamBuilder<DateTime?>(
+                  stream: _settings.watchDate(EmailSync.backgroundAtKey),
+                  builder: (context, at) => SettingsItem(
+                    icon: Icons.schedule_rounded,
+                    title: 'Check email',
+                    subtitle: at.data == null
+                        ? 'Hourly · no background check yet'
+                        : 'Hourly · last background check '
+                              '${_when(at.data!)}',
+                  ),
+                ),
+                SettingsItem(
+                  icon: Icons.history_rounded,
+                  title: 'Read past email',
+                  subtitle: 'From a date you pick',
+                  onTap: _checking ? null : _importOlderEmail,
+                  trailing: const SettingsChevron(),
+                ),
+              ],
+            );
+          },
         ),
         StreamBuilder<String?>(
           stream: _settings.watch(_dedupKey),

@@ -80,6 +80,10 @@ Future<void> emailBackgroundMain() async {
       debugPrint('k: notifications unavailable in background: $e');
     }
     await getIt<EmailSync>().syncAll();
+    await getIt<SettingsRepository>().set(
+      EmailSync.backgroundAtKey,
+      DateTime.now().toIso8601String(),
+    );
     ok = true;
   } catch (e, s) {
     debugPrint('k: background email sync failed: $e\n$s');

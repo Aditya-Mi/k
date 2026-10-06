@@ -665,6 +665,10 @@ class _Editor extends StatelessWidget {
       ..showSnackBar(
         SnackBar(
           content: Text(text),
+          // Snackbars with an action stay until tapped by default; Undo is
+          // a convenience, so let it time out.
+          persist: false,
+          duration: const Duration(seconds: 6),
           action: SnackBarAction(
             label: 'Undo',
             onPressed: () => getIt<ReviewService>().undo(undo),

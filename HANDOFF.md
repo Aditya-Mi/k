@@ -218,8 +218,17 @@ State: everything since `ca4de66` is **uncommitted** (critique fixes, copy trim 
 6. Summary: trend bars `AnimatedContainer`, category bars tween, calendar fades (AnimatedSwitcher + AnimatedSize keyed by month).
 Also: `learned_formats_screen.dart` AnimatedOpacity honours Remove animations.
 Emulator-checked (release arm64 APK on `Medium_Phone_API_36.1`; it is arm64, x64 APK won't start): live SMS → row opens, total rolled mid-frame, wash cleared; tab switch, Summary month change; no crashes. Not exercised on emulator: Review queue/editor motion (no review items), predictive back gesture (needs real swipe).
-**Polish pass done (2026-10-06):** Review editor header puts the reason on its own line (time no longer truncates; Pencil 03b not yet synced); card screen rows follow 12b (`TxnRow(onCard: true)`: date on every row, no account, bill = "Bill payment · Axis ··1234 · 2 Oct · not spent", no swap icon); Accounts balance meta drops "00:00" for date-only messages. Colour-blind ink collisions: owner accepted as is (DESIGN.md Do's). Emulator round (dark): all 5 tabs, review editor, detail, Settings look right.
+**Polish pass done (2026-10-06):** Review editor header puts the reason on its own line (time no longer truncates; Pencil 03b synced); card screen rows follow 12b (`TxnRow(onCard: true)`: date on every row, no account, bill = "Bill payment · Axis ··1234 · 2 Oct · not spent", no swap icon); Accounts balance meta drops "00:00" for date-only messages. Colour-blind ink collisions: owner accepted as is (DESIGN.md Do's). Emulator round (dark): all 5 tabs, review editor, detail, Settings look right.
 Next: commit (owner approves first), then release.
+
+## Device test of 1.1.1 + fixes (2026-10-06)
+Owner checked on the phone: wrong passphrase, CSV export, in-app update install all work. Overnight backup did not run (last was 18:20 the evening before; phone was at 6% overnight).
+- **Backup:** the 03:00 worker needs battery-not-low, so it waited until charging, then skipped because the last backup was <20h old; app-open catch-up only after 36h. Now worker gap 12h (`_minGap`) and app-open catch-up 26h (`refresh`).
+- **Gmail hourly sync visibility:** app-open syncs made "last checked" always fresh. `emailBackgroundMain` now stamps `EmailSync.backgroundAtKey`; Settings → Sync "Check email" shows "Hourly · last background check 14:02" (design 06 updated). Owner to watch it after the next release.
+- **Read past email** (Settings → Sync, shown when an inbox exists, design 06): `EmailSync.importSince(from)` re-reads every inbox from a picked date, cursor untouched, dedup makes overlap safe.
+- **Transaction detail** (design 02 updated): actions sit above "Came from this bank message"; that section has Hide/Show (`device.detail.hideMessages`, remembered for every payment).
+- **Review Undo snackbar never went away:** Flutter now keeps snackbars with an action until tapped (`persist` defaults to true when there's an action); Undo snackbar sets `persist: false`, 6s.
+Emulator-checked: detail order + Hide/Show, Undo snackbar times out. Not checked: Read past email (no inbox on emulator), backup timing (device).
 
 ## Design critique fixes (2026-10-06)
 `/impeccable critique` of the main screens scored 28/40 (snapshot `.impeccable/critique/`). Fixed, design first (01, 01d new, 02*, 03a, 05, 05b/05c new, 12b; DESIGN.md components: FAB, Quick Actions Sheet, Upcoming/Unknown Chip, Upcoming Row, Review Card, Drill-in Row):

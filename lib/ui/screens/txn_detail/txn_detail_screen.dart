@@ -10,9 +10,11 @@ import '../../../data/db/enums.dart';
 import '../../../data/repositories/ledger_models.dart';
 import '../../../data/ingest/transfer_linker.dart';
 import '../../../data/repositories/ledger_repository.dart';
+import '../../../data/repositories/settings_repository.dart';
 import '../../../di.dart';
 import '../../widgets/txn_row.dart';
 import '../../format.dart';
+import '../../motion.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/note_chip.dart';
@@ -339,39 +341,7 @@ class _Loaded extends StatelessWidget {
                         textAlign: TextAlign.right,
                       ),
                     ),
-                    const SizedBox(height: 32),
-                    Text(
-                      txn.addedByUser
-                          ? 'Added by you'
-                          : sources.length > 1
-                          ? 'Came from ${sources.length} bank messages'
-                          : 'Came from this bank message',
-                      style: t.title,
-                    ),
-                    if (txn.addedByUser) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        detail.sourcesFromPartner
-                            ? 'Mirrors the other side of the transfer:'
-                            : 'No bank message for this.',
-                        style: t.body.copyWith(color: c.text2),
-                      ),
-                    ] else if (sources.length > 1) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Same amount, account and time, merged into one',
-                        style: t.body.copyWith(color: c.text2),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    for (final (i, m) in sources.indexed) ...[
-                      RawMessageCard(
-                        message: m,
-                        merged: i > 0 && !detail.sourcesFromPartner,
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                     Wrap(
                       spacing: 12,
                       runSpacing: 12,
@@ -447,6 +417,29 @@ class _Loaded extends StatelessWidget {
                           onPressed: () =>
                               _remove(context, cubit, notATransaction: false),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    // Below the actions; can be folded away (remembered).
+                    _SourcesSection(
+                      title: txn.addedByUser
+                          ? 'Added by you'
+                          : sources.length > 1
+                          ? 'Came from ${sources.length} bank messages'
+                          : 'Came from this bank message',
+                      note: txn.addedByUser
+                          ? (detail.sourcesFromPartner
+                                ? 'Mirrors the other side of the transfer:'
+                                : 'No bank message for this.')
+                          : sources.length > 1
+                          ? 'Same amount, account and time, merged into one'
+                          : null,
+                      cards: [
+                        for (final (i, m) in sources.indexed)
+                          RawMessageCard(
+                            message: m,
+                            merged: i > 0 && !detail.sourcesFromPartner,
+                          ),
                       ],
                     ),
                     SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom),
@@ -885,6 +878,75 @@ class _SubscriptionField extends StatelessWidget {
               Icon(Icons.chevron_right_rounded, color: context.k.text2),
             ],
           ),
+        );
+      },
+    );
+  }
+}
+
+/// "Came from this bank message" with its cards, foldable. The choice is
+/// remembered for every payment (device setting).
+class _SourcesSection extends StatelessWidget {
+  const _SourcesSection({
+    required this.title,
+    required this.note,
+    required this.cards,
+  });
+
+  final String title;
+  final String? note;
+  final List<Widget> cards;
+
+  static const _key = 'device.detail.hideMessages';
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.k;
+    final t = context.kt;
+    final settings = getIt<SettingsRepository>();
+    return StreamBuilder<String?>(
+      stream: settings.watch(_key),
+      builder: (context, snap) {
+        final hidden = snap.data == 'true';
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text(title, style: t.title)),
+                TextButton(
+                  onPressed: cards.isEmpty
+                      ? null
+                      : () => settings.set(_key, '${!hidden}'),
+                  child: Text(
+                    hidden ? 'Show' : 'Hide',
+                    style: t.body.copyWith(color: c.text2),
+                  ),
+                ),
+              ],
+            ),
+            AnimatedSize(
+              duration: Motion.of(context, Motion.medium),
+              curve: Motion.standard,
+              alignment: Alignment.topCenter,
+              child: hidden
+                  ? const SizedBox(width: double.infinity)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (note != null) ...[
+                          Text(note!, style: t.body.copyWith(color: c.text2)),
+                          const SizedBox(height: 12),
+                        ] else
+                          const SizedBox(height: 4),
+                        for (final card in cards) ...[
+                          card,
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+                    ),
+            ),
+          ],
         );
       },
     );

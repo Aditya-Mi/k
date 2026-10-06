@@ -75,6 +75,10 @@ class EmailSync {
   static String _sinceKey(String id) => 'device.email.$id.since';
   static String _errorKey(String id) => 'device.email.$id.error';
 
+  /// When the hourly worker last ran (app-open syncs don't count), so
+  /// Settings can show the background check is alive.
+  static const backgroundAtKey = 'device.email.backgroundAt';
+
   Future<void> _tail = Future.value();
 
   Future<T> _serial<T>(Future<T> Function() run) {
@@ -242,7 +246,35 @@ class EmailSync {
     return logged;
   });
 
-  Future<int> _syncOne(EmailAccount a, List<String> senders) async {
+  /// Reads every inbox again from [from] (Settings → Read past email).
+  /// The sync cursor is left alone; dedup makes overlap with mail k already
+  /// read safe.
+  Future<int> importSince(DateTime from) => _serial(() async {
+    final started = DateTime.now();
+    final accounts = await (_db.select(
+      _db.emailAccounts,
+    )..where((a) => a.deletedAt.isNull() & a.enabled.equals(true))).get();
+    final senders = await _bankSenders();
+    var logged = 0;
+    for (final a in accounts) {
+      try {
+        logged += await _syncOne(a, senders, from: from);
+      } on EmailAuthException catch (e) {
+        await _settings.set(_errorKey(a.id), e.message);
+      } catch (e, s) {
+        debugPrint('k: email import failed for ${a.email}: $e\n$s');
+        await _settings.set(_errorKey(a.id), 'Could not reach the inbox');
+      }
+    }
+    await onLive?.call(started);
+    return logged;
+  });
+
+  Future<int> _syncOne(
+    EmailAccount a,
+    List<String> senders, {
+    DateTime? from,
+  }) async {
     final source = await _sources(
       a,
       await _secrets.read(key: _secretKey(a.id)),
@@ -256,8 +288,8 @@ class EmailSync {
         (a.lastSyncAt ?? DateTime.now()).subtract(const Duration(days: 1));
     final result = await source.fetch(
       senders: senders,
-      cursor: a.syncCursor,
-      since: since,
+      cursor: from == null ? a.syncCursor : null,
+      since: from ?? since,
     );
     var logged = 0;
     for (final e in result.emails) {
@@ -274,6 +306,7 @@ class EmailSync {
       );
       if (outcome == IngestOutcome.transaction) logged++;
     }
+    if (from != null) return logged;
     await (_db.update(
       _db.emailAccounts,
     )..where((x) => x.id.equals(a.id))).write(

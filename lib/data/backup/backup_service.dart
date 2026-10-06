@@ -49,8 +49,10 @@ class BackupService {
 
   static const keep = 7;
 
-  /// Worker runs daily; this stops a second run the same day.
-  static const _minGap = Duration(hours: 20);
+  /// Stops a second run right after one. Short on purpose: when the 03:00
+  /// run waits for battery (low overnight) it fires after charging, often
+  /// under 20 hours after an evening "Back up now", and must still back up.
+  static const _minGap = Duration(hours: 12);
 
   Future<bool> get hasPassphrase async =>
       await _secrets.read(key: _keySecret) != null;
@@ -87,7 +89,8 @@ class BackupService {
   Future<void> refresh() async {
     final on = await driveAccount != null;
     await _bridge.scheduleBackup(on: on);
-    if (on) await runIfDue(const Duration(hours: 36));
+    // A missed night (phone dead, worker deferred) backs up on next open.
+    if (on) await runIfDue(const Duration(hours: 26));
   }
 
   Future<bool> runIfDue([Duration gap = _minGap]) async {
