@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter/services.dart';
 import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/db/enums.dart';
 import '../../../data/repositories/bank_repository.dart';
@@ -14,7 +17,10 @@ import '../../widgets/text_prompt.dart';
 /// Add an account before any message names it (design 10c): bank from the
 /// catalogue, type, last 4, nickname, and optionally the balance now.
 class AddAccountScreen extends StatefulWidget {
-  const AddAccountScreen({super.key});
+  const AddAccountScreen({super.key, this.type = AccountType.savings});
+
+  /// Picked in the "+" sheet (bank account, credit card or wallet).
+  final AccountType type;
 
   @override
   State<AddAccountScreen> createState() => _AddAccountScreenState();
@@ -30,7 +36,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
   /// A bank typed in "A bank not in k", created on save.
   String? _newBank;
-  var _type = AccountType.savings;
+  late var _type = widget.type;
   var _overdrawn = false;
   var _saving = false;
 
@@ -72,10 +78,14 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
           appBar: AppBar(
             leading: IconButton(
               tooltip: 'Close',
-              icon: const Icon(Icons.close_rounded),
+              icon: const Icon(Symbols.close),
               onPressed: () => Navigator.pop(context),
             ),
-            title: const Text('Add account'),
+            title: Text(switch (widget.type) {
+              AccountType.creditCard => 'Add a credit card',
+              AccountType.wallet => 'Add a wallet',
+              _ => 'Add an account',
+            }),
           ),
           body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -99,6 +109,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                       : 'Last 4 digits of the account or card',
                 ),
                 TextField(
+                  style: context.kt.input,
                   controller: _last4,
                   keyboardType: TextInputType.number,
                   maxLength: 4,
@@ -113,6 +124,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
               ],
               const _Label('Nickname (optional)'),
               TextField(
+                style: context.kt.input,
                 controller: _nickname,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
@@ -123,6 +135,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                 const SizedBox(height: 20),
                 const _Label('Card limit (optional)'),
                 TextField(
+                  style: context.kt.amountInput,
                   controller: _limit,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -130,9 +143,13 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
                   ],
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'e.g. 1,00,000',
                     prefixText: '₹ ',
+                    hintStyle: context.kt.amountInput.copyWith(
+                      color: context.k.text3,
+                    ),
+                    prefixStyle: context.kt.amountInput,
                   ),
                 ),
               ],
@@ -158,6 +175,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                   ],
                   Expanded(
                     child: TextField(
+                      style: context.kt.amountInput,
                       controller: _balance,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
@@ -168,6 +186,10 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                       decoration: InputDecoration(
                         hintText: '0.00',
                         prefixText: _overdrawn && !_isCard ? '−₹ ' : '₹ ',
+                        hintStyle: context.kt.amountInput.copyWith(
+                          color: context.k.text3,
+                        ),
+                        prefixStyle: context.kt.amountInput,
                       ),
                     ),
                   ),
@@ -195,7 +217,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                   minimumSize: const Size.fromHeight(52),
                 ),
                 onPressed: _ready && !_saving ? _save : null,
-                icon: const Icon(Icons.add_rounded),
+                icon: const Icon(Symbols.add),
                 label: const Text('Add account'),
               ),
             ),
@@ -238,9 +260,8 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
   }
 
   Future<void> _pickType() async {
-    final picked = await showModalBottomSheet<AccountType>(
+    final picked = await showKSheet<AccountType>(
       context: context,
-      showDragHandle: true,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -248,9 +269,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
             for (final MapEntry(key: type, value: label) in _types.entries)
               ListTile(
                 title: Text(label),
-                trailing: type == _type
-                    ? const Icon(Icons.check_rounded)
-                    : null,
+                trailing: type == _type ? const Icon(Symbols.check) : null,
                 onTap: () => Navigator.pop(context, type),
               ),
           ],

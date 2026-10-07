@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:intl/intl.dart';
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/repositories/ledger_models.dart';
 import '../../../data/repositories/ledger_repository.dart';
@@ -84,7 +87,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
               const SizedBox(width: 4),
               IconButton(
                 tooltip: 'Previous month',
-                icon: const Icon(Icons.chevron_left_rounded),
+                icon: const Icon(Symbols.chevron_left),
                 onPressed: () => _go(DateTime(_month.year, _month.month - 1)),
               ),
               Expanded(
@@ -96,7 +99,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
               ),
               IconButton(
                 tooltip: 'Next month',
-                icon: const Icon(Icons.chevron_right_rounded),
+                icon: const Icon(Symbols.chevron_right),
                 onPressed: isCurrent
                     ? null
                     : () => _go(DateTime(_month.year, _month.month + 1)),
@@ -222,10 +225,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
       for (final t in all)
         if (dateOnly(t.occurredAt) == date) t,
     ];
-    return showModalBottomSheet<void>(
+    return showKSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
       builder: (context) => SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(
@@ -289,7 +291,7 @@ class _AccountsTotal extends StatelessWidget {
                 signedInr(accountsTotal(rows).totalMinor),
                 style: t.amountRow,
               ),
-              Icon(Icons.chevron_right_rounded, color: context.k.text2),
+              Icon(Symbols.chevron_right, color: context.k.text2),
             ],
           ),
         );
@@ -315,7 +317,7 @@ class _DrillRow extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text('See all', style: context.kt.body.copyWith(color: c.text2)),
-          Icon(Icons.chevron_right_rounded, color: c.text2),
+          Icon(Symbols.chevron_right, color: c.text2),
         ],
       ),
     );
@@ -334,7 +336,7 @@ class _ListScreen extends StatelessWidget {
     appBar: AppBar(
       leading: IconButton(
         tooltip: 'Back',
-        icon: const Icon(Icons.arrow_back_rounded),
+        icon: const Icon(Symbols.arrow_back),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(title),

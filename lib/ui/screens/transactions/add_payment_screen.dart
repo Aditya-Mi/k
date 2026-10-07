@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:txn_parser/txn_parser.dart' show Direction, parseAmountMinor;
+
+import '../../widgets/k_sheet.dart';
 
 import '../categories/category_edit_screen.dart';
 import '../../../data/db/app_database.dart' hide ParserTemplate, SenderRule;
@@ -74,7 +77,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
           ),
         ),
         const SizedBox(width: 6),
-        Icon(Icons.edit_outlined, size: 16, color: c.text2),
+        Icon(Symbols.edit, size: 16, color: c.text2),
       ],
     );
     final account = _accountId == null
@@ -86,7 +89,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Close',
-          icon: const Icon(Icons.close_rounded),
+          icon: const Icon(Symbols.close),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Add payment'),
@@ -116,7 +119,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Icon(Icons.edit_outlined, size: 20, color: c.text2),
+                Icon(Symbols.edit, size: 20, color: c.text2),
               ],
             ),
           ),
@@ -167,7 +170,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         child: FilledButton.icon(
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
           onPressed: _ready ? _save : null,
-          icon: const Icon(Icons.check_rounded, size: 20),
+          icon: const Icon(Symbols.check, size: 20),
           label: const Text('Save payment'),
         ),
       ),
@@ -196,7 +199,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
   }
 
   Future<void> _editAccount() async {
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showKSheet<String>(
       context: context,
       isScrollControlled: true,
       builder: (context) => SafeArea(
@@ -214,24 +217,22 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
               ListTile(
                 leading: Icon(
                   a.isCash
-                      ? Icons.payments_outlined
+                      ? Symbols.payments
                       : a.isCard
-                      ? Icons.credit_card_outlined
-                      : Icons.account_balance_wallet_outlined,
+                      ? Symbols.credit_card
+                      : Symbols.account_balance_wallet,
                 ),
                 title: Text(a.short),
                 subtitle: Text(a.isCash ? 'Cash in hand' : a.long),
-                trailing: a.id == _accountId
-                    ? const Icon(Icons.check_rounded)
-                    : null,
+                trailing: a.id == _accountId ? const Icon(Symbols.check) : null,
                 onTap: () => Navigator.pop(context, a.id),
               ),
             ListTile(
-              leading: const Icon(Icons.help_outline_rounded),
+              leading: const Icon(Symbols.help),
               title: const Text('Not in k'),
               subtitle: const Text('Not counted in any balance'),
               trailing: _accountId == _noAccount
-                  ? const Icon(Icons.check_rounded)
+                  ? const Icon(Symbols.check)
                   : null,
               onTap: () => Navigator.pop(context, _noAccount),
             ),
@@ -245,7 +246,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
   Future<void> _editCategory() async {
     final categories = await _ledger.watchCategories().first;
     if (!mounted) return;
-    final picked = await showModalBottomSheet<Category>(
+    final picked = await showKSheet<Category>(
       context: context,
       isScrollControlled: true,
       builder: (context) => SafeArea(
@@ -261,7 +262,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                   leading: Icon(categoryIcon(cat.icon), color: context.k.text2),
                   title: Text(cat.name),
                   trailing: cat.id == _category?.id
-                      ? const Icon(Icons.check_rounded)
+                      ? const Icon(Symbols.check)
                       : null,
                   onTap: () => Navigator.pop(context, cat),
                 ),
@@ -341,7 +342,7 @@ class _DirectionToggle extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (on) ...[
-                    Icon(Icons.check_rounded, size: 18, color: c.text),
+                    Icon(Symbols.check, size: 18, color: c.text),
                     const SizedBox(width: 6),
                   ],
                   Text(

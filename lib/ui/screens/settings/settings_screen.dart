@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../app/updates.dart';
 
@@ -43,7 +46,7 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Symbols.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Settings'),
@@ -53,7 +56,7 @@ class SettingsScreen extends StatelessWidget {
         children: [
           const SettingsHead('Reading'),
           SettingsItem(
-            icon: Icons.sms_outlined,
+            icon: Symbols.sms,
             title: 'Messages and email',
             subtitle: 'Banks and email inboxes',
             onTap: () => open('Messages and email', const [
@@ -63,7 +66,7 @@ class SettingsScreen extends StatelessWidget {
             trailing: const SettingsChevron(),
           ),
           SettingsItem(
-            icon: Icons.sync_rounded,
+            icon: Symbols.sync,
             title: 'Sync',
             subtitle: 'SMS access and checks',
             onTap: () => open('Sync', const [_SyncSection()]),
@@ -77,7 +80,7 @@ class SettingsScreen extends StatelessWidget {
                   .where((c) => !c.isSystem)
                   .length;
               return SettingsItem(
-                icon: Icons.category_outlined,
+                icon: Symbols.category,
                 title: 'Categories',
                 subtitle: mine == 0
                     ? 'Add, rename or hide'
@@ -97,7 +100,7 @@ class SettingsScreen extends StatelessWidget {
             builder: (context, snap) {
               final n = snap.data?.length;
               return SettingsItem(
-                icon: Icons.school_outlined,
+                icon: Symbols.school,
                 title: 'Message formats',
                 subtitle: n == null
                     ? '…'
@@ -115,7 +118,7 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           SettingsItem(
-            icon: Icons.cloud_upload_outlined,
+            icon: Symbols.cloud_upload,
             title: 'Backup and export',
             subtitle: 'Drive backup, files, CSV',
             onTap: () => open('Backup and export', const [BackupSettings()]),
@@ -123,7 +126,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SettingsHead('This phone'),
           SettingsItem(
-            icon: Icons.notifications_outlined,
+            icon: Symbols.notifications,
             title: 'Notifications',
             subtitle: 'Payments, review, reminders',
             onTap: () => open('Notifications', const [NotificationSettings()]),
@@ -137,7 +140,7 @@ class SettingsScreen extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.lock_outline_rounded, size: 16, color: c.text3),
+                Icon(Symbols.lock, size: 16, color: c.text3),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -167,7 +170,7 @@ class _SubPage extends StatelessWidget {
     appBar: AppBar(
       leading: IconButton(
         tooltip: 'Back',
-        icon: const Icon(Icons.arrow_back_rounded),
+        icon: const Icon(Symbols.arrow_back),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(title),
@@ -263,7 +266,7 @@ class _SyncSectionState extends State<_SyncSection> {
       : '${dayMonth(d)}, ${hhmm(d)}';
 
   Future<void> _pickWindow(int current) async {
-    final picked = await showModalBottomSheet<int>(
+    final picked = await showKSheet<int>(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
@@ -282,7 +285,7 @@ class _SyncSectionState extends State<_SyncSection> {
             for (final m in const [5, 10, 30, 60])
               ListTile(
                 title: Text(_minutes(m)),
-                trailing: m == current ? const Icon(Icons.check_rounded) : null,
+                trailing: m == current ? const Icon(Symbols.check) : null,
                 onTap: () => Navigator.pop(context, m),
               ),
           ],
@@ -305,7 +308,7 @@ class _SyncSectionState extends State<_SyncSection> {
       children: [
         const SettingsHead('Sync'),
         SettingsItem(
-          icon: smsOk ? Icons.sms_outlined : Icons.sms_failed_outlined,
+          icon: smsOk ? Symbols.sms : Symbols.sms_failed,
           iconColor: _sms == null || smsOk ? null : c.alert,
           title: _sms == null ? 'SMS' : (smsOk ? 'SMS allowed' : 'SMS off'),
           subtitle: smsOk
@@ -319,7 +322,7 @@ class _SyncSectionState extends State<_SyncSection> {
           trailing: const SettingsChevron(),
         ),
         SettingsItem(
-          icon: Icons.battery_full_rounded,
+          icon: Symbols.battery_full,
           title: batteryOk ? 'Battery: unrestricted' : 'Battery: limited',
           subtitle: batteryOk
               ? 'Reads messages while closed'
@@ -335,7 +338,7 @@ class _SyncSectionState extends State<_SyncSection> {
         StreamBuilder<DateTime?>(
           stream: _settings.watchDate(SettingsRepository.smsLastSyncAt),
           builder: (context, snap) => SettingsItem(
-            icon: Icons.refresh_rounded,
+            icon: Symbols.refresh,
             title: 'Check SMS now',
             subtitle: snap.data == null
                 ? 'Never checked'
@@ -355,7 +358,7 @@ class _SyncSectionState extends State<_SyncSection> {
           ),
         ),
         SettingsItem(
-          icon: Icons.history_rounded,
+          icon: Symbols.history,
           title: 'Read past SMS',
           subtitle: 'From a date you pick',
           onTap: _checking || !smsOk ? null : _importOlder,
@@ -372,7 +375,7 @@ class _SyncSectionState extends State<_SyncSection> {
                 StreamBuilder<DateTime?>(
                   stream: _settings.watchDate(EmailSync.backgroundAtKey),
                   builder: (context, at) => SettingsItem(
-                    icon: Icons.schedule_rounded,
+                    icon: Symbols.schedule,
                     title: 'Check email',
                     subtitle: at.data == null
                         ? 'Hourly · no background check yet'
@@ -381,7 +384,7 @@ class _SyncSectionState extends State<_SyncSection> {
                   ),
                 ),
                 SettingsItem(
-                  icon: Icons.history_rounded,
+                  icon: Symbols.history,
                   title: 'Read past email',
                   subtitle: 'From a date you pick',
                   onTap: _checking ? null : _importOlderEmail,
@@ -396,7 +399,7 @@ class _SyncSectionState extends State<_SyncSection> {
           builder: (context, snap) {
             final m = int.tryParse(snap.data ?? '') ?? 10;
             return SettingsItem(
-              icon: Icons.merge_rounded,
+              icon: Symbols.merge,
               title: 'Treat as the same payment',
               subtitle: 'SMS and email within ${_minutes(m)}',
               onTap: () => _pickWindow(m),

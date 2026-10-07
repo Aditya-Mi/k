@@ -3,6 +3,7 @@ import 'package:txn_parser/txn_parser.dart';
 
 import '../db/app_database.dart';
 import '../db/enums.dart';
+import '../ingest/category_resolver.dart';
 
 /// "Axis Bank" → "Axis", "Kotak Mahindra Bank" → "Kotak", "Bank of Baroda" → "BOB".
 String bankShortName(String bankId, String bankName) => switch (bankId) {
@@ -160,12 +161,19 @@ class TxnView extends Equatable {
     return e.kind == EmiKind.card && !e.spread;
   }
 
-  /// Paid from cash: it already counted as spent when withdrawn at the ATM.
+  /// Paid from (or into) cash in hand.
   bool get isCash => account?.isCash ?? false;
 
-  /// Counts toward spent / came in. Self transfers and cash payments don't
-  /// (cash was counted once, at the ATM); see also [_emiExcluded].
-  bool get countsInTotals => !isTransfer && !isCash && !_emiExcluded;
+  /// Bank → cash in hand: parsed as ATM, or filed under ATM withdrawal.
+  /// Like a self transfer, the money is still the owner's until spent.
+  bool get isAtmWithdrawal =>
+      !isCash &&
+      isDebit &&
+      (txnType == TxnType.atm || category?.id == atmCategoryId);
+
+  /// Counts toward spent / came in. Self transfers and ATM withdrawals
+  /// don't (cash counts when it's spent); see also [_emiExcluded].
+  bool get countsInTotals => !isTransfer && !isAtmWithdrawal && !_emiExcluded;
 
   /// Signed contribution to spent: debits add, card refunds subtract.
   int get spentMinor => !countsInTotals

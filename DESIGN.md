@@ -176,7 +176,7 @@ components:
 
 **Creative North Star: "The Note Ink Ledger"**
 
-k reads like a ledger kept in banknote ink. Every amount carries the colour of the RBI note you would have paid it with, so the size of a spend registers as colour before the number is read. Everything else steps back: a near-black ground with flat tonal steps, paper-white type, neutral Material Symbols, and Material 3 controls left plain. The inks are the only saturated thing on screen, and they mean one thing.
+k reads like a ledger kept in banknote ink. Every amount carries the colour of the RBI note you would have paid it with, so the size of a spend registers as colour before the number is read. Everything else steps back: a near-black ground with flat tonal steps, paper-white type, neutral hairline Material Symbols, and Material 3 controls left plain, except sheets and confirmations, which float as notes. The inks are the only saturated thing on screen, and they mean one thing.
 
 The density is a working list, not a dashboard. A screen is one column at a 16dp gutter: the month on a note-shaped panel, a row of filter chips, and day-grouped rows of chip, payee and amount. Depth is tonal, never cast. The one ornament is the guilloche rosette on the month panel, drawn in hairlines in the month total's ink, borrowed from the security printing of the notes themselves.
 
@@ -239,6 +239,8 @@ Each ink has a deepened light-theme twin (`-light` keys) that holds at least 4.9
 - **Title** (Archivo 600, 16dp): section heads ("Transactions", "Next charges", "Where it went") and the numeral on the large note chip.
 - **Amount Row** (Archivo 600, 16dp, tabular): right-aligned amounts in every list row.
 - **Body** (Roboto 400, 15dp): payee names, field values, raw message text.
+- **Input** (Roboto 400, 17dp): what you type into a field (note, names, search), with its hint at the same size in text-3.
+- **Amount Input** (Archivo 600, 24dp, tabular): an amount you type (balance, limit, amount prompts), ₹ prefix and hint at the same size.
 - **Meta** (Roboto 400, 12.5dp, text-2): category · account · time lines under payees.
 - **Day Header** (Roboto 500, 12.5dp, text-2): day group labels with their right-aligned "₹702 out" totals.
 - **Label** (Roboto 500, 12dp): navigation labels; the selected destination steps up to text colour and a heavier weight.
@@ -266,6 +268,12 @@ Small, banknote-proportioned rectangles for anything inked; soft 12dp cards for 
 
 ### Named Rules
 **The Note Proportion Rule.** An amount's ink is always shown as a note-shaped rectangle or a bar, never as a dot, circle or avatar.
+
+## Icons
+
+One family: Material Symbols **Outlined** (`material_symbols_icons`, `Symbols.*`), weight 300, grade 0, so the stroke sits with the hairline rosettes and Archivo rather than fighting them. Set once in the theme (`_iconWeight` in `k_theme.dart`); never pass a weight per icon. Filled (`fill: 1`) only for the selected bottom-nav destination. Sizes: 24 default (app bar, nav, sheets), 20 in list rows and fields, 18 inside buttons and chips, 16 beside meta text; 12–14 only inline with text of that size; 8 only inside the upcoming chip. Never mix in Flutter `Icons.*` (Material Icons has no weight axis). Icons stay neutral (text, text-2, text-3), never ink.
+
+**k's own icons** (`KIcon` / `KIcons` in `lib/ui/widgets/k_icons.dart`; Pencil "Icons — hairline set", export `design/screens/00-icons.png`): the five nav destinations (Transactions, Review, Recurring, Accounts, Summary), Transfer (self transfer, ATM → cash, card bill) and Merged. 24 grid, 1.5 stroke, round caps and joins. Each nav icon carries a 2:1 note shape that fills when selected (the nav theme's `fill: 1`); everything else stays line. Everyday actions and categories stay Material Symbols; add an own icon only where k says something no stock glyph does.
 
 ## Components
 
@@ -298,14 +306,17 @@ Small, banknote-proportioned rectangles for anything inked; soft 12dp cards for 
 - **Switch:** track in text colour, thumb in bg with a check when on.
 
 ### Navigation
-- **Bottom Nav:** Material 3 navigation bar on surface-1, five destinations with Material Symbols Rounded icons over 12dp labels. Selected destination: surface-3 indicator (64×32dp) behind the icon, label in text colour. Unselected: icon and label in text-2. The Review badge is neutral: a small text-coloured disc with a bg-coloured count.
+- **Bottom Nav:** Material 3 navigation bar on surface-1, five destinations with k's own hairline icons over 12dp labels. Selected destination: the icon's note shape fills, surface-3 indicator (64×32dp) behind it, label in text colour. Unselected: icon and label in text-2. The Review badge is neutral: a small text-coloured disc with a bg-coloured count.
 - **Top App Bar:** home shows the lowercase "k" wordmark in Archivo with search and settings actions (Add lives on the FAB); inner screens show a back or close icon, an Archivo 22dp title, and actions on the right.
 
 ### FAB (Add payment)
 The one place Add payment lives. An extended M3 FAB, 56dp high, 16dp corners, filled in the text colour with an on-ink plus icon and the label "Add" (Archivo 600, 16dp); bottom-right, 16dp from the edge and 16dp above the navigation bar. Neutral, no ink, no shadow. Only on Transactions. The list ends with 88dp of clearance so the last row clears it.
 
+### Floating Note (sheets and confirmations)
+Every sheet and every confirmation is one thing: a surface-2 card with 24dp corners floating 12dp off the screen edges and above the system bar, rising from the bottom over the default scrim, no drag handle (drag down or tap outside to close). Confirmations and small forms are not centred dialogs; they are floating notes too, so the answer is under the thumb: title (Archivo headline), body in text-2, then **the tear line** (a dashed text-3 hairline, 4 on 4 off, like a cheque counterfoil), then the actions stacked full width: the main action first as a 52dp filled pill (text colour, or alert colour when it can't be undone: Delete, Remove, Forget, Disconnect, Restore, Merge), the dismissive action below it as a plain text button. Code: `showKSheet` / `showKDialog` / `KDialog` / `TearLine` in `lib/ui/widgets/k_sheet.dart`; never call `showModalBottomSheet` or `showDialog` directly. Design: Pencil "Sheets & dialogs — directions" (B, chosen).
+
 ### Quick Actions Sheet
-Long-pressing a Transactions row opens an M3 modal bottom sheet (surface-1, 28dp top corners, 40% black scrim, handle). A header repeats the row (ink chip, payee, "account · time", amount), then a hairline, then one-line 56dp actions with a text-2 icon on the left: Category (current value in text-2 and a chevron), Not a transaction, Mark as self transfer, Open details.
+Long-pressing a Transactions row opens a Floating Note. A header repeats the row (ink chip, payee, "account · time", amount), then the tear line, then one-line 56dp actions with a text-2 icon on the left: Category (current value in text-2 and a chevron), Not a transaction, Mark as self transfer, Open details.
 
 ### Upcoming Row
 A Txn Row whose chip is the Upcoming Chip and whose amount is text-2 (payee also text-2). Meta reads "Due Wed 8 Oct · UPI AutoPay · Kotak ··5555". Sits under an "Upcoming · AutoPay" day header, above Today.
@@ -370,7 +381,7 @@ Everything else is functional motion only: it explains a change, never decorates
 ### Do:
 - **Do** colour an amount's chip by its band: ink-10 under ₹20 through ink-2000 at ₹2,000 and up, using the `-light` twins on the paper theme.
 - **Do** set every figure amount in Archivo at wdth 112 with tabular figures, right-aligned, with Indian grouping (₹1,12,000).
-- **Do** show categories with neutral Material Symbols Rounded in text-2, and category bars and subscription cycle fills in the text colour. Never text-2 for a bar: it is near-identical to ink-500 (1.02:1) and would read as the ₹500 band.
+- **Do** show categories with neutral Material Symbols in text-2, and category bars and subscription cycle fills in the text colour. Never text-2 for a bar: it is near-identical to ink-500 (1.02:1) and would read as the ₹500 band.
 - **Do** make depth with surface steps (bg, surface-1, surface-2, surface-3) and 1dp hairlines.
 - **Do** make the one primary action a text-coloured pill with a bg-coloured label, at the bottom in thumb reach.
 - **Do** keep the raw bank message one tap from any transaction, verbatim.

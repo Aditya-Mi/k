@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:txn_parser/txn_parser.dart' show Channel;
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/ingest/ingestion_service.dart';
 import '../../../data/repositories/bank_repository.dart';
@@ -35,7 +38,7 @@ class BankSettings extends StatelessWidget {
               trailing: const SettingsChevron(),
             ),
           SettingsItem(
-            icon: Icons.format_list_bulleted_rounded,
+            icon: Symbols.format_list_bulleted,
             title: 'All banks k reads',
             subtitle: '${banks.length} banks',
             onTap: () => Navigator.of(context).push(
@@ -44,7 +47,7 @@ class BankSettings extends StatelessWidget {
             trailing: const SettingsChevron(),
           ),
           SettingsItem(
-            icon: Icons.add_rounded,
+            icon: Symbols.add,
             title: 'Add a bank sender',
             subtitle: 'For a bank sending from a new name',
             onTap: () => addBankSender(context, banks),
@@ -55,7 +58,7 @@ class BankSettings extends StatelessWidget {
               final blocked = snap.data ?? const <String>[];
               if (blocked.isEmpty) return const SizedBox.shrink();
               return SettingsItem(
-                icon: Icons.block_rounded,
+                icon: Symbols.block,
                 title: 'Not banks',
                 subtitle: 'SMS from ${blocked.join(', ')} is skipped',
                 onTap: () => _unblock(context, blocked),
@@ -71,7 +74,7 @@ class BankSettings extends StatelessWidget {
   /// Senders marked "Not a bank" in Review; reading one again lets its
   /// payment-like SMS back into Review.
   Future<void> _unblock(BuildContext context, List<String> blocked) async {
-    final core = await showModalBottomSheet<String>(
+    final core = await showKSheet<String>(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
@@ -80,7 +83,7 @@ class BankSettings extends StatelessWidget {
             sheetTitle(context, 'Not banks'),
             for (final b in blocked)
               ListTile(
-                leading: const Icon(Icons.sms_outlined),
+                leading: const Icon(Symbols.sms),
                 title: Text(b),
                 trailing: TextButton(
                   onPressed: () => Navigator.pop(context, b),
@@ -130,7 +133,7 @@ Future<void> addBankSender(
   }
   if (picked == null || !context.mounted) return;
   final b = picked;
-  final channel = await showModalBottomSheet<Channel>(
+  final channel = await showKSheet<Channel>(
     context: context,
     builder: (context) => SafeArea(
       child: Column(
@@ -138,13 +141,13 @@ Future<void> addBankSender(
         children: [
           BankSettings.sheetTitle(context, 'Add a ${b.name} sender'),
           ListTile(
-            leading: const Icon(Icons.sms_outlined),
+            leading: const Icon(Symbols.sms),
             title: const Text('SMS sender'),
             subtitle: const Text('The middle of the header, e.g. AXISBK'),
             onTap: () => Navigator.pop(context, Channel.sms),
           ),
           ListTile(
-            leading: const Icon(Icons.mail_outline_rounded),
+            leading: const Icon(Symbols.mail),
             title: const Text('Email sender'),
             subtitle: const Text('An address or domain, e.g. axis.bank.in'),
             onTap: () => Navigator.pop(context, Channel.email),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../app/notifications.dart';
@@ -56,8 +57,8 @@ class _NotificationSettingsState extends State<NotificationSettings> {
         SettingsHead('Notifications'),
         SettingsItem(
           icon: allowed
-              ? Icons.notifications_active_outlined
-              : Icons.notifications_off_outlined,
+              ? Symbols.notifications_active
+              : Symbols.notifications_off,
           title: _permission == null ? '…' : (allowed ? 'Allowed' : 'Off'),
           subtitle: allowed ? 'Android permission is on' : 'Tap to allow',
           onTap: allowed ? openAppSettings : _allow,
@@ -68,7 +69,7 @@ class _NotificationSettingsState extends State<NotificationSettings> {
           builder: (context, snap) {
             final days = int.tryParse(snap.data ?? '') ?? 3;
             return SettingsItem(
-              icon: Icons.notifications_outlined,
+              icon: Symbols.notifications,
               title: 'Subscription reminders',
               subtitle: days == 0
                   ? 'Off'
@@ -86,13 +87,13 @@ class _NotificationSettingsState extends State<NotificationSettings> {
         ),
         _Toggle(
           settingKey: KNotifications.reviewKey,
-          icon: Icons.rule_rounded,
+          icon: Symbols.rule,
           title: 'Needs review',
           subtitle: "When a bank message couldn't be read",
         ),
         _Toggle(
           settingKey: KNotifications.paymentsKey,
-          icon: Icons.receipt_long_outlined,
+          icon: Symbols.receipt_long,
           title: 'Payment logged',
           subtitle: 'Amounts are hidden on the lock screen',
         ),
@@ -139,5 +140,5 @@ class _Chevron extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Icon(Icons.chevron_right_rounded, size: 20, color: context.k.text3);
+      Icon(Symbols.chevron_right, size: 20, color: context.k.text3);
 }

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/repositories/settings_repository.dart';
 import '../../../di.dart';
@@ -33,16 +36,12 @@ class AppearanceSettings extends StatelessWidget {
           children: [
             if (showHead) const SettingsHead('Appearance'),
             SettingsItem(
-              icon: Icons.contrast_rounded,
+              icon: Symbols.contrast,
               title: 'Theme',
               subtitle: _labels[mode]!,
-              trailing: Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
-                color: c.text3,
-              ),
+              trailing: Icon(Symbols.chevron_right, size: 20, color: c.text3),
               onTap: () async {
-                final picked = await showModalBottomSheet<ThemeMode>(
+                final picked = await showKSheet<ThemeMode>(
                   context: context,
                   builder: (context) => SafeArea(
                     child: Column(
@@ -59,7 +58,7 @@ class AppearanceSettings extends StatelessWidget {
                           ListTile(
                             title: Text(_labels[m]!),
                             trailing: m == mode
-                                ? const Icon(Icons.check_rounded)
+                                ? const Icon(Symbols.check)
                                 : null,
                             onTap: () => Navigator.pop(context, m),
                           ),

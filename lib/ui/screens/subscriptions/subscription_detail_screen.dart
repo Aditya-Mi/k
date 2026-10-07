@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
+
+import '../../widgets/k_sheet.dart';
 
 import '../categories/category_edit_screen.dart';
 import '../../../data/db/app_database.dart' show Category;
@@ -32,7 +35,7 @@ class SubscriptionDetailScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Symbols.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -54,7 +57,7 @@ class SubscriptionDetailScreen extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: OutlinedButton.icon(
                   onPressed: () => _stop(context, sub),
-                  icon: const Icon(Icons.do_not_disturb_on_outlined, size: 18),
+                  icon: const Icon(Symbols.do_not_disturb_on, size: 18),
                   label: const Text('Stop tracking'),
                 ),
               ),
@@ -93,7 +96,7 @@ class SubscriptionDetailScreen extends StatelessWidget {
       SubscriptionFrequency.halfYearly,
       SubscriptionFrequency.yearly,
     ];
-    final picked = await showModalBottomSheet<SubscriptionFrequency>(
+    final picked = await showKSheet<SubscriptionFrequency>(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
@@ -103,7 +106,7 @@ class SubscriptionDetailScreen extends StatelessWidget {
               ListTile(
                 title: Text(frequencyLabel(f, sub.row.intervalDays)),
                 trailing: f == sub.row.frequency
-                    ? const Icon(Icons.check_rounded)
+                    ? const Icon(Symbols.check)
                     : null,
                 onTap: () => Navigator.pop(context, f),
               ),
@@ -144,7 +147,7 @@ class SubscriptionDetailScreen extends StatelessWidget {
     SubscriptionView sub,
     List<Category> categories,
   ) async {
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showKSheet<String>(
       context: context,
       isScrollControlled: true,
       builder: (context) => SafeArea(
@@ -160,7 +163,7 @@ class SubscriptionDetailScreen extends StatelessWidget {
                   leading: Icon(categoryIcon(cat.icon), color: context.k.text2),
                   title: Text(cat.name),
                   trailing: cat.id == sub.row.categoryId
-                      ? const Icon(Icons.check_rounded)
+                      ? const Icon(Symbols.check)
                       : null,
                   onTap: () => Navigator.pop(context, cat.id),
                 ),
@@ -174,9 +177,9 @@ class SubscriptionDetailScreen extends StatelessWidget {
   }
 
   Future<void> _stop(BuildContext context, SubscriptionView sub) async {
-    final ok = await showDialog<bool>(
+    final ok = await showKDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => KDialog(
         title: Text('Stop tracking ${sub.name}?'),
         content: const Text('No more reminders. Past charges stay.'),
         actions: [
@@ -304,7 +307,7 @@ class _Fields extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Icon(Icons.edit_outlined, size: 16, color: c.text2),
+        Icon(Symbols.edit, size: 16, color: c.text2),
       ],
     );
     return Column(

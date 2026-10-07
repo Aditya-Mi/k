@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/db/app_database.dart' show Category;
 import '../../../data/repositories/ledger_repository.dart';
@@ -18,7 +19,7 @@ Widget newCategoryTile(
   BuildContext sheetContext,
   Object Function(Category) result,
 ) => ListTile(
-  leading: Icon(Icons.add_rounded, color: sheetContext.k.text2),
+  leading: Icon(Symbols.add, color: sheetContext.k.text2),
   title: const Text('New category'),
   onTap: () async {
     final c = await createCategory(sheetContext);
@@ -99,12 +100,11 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
   Widget build(BuildContext context) {
     final c = context.k;
     final t = context.kt;
-    final icons = categoryIcons.entries.toList();
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Symbols.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(_editing ? 'Edit category' : 'New category'),
@@ -114,6 +114,7 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
         children: [
           const FieldLabel('Name'),
           TextField(
+            style: context.kt.input,
             controller: _name,
             autofocus: !_editing,
             textCapitalization: TextCapitalization.sentences,
@@ -127,38 +128,45 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
           const SizedBox(height: 20),
           const FieldLabel('Icon'),
           const SizedBox(height: 4),
-          GridView.count(
-            crossAxisCount: 6,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 52 / 44,
-            mainAxisSpacing: 10,
-            children: [
-              for (final MapEntry(key: name, value: icon) in icons)
-                Semantics(
-                  label: name.replaceAll('_', ' '),
-                  selected: name == _icon,
-                  button: true,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(22),
-                    onTap: () => setState(() => _icon = name),
-                    child: Container(
-                      decoration: name == _icon
-                          ? BoxDecoration(
-                              color: c.surface3,
-                              border: Border.all(color: c.text),
-                              borderRadius: BorderRadius.circular(22),
-                            )
-                          : null,
-                      child: Icon(
-                        icon,
-                        color: name == _icon ? c.text : c.text2,
+          for (final (title, icons) in categoryIconGroups) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 12, bottom: 6),
+              child: Text(title, style: t.meta.copyWith(color: c.text2)),
+            ),
+            GridView.count(
+              crossAxisCount: 6,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 52 / 44,
+              mainAxisSpacing: 10,
+              children: [
+                for (final MapEntry(key: name, value: icon) in icons.entries)
+                  Semantics(
+                    label: name.replaceAll('_', ' '),
+                    selected: name == _icon,
+                    button: true,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(22),
+                      onTap: () => setState(() => _icon = name),
+                      child: Container(
+                        decoration: name == _icon
+                            ? BoxDecoration(
+                                color: c.surface3,
+                                border: Border.all(color: c.text),
+                                borderRadius: BorderRadius.circular(22),
+                              )
+                            : null,
+                        child: Icon(
+                          icon,
+                          fill: name == _icon ? 1 : 0,
+                          color: name == _icon ? c.text : c.text2,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          ),
+              ],
+            ),
+          ],
           const SizedBox(height: 20),
           Text(
             _editing
@@ -174,8 +182,8 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
                 onPressed: _busy ? null : _toggleHidden,
                 icon: Icon(
                   widget.category!.hidden
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
+                      ? Symbols.visibility
+                      : Symbols.visibility_off,
                   size: 20,
                 ),
                 label: Text(
@@ -192,7 +200,7 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
         ],
       ),
       bottomNavigationBar: BottomAction(
-        icon: _editing ? Icons.check_rounded : Icons.add_rounded,
+        icon: _editing ? Symbols.check : Symbols.add,
         label: _editing ? 'Save' : 'Add category',
         busy: _busy,
         onPressed: _save,

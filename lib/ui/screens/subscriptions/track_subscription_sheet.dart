@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/db/enums.dart';
 import '../../../data/repositories/ledger_models.dart';
@@ -14,10 +17,9 @@ import 'subscription_parts.dart';
 /// repeats; the next charge follows from this payment and can be changed.
 /// Returns the new plan's id, or null when cancelled.
 Future<String?> showTrackSubscriptionSheet(BuildContext context, TxnView txn) =>
-    showModalBottomSheet<String>(
+    showKSheet<String>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) => _TrackSheet(txn: txn),
     );
 
@@ -125,7 +127,7 @@ class _TrackSheetState extends State<_TrackSheet> {
                       style: t.body.copyWith(fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(width: 6),
-                    Icon(Icons.edit_outlined, size: 16, color: c.text2),
+                    Icon(Symbols.edit, size: 16, color: c.text2),
                   ],
                 ),
               ),
@@ -141,7 +143,7 @@ class _TrackSheetState extends State<_TrackSheet> {
                 const SizedBox(width: 12),
                 FilledButton.icon(
                   onPressed: _saving ? null : _save,
-                  icon: const Icon(Icons.check_rounded, size: 20),
+                  icon: const Icon(Symbols.check, size: 20),
                   label: const Text('Track it'),
                 ),
               ],

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
+
+import '../ui/widgets/k_sheet.dart';
 
 import '../data/backup/backup_service.dart';
 import '../data/repositories/settings_repository.dart';
@@ -44,7 +47,7 @@ Future<UpdateCheck> _check() async {
 }
 
 Future<void> showUpdateDialog(BuildContext context, UpdateCheck check) =>
-    showDialog<void>(
+    showKDialog<void>(
       context: context,
       barrierDismissible: !check.required,
       builder: (_) => _UpdateDialog(check: check),
@@ -200,8 +203,8 @@ class _UpdateDialogState extends State<_UpdateDialog> {
         : ' ${(m.sizeBytes / (1024 * 1024)).toStringAsFixed(0)} MB.';
     return PopScope(
       canPop: !widget.check.required && !busy,
-      child: AlertDialog(
-        icon: Icon(Icons.system_update_alt_rounded, color: c.text2),
+      child: KDialog(
+        icon: Icon(Symbols.system_update_alt, color: c.text2),
         title: Text('k ${m.version} is ready'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -354,7 +357,7 @@ class _AboutSettingsState extends State<AboutSettings> {
         builder: (context, snap) {
           final at = snap.data;
           return SettingsItem(
-            icon: Icons.info_outline_rounded,
+            icon: Symbols.info,
             title: 'k ${_version ?? ''}',
             subtitle: at == null
                 ? 'Not checked for updates yet'
@@ -363,7 +366,7 @@ class _AboutSettingsState extends State<AboutSettings> {
         },
       ),
       SettingsItem(
-        icon: Icons.system_update_alt_rounded,
+        icon: Symbols.system_update_alt,
         title: 'Check for updates',
         subtitle: 'Also checked when k opens',
         onTap: _checking ? null : _checkNow,

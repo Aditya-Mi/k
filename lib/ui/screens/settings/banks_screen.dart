@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/repositories/bank_repository.dart';
 import '../../../di.dart';
@@ -98,7 +99,7 @@ class _BankRow extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: c.text3, size: 20),
+            Icon(Symbols.chevron_right, color: c.text3, size: 20),
           ],
         ),
       ),

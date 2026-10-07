@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/app_lock.dart';
 import '../../../di.dart';
@@ -37,7 +38,7 @@ class PrivacySettings extends StatelessWidget {
           children: [
             if (showHead) const SettingsHead('Privacy'),
             SettingsItem(
-              icon: Icons.fingerprint_rounded,
+              icon: Symbols.fingerprint,
               title: 'App lock',
               subtitle: 'Fingerprint or device PIN when k opens',
               onTap: () => set(!lock.enabled),

@@ -82,7 +82,7 @@ MonthSummary summarize(DateTime month, List<TxnView> txns) {
   var spends = 0;
   final bands = List.filled(Bands.count, 0);
   for (final t in txns) {
-    // Own-account moves and cash payments (counted at the ATM) are out;
+    // Own-account moves and ATM withdrawals (cash counts when spent) are out;
     // card refunds lower spent.
     if (!t.countsInTotals) continue;
     came += t.inMinor;

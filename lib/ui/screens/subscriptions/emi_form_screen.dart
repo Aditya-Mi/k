@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/db/enums.dart';
 import '../../../data/emis/emi_schedule.dart';
@@ -135,7 +138,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
           ),
         ),
         const SizedBox(width: 6),
-        Icon(Icons.edit_outlined, size: 16, color: c.text2),
+        Icon(Symbols.edit, size: 16, color: c.text2),
       ],
     );
     final purchase = _purchaseMinor;
@@ -150,7 +153,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Close',
-          icon: const Icon(Icons.close_rounded),
+          icon: const Icon(Symbols.close),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(title),
@@ -168,8 +171,8 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
                   border: Border.all(color: c.outline),
                 ),
                 child: Icon(
-                  _card ? Icons.credit_card_rounded : Icons.home_outlined,
-                  size: 26,
+                  _card ? Symbols.credit_card : Symbols.home,
+                  size: 24,
                   color: c.text2,
                 ),
               ),
@@ -307,7 +310,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: _ready && !_saving ? _save : null,
-                icon: const Icon(Icons.check_rounded, size: 20),
+                icon: const Icon(Symbols.check, size: 20),
                 label: const Text('Save EMI'),
               ),
             ),
@@ -328,7 +331,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
   }
 
   Future<void> _pickAccount() async {
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showKSheet<String>(
       context: context,
       builder: (context) => SafeArea(
         child: ListView(
@@ -337,17 +340,13 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
             for (final a in _accounts)
               ListTile(
                 title: Text(a.long),
-                trailing: a.id == _accountId
-                    ? const Icon(Icons.check_rounded)
-                    : null,
+                trailing: a.id == _accountId ? const Icon(Symbols.check) : null,
                 onTap: () => Navigator.pop(context, a.id),
               ),
             ListTile(
               title: const Text('Not in k'),
               subtitle: const Text('k can\'t link its debits'),
-              trailing: _accountId == null
-                  ? const Icon(Icons.check_rounded)
-                  : null,
+              trailing: _accountId == null ? const Icon(Symbols.check) : null,
               onTap: () => Navigator.pop(context, ''),
             ),
           ],
@@ -362,7 +361,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
   Future<void> _editCount() async {
     int? n;
     if (_card) {
-      n = await showModalBottomSheet<int>(
+      n = await showKSheet<int>(
         context: context,
         builder: (context) => SafeArea(
           child: Column(
@@ -371,9 +370,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
               for (final m in const [3, 6, 9, 12, 18, 24])
                 ListTile(
                   title: Text('$m months'),
-                  trailing: m == _count
-                      ? const Icon(Icons.check_rounded)
-                      : null,
+                  trailing: m == _count ? const Icon(Symbols.check) : null,
                   onTap: () => Navigator.pop(context, m),
                 ),
               ListTile(
@@ -444,7 +441,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
   }
 
   Future<void> _editSpread() async {
-    final v = await showModalBottomSheet<bool>(
+    final v = await showKSheet<bool>(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
@@ -453,13 +450,13 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
             ListTile(
               title: const Text('Each EMI, monthly'),
               subtitle: const Text('Spent is spread over the months'),
-              trailing: _spread ? const Icon(Icons.check_rounded) : null,
+              trailing: _spread ? const Icon(Symbols.check) : null,
               onTap: () => Navigator.pop(context, true),
             ),
             ListTile(
               title: const Text('Full amount once'),
               subtitle: const Text('In the month you bought it'),
-              trailing: !_spread ? const Icon(Icons.check_rounded) : null,
+              trailing: !_spread ? const Icon(Symbols.check) : null,
               onTap: () => Navigator.pop(context, false),
             ),
           ],
@@ -521,9 +518,9 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
   }
 
   Future<void> _remove() async {
-    final ok = await showDialog<bool>(
+    final ok = await showKDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => KDialog(
         title: const Text('Stop tracking this EMI?'),
         content: Text(
           _card

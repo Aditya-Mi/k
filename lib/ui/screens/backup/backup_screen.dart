@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -177,7 +178,7 @@ class _BackupScreenState extends State<BackupScreen> {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Symbols.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Backup'),
@@ -199,7 +200,7 @@ class _BackupScreenState extends State<BackupScreen> {
             children: [
               const SettingsHead('Google Drive'),
               SettingsItem(
-                icon: Icons.cloud_upload_outlined,
+                icon: Symbols.cloud_upload,
                 title: 'Daily backup',
                 subtitle: on
                     ? '${s.account} · keeps the last ${BackupService.keep}'
@@ -212,9 +213,7 @@ class _BackupScreenState extends State<BackupScreen> {
               ),
               if (on && (s.lastAt != null || s.error != null))
                 SettingsItem(
-                  icon: s.error == null
-                      ? Icons.check_circle_outline_rounded
-                      : Icons.error_outline_rounded,
+                  icon: s.error == null ? Symbols.check_circle : Symbols.error,
                   iconColor: s.error == null ? null : c.alert,
                   title: s.lastAt == null
                       ? 'No backup yet'
@@ -242,7 +241,7 @@ class _BackupScreenState extends State<BackupScreen> {
                           : () => _run(
                               () => backUpNow(ScaffoldMessenger.of(context)),
                             ),
-                      icon: const Icon(Icons.backup_outlined, size: 18),
+                      icon: const Icon(Symbols.backup, size: 18),
                       label: const Text('Back up now'),
                     ),
                   ),
@@ -250,7 +249,7 @@ class _BackupScreenState extends State<BackupScreen> {
               const SettingsHead('On Drive'),
               if (!on)
                 SettingsItem(
-                  icon: Icons.manage_search_rounded,
+                  icon: Symbols.manage_search,
                   title: 'Find backups on Drive',
                   subtitle: 'Sign in to the account they were saved to',
                   onTap: _busy ? null : _findOnDrive,
@@ -262,7 +261,7 @@ class _BackupScreenState extends State<BackupScreen> {
                   builder: (context, list) {
                     if (list.hasError) {
                       return SettingsItem(
-                        icon: Icons.cloud_off_outlined,
+                        icon: Symbols.cloud_off,
                         title: "Couldn't list Drive",
                         subtitle: list.error is DriveAuthException
                             ? 'Sign in again: turn backup off and on'
@@ -273,14 +272,14 @@ class _BackupScreenState extends State<BackupScreen> {
                     final copies = list.data;
                     if (copies == null) {
                       return const SettingsItem(
-                        icon: Icons.history_rounded,
+                        icon: Symbols.history,
                         title: 'Looking…',
                         subtitle: 'Reading your backups',
                       );
                     }
                     if (copies.isEmpty) {
                       return const SettingsItem(
-                        icon: Icons.history_rounded,
+                        icon: Symbols.history,
                         title: 'None yet',
                         subtitle: 'First one tonight',
                       );
@@ -291,7 +290,7 @@ class _BackupScreenState extends State<BackupScreen> {
                       children: [
                         for (final b in shown)
                           SettingsItem(
-                            icon: Icons.history_rounded,
+                            icon: Symbols.history,
                             title: _cap(whenShort(b.createdAt)),
                             subtitle: [
                               if (b.payments != null)
@@ -303,7 +302,7 @@ class _BackupScreenState extends State<BackupScreen> {
                           ),
                         if (more > 0)
                           SettingsItem(
-                            icon: Icons.more_horiz_rounded,
+                            icon: Symbols.more_horiz,
                             iconColor: c.text3,
                             title: '$more older',
                             subtitle:
@@ -317,7 +316,7 @@ class _BackupScreenState extends State<BackupScreen> {
                 ),
               const SettingsHead('Passphrase'),
               SettingsItem(
-                icon: Icons.key_rounded,
+                icon: Symbols.key,
                 title: _hasPassphrase == false
                     ? 'Set a passphrase'
                     : 'Change passphrase',
@@ -329,7 +328,7 @@ class _BackupScreenState extends State<BackupScreen> {
               ),
               const SettingsHead('From a file'),
               SettingsItem(
-                icon: Icons.upload_file_rounded,
+                icon: Symbols.upload_file,
                 title: 'Import a backup file',
                 subtitle: 'A .${BackupFile.extension} file from Export',
                 onTap: _busy ? null : _import,
@@ -340,7 +339,7 @@ class _BackupScreenState extends State<BackupScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.lock_outline_rounded, size: 16, color: c.text3),
+                    Icon(Symbols.lock, size: 16, color: c.text3),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(

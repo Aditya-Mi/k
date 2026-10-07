@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../theme/k_theme.dart';
 
@@ -34,7 +35,7 @@ class SettingsChevron extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Icon(Icons.chevron_right_rounded, size: 20, color: context.k.text3);
+      Icon(Symbols.chevron_right, size: 20, color: context.k.text3);
 }
 
 /// Icon, title over subtitle, trailing control (design 06 items).

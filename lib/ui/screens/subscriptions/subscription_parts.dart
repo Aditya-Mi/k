@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 
+import '../../widgets/k_sheet.dart';
+
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/db/enums.dart';
 import '../../../data/subscriptions/recurrence.dart';
@@ -115,7 +118,7 @@ class PriceUpBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.arrow_upward_rounded, size: 12, color: c.alert),
+          Icon(Symbols.arrow_upward, size: 12, color: c.alert),
           const SizedBox(width: 2),
           Text(
             'Price up, was ${inr(was)}',
@@ -164,7 +167,7 @@ Future<int?> pickReminder(
   required int current,
   int? defaultDays,
   bool usingDefault = false,
-}) => showModalBottomSheet<int>(
+}) => showKSheet<int>(
   context: context,
   builder: (context) => SafeArea(
     child: Column(
@@ -180,14 +183,14 @@ Future<int?> pickReminder(
         if (defaultDays != null)
           ListTile(
             title: Text('Same as others (${reminderLabel(defaultDays)})'),
-            trailing: usingDefault ? const Icon(Icons.check_rounded) : null,
+            trailing: usingDefault ? const Icon(Symbols.check) : null,
             onTap: () => Navigator.pop(context, -1),
           ),
         for (final d in const [1, 2, 3, 5, 7, 0])
           ListTile(
             title: Text(reminderLabel(d)),
             trailing: !usingDefault && d == current
-                ? const Icon(Icons.check_rounded)
+                ? const Icon(Symbols.check)
                 : null,
             onTap: () => Navigator.pop(context, d),
           ),

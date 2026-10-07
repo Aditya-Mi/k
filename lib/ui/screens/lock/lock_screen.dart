@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/app_lock.dart';
 import '../../theme/k_theme.dart';
@@ -129,7 +130,7 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed: _busy ? null : _unlock,
-                    icon: const Icon(Icons.lock_open_rounded),
+                    icon: const Icon(Symbols.lock_open),
                     label: const Text('Unlock'),
                   ),
                 ),

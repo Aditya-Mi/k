@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../data/email/email_source.dart';
@@ -73,7 +74,7 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Close',
-          icon: const Icon(Icons.close_rounded),
+          icon: const Icon(Symbols.close),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Connect an inbox'),
@@ -88,7 +89,7 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
           ),
           const SizedBox(height: 16),
           _Option(
-            icon: Icons.account_circle_outlined,
+            icon: Symbols.account_circle,
             title: 'Sign in with Google',
             tag: 'Recommended',
             subtitle:
@@ -99,7 +100,7 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
           ),
           const SizedBox(height: 16),
           _Option(
-            icon: Icons.key_outlined,
+            icon: Symbols.key,
             title: 'Use an app password',
             subtitle: 'For Gmail with 2-Step Verification, or other IMAP mail',
             onTap: () async {
@@ -126,7 +127,7 @@ class _ConnectInboxScreenState extends State<ConnectInboxScreen> {
                   style: t.body.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(width: 6),
-                Icon(Icons.edit_outlined, size: 16, color: c.text2),
+                Icon(Symbols.edit, size: 16, color: c.text2),
               ],
             ),
           ),
@@ -222,11 +223,7 @@ class _Option extends StatelessWidget {
                           color: c.text2,
                         ),
                       )
-                    : Icon(
-                        Icons.chevron_right_rounded,
-                        size: 20,
-                        color: c.text3,
-                      ),
+                    : Icon(Symbols.chevron_right, size: 20, color: c.text3),
               ],
             ),
           ),
@@ -285,7 +282,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Symbols.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('App password'),
@@ -295,6 +292,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
         children: [
           label('Gmail address'),
           TextField(
+            style: context.kt.input,
             controller: _email,
             enabled: widget.email == null,
             keyboardType: TextInputType.emailAddress,
@@ -304,6 +302,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
           const SizedBox(height: 20),
           label('App password'),
           TextField(
+            style: context.kt.input,
             controller: _password,
             obscureText: !_show,
             autocorrect: false,
@@ -311,11 +310,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
             decoration: box('16 letters, spaces are fine').copyWith(
               suffixIcon: IconButton(
                 tooltip: _show ? 'Hide' : 'Show',
-                icon: Icon(
-                  _show
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                ),
+                icon: Icon(_show ? Symbols.visibility_off : Symbols.visibility),
                 onPressed: () => setState(() => _show = !_show),
               ),
             ),
@@ -386,7 +381,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
                   dimension: 18,
                   child: CircularProgressIndicator(strokeWidth: 2, color: c.bg),
                 )
-              : const Icon(Icons.link_rounded, size: 20),
+              : const Icon(Symbols.link, size: 20),
           label: Text(_busy ? 'Connecting…' : 'Connect'),
         ),
       ),

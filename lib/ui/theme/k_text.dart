@@ -58,6 +58,16 @@ class KText {
         color: c.text,
       ),
       body = TextStyle(fontSize: 15, height: 1.35, color: c.text),
+      input = TextStyle(fontSize: 17, height: 1.35, color: c.text),
+      amountInput = TextStyle(
+        fontFamily: _archivo,
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        fontVariations: _axes(600),
+        fontFeatures: _tnum,
+        height: 1.2,
+        color: c.text,
+      ),
       meta = TextStyle(
         fontSize: 12.5,
         height: 1.35,
@@ -100,6 +110,12 @@ class KText {
   final TextStyle title;
   final TextStyle amountRow;
   final TextStyle body;
+
+  /// What you type into a field (Roboto 17).
+  final TextStyle input;
+
+  /// An amount you type, counted like any figure (Archivo 600 24, tabular).
+  final TextStyle amountInput;
   final TextStyle meta;
   final TextStyle dayHeader;
   final TextStyle label;

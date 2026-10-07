@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../theme/k_theme.dart';
 
@@ -118,7 +119,7 @@ class _DashedChip extends StatelessWidget {
         painter: _DashedRect(c.text3),
         child: Center(
           child: style == NoteChipStyle.upcoming
-              ? Icon(Icons.schedule_rounded, size: 8, color: c.text3)
+              ? Icon(Symbols.schedule, size: 8, color: c.text3)
               : Text(
                   '?',
                   style: context.kt.meta.copyWith(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'k_sheet.dart';
+
 import '../theme/k_theme.dart';
 
 /// One-field text dialog. Returns the text on confirm, null on cancel.
@@ -16,7 +18,7 @@ Future<String?> promptText(
   String action = 'Save',
   bool numeric = false,
   int maxLines = 1,
-}) => showDialog<String>(
+}) => showKDialog<String>(
   context: context,
   builder: (_) => _TextPrompt(
     title: title,
@@ -64,6 +66,7 @@ class _TextPromptState extends State<_TextPrompt> {
   @override
   Widget build(BuildContext context) {
     final field = TextField(
+      style: widget.numeric ? context.kt.amountInput : context.kt.input,
       controller: _controller,
       autofocus: true,
       maxLines: widget.maxLines,
@@ -79,9 +82,13 @@ class _TextPromptState extends State<_TextPrompt> {
       decoration: InputDecoration(
         hintText: widget.hint,
         prefixText: widget.numeric ? '₹ ' : null,
+        hintStyle: widget.numeric
+            ? context.kt.amountInput.copyWith(color: context.k.text3)
+            : null,
+        prefixStyle: context.kt.amountInput,
       ),
     );
-    return AlertDialog(
+    return KDialog(
       title: Text(widget.title),
       content: widget.help == null
           ? field

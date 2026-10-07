@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
+
+import 'k_sheet.dart';
 
 import '../../data/repositories/bank_repository.dart';
 import '../theme/k_theme.dart';
@@ -24,9 +27,8 @@ Future<String?> showBankPicker(
   String? subtitle,
   String? selectedId,
   bool allowNew = true,
-}) => showModalBottomSheet<String>(
+}) => showKSheet<String>(
   context: context,
-  showDragHandle: true,
   isScrollControlled: true,
   builder: (_) => _BankPicker(
     banks: banks,
@@ -111,7 +113,7 @@ class _BankPickerState extends State<_BankPicker> {
                     for (final b in others) _row(b, c),
                     if (widget.allowNew)
                       ListTile(
-                        leading: Icon(Icons.add_rounded, color: c.text2),
+                        leading: Icon(Symbols.add, color: c.text2),
                         title: const Text('A bank not in k'),
                         subtitle: const Text('Name it once'),
                         onTap: () => Navigator.pop(context, newBankPick),
@@ -130,16 +132,13 @@ class _BankPickerState extends State<_BankPicker> {
     leading: Icon(bankIcon(b), color: c.text2),
     title: Text(b.name),
     subtitle: Text(bankSenders(b)),
-    trailing: b.id == widget.selectedId
-        ? const Icon(Icons.check_rounded)
-        : null,
+    trailing: b.id == widget.selectedId ? const Icon(Symbols.check) : null,
     onTap: () => Navigator.pop(context, b.id),
   );
 }
 
-IconData bankIcon(BankView b) => b.wallet
-    ? Icons.account_balance_wallet_outlined
-    : Icons.account_balance_outlined;
+IconData bankIcon(BankView b) =>
+    b.wallet ? Symbols.account_balance_wallet : Symbols.account_balance;
 
 /// Name or sender contains the query ("hdfc", "sbiinb", "kotak.com").
 List<BankView> filterBanks(List<BankView> banks, String query) {
@@ -164,10 +163,11 @@ class BankSearchField extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.k;
     return TextField(
+      style: context.kt.input,
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: 'Search banks and wallets',
-        prefixIcon: Icon(Icons.search_rounded, color: c.text2),
+        prefixIcon: Icon(Symbols.search, color: c.text2),
         filled: true,
         fillColor: c.surface2,
         isDense: true,

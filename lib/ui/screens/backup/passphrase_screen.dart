@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/backup/backup_service.dart';
 import '../../../di.dart';
@@ -71,16 +72,14 @@ class _PassphraseScreenState extends State<PassphraseScreen> {
     final t = context.kt;
     final eye = IconButton(
       tooltip: _show ? 'Hide' : 'Show',
-      icon: Icon(
-        _show ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-      ),
+      icon: Icon(_show ? Symbols.visibility_off : Symbols.visibility),
       onPressed: () => setState(() => _show = !_show),
     );
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Symbols.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(widget.title),
@@ -90,6 +89,7 @@ class _PassphraseScreenState extends State<PassphraseScreen> {
         children: [
           const FieldLabel('Passphrase'),
           TextField(
+            style: context.kt.input,
             controller: _first,
             obscureText: !_show,
             autocorrect: false,
@@ -103,6 +103,7 @@ class _PassphraseScreenState extends State<PassphraseScreen> {
           const SizedBox(height: 20),
           const FieldLabel('Type it again'),
           TextField(
+            style: context.kt.input,
             controller: _again,
             obscureText: !_show,
             autocorrect: false,
@@ -156,7 +157,7 @@ class _PassphraseScreenState extends State<PassphraseScreen> {
         ],
       ),
       bottomNavigationBar: BottomAction(
-        icon: Icons.key_rounded,
+        icon: Symbols.key,
         label: _busy ? 'Saving…' : widget.action,
         busy: _busy,
         onPressed: _save,

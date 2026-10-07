@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/backup/backup_file.dart';
 import '../../../data/backup/backup_service.dart';
@@ -50,9 +53,10 @@ class _RestoreScreenState extends State<RestoreScreen> {
       setState(() => _error = 'Enter the passphrase this backup was made with');
       return;
     }
-    final ok = await showDialog<bool>(
+    final ok = await showKDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => KDialog(
+        destructive: true,
         title: const Text('Replace everything?'),
         content: const Text(
           "Everything on this phone is replaced with the backup's. This can't "
@@ -119,7 +123,7 @@ class _RestoreScreenState extends State<RestoreScreen> {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Symbols.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Restore'),
@@ -152,6 +156,7 @@ class _RestoreScreenState extends State<RestoreScreen> {
           if (_savedKeyOpens == false) ...[
             const FieldLabel('Passphrase for this backup'),
             TextField(
+              style: context.kt.input,
               controller: _passphrase,
               obscureText: !_show,
               autocorrect: false,
@@ -161,9 +166,7 @@ class _RestoreScreenState extends State<RestoreScreen> {
                     suffixIcon: IconButton(
                       tooltip: _show ? 'Hide' : 'Show',
                       icon: Icon(
-                        _show
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
+                        _show ? Symbols.visibility_off : Symbols.visibility,
                       ),
                       onPressed: () => setState(() => _show = !_show),
                     ),
@@ -187,7 +190,7 @@ class _RestoreScreenState extends State<RestoreScreen> {
         ],
       ),
       bottomNavigationBar: BottomAction(
-        icon: Icons.settings_backup_restore_rounded,
+        icon: Symbols.settings_backup_restore,
         label: _busy ? 'Restoring…' : 'Restore',
         busy: _busy || _savedKeyOpens == null,
         onPressed: _restore,

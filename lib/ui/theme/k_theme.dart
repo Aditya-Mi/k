@@ -8,6 +8,9 @@ export 'bands.dart';
 export 'k_colors.dart';
 export 'k_text.dart';
 
+/// Material Symbols Outlined weight: thin lines to sit with the hairline rosettes.
+const _iconWeight = 300.0;
+
 final _darkText = KText(KColors.dark);
 final _lightText = KText(KColors.light);
 
@@ -54,6 +57,7 @@ ThemeData buildTheme(Brightness brightness) {
     colorScheme: scheme,
     scaffoldBackgroundColor: c.bg,
     canvasColor: c.bg,
+    iconTheme: IconThemeData(color: c.text, weight: _iconWeight),
     dividerColor: c.outline,
     extensions: [c],
     splashFactory: InkSparkle.splashFactory,
@@ -94,6 +98,8 @@ ThemeData buildTheme(Brightness brightness) {
       iconTheme: WidgetStateProperty.resolveWith(
         (s) => IconThemeData(
           color: s.contains(WidgetState.selected) ? c.text : c.text2,
+          weight: _iconWeight,
+          fill: s.contains(WidgetState.selected) ? 1 : 0,
         ),
       ),
     ),
@@ -157,7 +163,7 @@ ThemeData buildTheme(Brightness brightness) {
       behavior: SnackBarBehavior.floating,
     ),
     inputDecorationTheme: InputDecorationTheme(
-      hintStyle: t.body.copyWith(color: c.text3),
+      hintStyle: t.input.copyWith(color: c.text3),
       border: InputBorder.none,
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(

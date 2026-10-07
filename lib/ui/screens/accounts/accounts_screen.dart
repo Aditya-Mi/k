@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/db/enums.dart';
 import '../../../data/emis/emi_service.dart';
@@ -79,7 +82,7 @@ class AccountsScreen extends StatelessWidget {
             ? null
             : IconButton(
                 tooltip: 'Back',
-                icon: const Icon(Icons.arrow_back_rounded),
+                icon: const Icon(Symbols.arrow_back),
                 onPressed: () => Navigator.pop(context),
               ),
         titleSpacing: asTab ? 20 : null,
@@ -87,10 +90,8 @@ class AccountsScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Add account',
-            icon: const Icon(Icons.add_rounded),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const AddAccountScreen()),
-            ),
+            icon: const Icon(Symbols.add),
+            onPressed: () => addAccount(context),
           ),
           const SizedBox(width: 4),
         ],
@@ -154,11 +155,13 @@ class AccountsScreen extends StatelessWidget {
                 for (final r in banks)
                   _AccountRow(row: r, onTap: () => open(r)),
               ],
-              if (cards.isNotEmpty) ...[
-                head('Credit cards'),
-                for (final r in cards)
-                  _AccountRow(row: r, onTap: () => open(r)),
-              ],
+              // Always shown, so adding a card is one tap away.
+              head('Credit cards'),
+              for (final r in cards) _AccountRow(row: r, onTap: () => open(r)),
+              _AddRow(
+                label: 'Add a credit card',
+                onTap: () => addAccount(context, AccountType.creditCard),
+              ),
               if (cash.isNotEmpty) ...[
                 head('Cash'),
                 for (final r in cash) _AccountRow(row: r, onTap: () => open(r)),
@@ -179,39 +182,39 @@ Future<void> accountActions(
   List<AccountRowData> all,
 ) async {
   final isCredit = r.account.isCreditCard;
-  final choice = await showModalBottomSheet<int>(
+  final choice = await showKSheet<int>(
     context: context,
     builder: (context) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.edit_outlined),
+            leading: const Icon(Symbols.edit),
             title: const Text('Rename'),
             onTap: () => Navigator.pop(context, 0),
           ),
           if (isCredit)
             ListTile(
-              leading: const Icon(Icons.credit_score_outlined),
+              leading: const Icon(Symbols.credit_score),
               title: const Text('Set card limit'),
               onTap: () => Navigator.pop(context, 3),
             ),
           ListTile(
-            leading: const Icon(Icons.account_balance_wallet_outlined),
+            leading: const Icon(Symbols.account_balance_wallet),
             title: Text(isCredit ? 'Set available limit' : 'Set balance'),
             onTap: () => Navigator.pop(context, 1),
           ),
           if (r.account.type == AccountType.savings ||
               r.account.type == AccountType.current)
             ListTile(
-              leading: const Icon(Icons.credit_card_outlined),
+              leading: const Icon(Symbols.credit_card),
               title: const Text('Add a debit card'),
               subtitle: const Text('Its payments log on this account'),
               onTap: () => Navigator.pop(context, 4),
             ),
           if (all.length > 1 && !r.account.isCash)
             ListTile(
-              leading: const Icon(Icons.call_merge_rounded),
+              leading: const Icon(Symbols.call_merge),
               title: const Text('Merge into another account'),
               subtitle: const Text('Same money, e.g. a debit card'),
               onTap: () => Navigator.pop(context, 2),
@@ -259,7 +262,7 @@ Future<void> accountActions(
       );
       if (name != null) await ledger.renameAccount(r.account.id, name);
     case 3:
-      final minor = await showDialog<int>(
+      final minor = await showKDialog<int>(
         context: context,
         builder: (_) => BalanceDialog(
           title: 'Card limit',
@@ -271,7 +274,7 @@ Future<void> accountActions(
       );
       if (minor != null) await ledger.setCreditLimit(r.account.id, minor);
     default:
-      final minor = await showDialog<int>(
+      final minor = await showKDialog<int>(
         context: context,
         builder: (_) => BalanceDialog(
           title: isCredit ? 'Available limit now' : 'Balance now',
@@ -292,7 +295,7 @@ Future<void> _merge(
   AccountRowData r,
   List<AccountRowData> all,
 ) async {
-  final target = await showModalBottomSheet<AccountView>(
+  final target = await showKSheet<AccountView>(
     context: context,
     builder: (context) => SafeArea(
       child: ListView(
@@ -316,9 +319,10 @@ Future<void> _merge(
     ),
   );
   if (target == null || !context.mounted) return;
-  final ok = await showDialog<bool>(
+  final ok = await showKDialog<bool>(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (context) => KDialog(
+      destructive: true,
       title: const Text('Merge accounts?'),
       content: Text(
         'Payments and future messages for ${r.account.short} move to '
@@ -382,8 +386,29 @@ class _AccountRow extends StatelessWidget {
       c,
       children: [
         Text(a.long, style: t.body),
-        if (a.includes.isNotEmpty)
-          Text('Includes ${a.includes.join(', ')}', style: t.meta),
+        // Cards and folded accounts that log here, one line each.
+        for (final inc in a.includes)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Row(
+              children: [
+                Icon(
+                  inc.startsWith('card')
+                      ? Symbols.credit_card
+                      : Symbols.account_balance,
+                  size: 14,
+                  color: c.text2,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  inc.startsWith('card')
+                      ? 'Debit card ${inc.substring(5)}'
+                      : 'Also a/c ${inc.substring(4)}',
+                  style: t.meta.copyWith(color: c.text2),
+                ),
+              ],
+            ),
+          ),
         const SizedBox(height: 2),
         Text(overdrawn ? '$meta · overdrawn' : meta, style: t.meta),
         if (row.emis.isNotEmpty) _emiLine(t, c),
@@ -556,7 +581,7 @@ class _BalanceDialogState extends State<BalanceDialog> {
   @override
   Widget build(BuildContext context) {
     final t = context.kt;
-    return AlertDialog(
+    return KDialog(
       title: Text(widget.title),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -574,6 +599,7 @@ class _BalanceDialogState extends State<BalanceDialog> {
             const SizedBox(height: 12),
           ],
           TextField(
+            style: context.kt.amountInput,
             controller: _controller,
             autofocus: true,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -583,6 +609,10 @@ class _BalanceDialogState extends State<BalanceDialog> {
             decoration: InputDecoration(
               hintText: '0.00',
               prefixText: _overdrawn ? '−₹ ' : '₹ ',
+              hintStyle: context.kt.amountInput.copyWith(
+                color: context.k.text3,
+              ),
+              prefixStyle: context.kt.amountInput,
             ),
             onSubmitted: (_) => _save(),
           ),
@@ -605,4 +635,72 @@ class _BalanceDialogState extends State<BalanceDialog> {
       ],
     );
   }
+}
+
+/// "+" on Accounts: pick what to add, then the form for it (design 10c).
+Future<void> addAccount(BuildContext context, [AccountType? type]) async {
+  final picked =
+      type ??
+      await showKSheet<AccountType>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final (t, icon, title, sub) in const [
+                (
+                  AccountType.savings,
+                  Symbols.account_balance,
+                  'Bank account',
+                  'Savings or current',
+                ),
+                (
+                  AccountType.creditCard,
+                  Symbols.credit_card,
+                  'Credit card',
+                  'Limit and what you owe',
+                ),
+                (
+                  AccountType.wallet,
+                  Symbols.account_balance_wallet,
+                  'Wallet',
+                  'PhonePe, Paytm, Amazon Pay',
+                ),
+              ])
+                ListTile(
+                  leading: Icon(icon),
+                  title: Text(title),
+                  subtitle: Text(sub),
+                  onTap: () => Navigator.pop(context, t),
+                ),
+            ],
+          ),
+        ),
+      );
+  if (picked == null || !context.mounted) return;
+  await Navigator.of(context).push(
+    MaterialPageRoute<void>(builder: (_) => AddAccountScreen(type: picked)),
+  );
+}
+
+class _AddRow extends StatelessWidget {
+  const _AddRow({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: SizedBox(
+      height: 48,
+      child: Row(
+        children: [
+          Icon(Symbols.add, size: 20, color: context.k.text2),
+          const SizedBox(width: 12),
+          Text(label, style: context.kt.body.copyWith(color: context.k.text2)),
+        ],
+      ),
+    ),
+  );
 }

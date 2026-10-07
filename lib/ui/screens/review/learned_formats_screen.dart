@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:txn_parser/txn_parser.dart' show Channel, TemplateKind;
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/review/learned_formats.dart';
 import '../../../di.dart';
@@ -24,7 +27,7 @@ class LearnedFormatsScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Symbols.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Learned formats'),
@@ -91,7 +94,7 @@ class _FormatCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                isSms ? Icons.sms_outlined : Icons.mail_outline_rounded,
+                isSms ? Symbols.sms : Symbols.mail,
                 size: 20,
                 color: c.text2,
               ),
@@ -173,9 +176,10 @@ class _FormatCard extends StatelessWidget {
   }
 
   Future<void> _forget(BuildContext context) async {
-    final ok = await showDialog<bool>(
+    final ok = await showKDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => KDialog(
+        destructive: true,
         title: const Text('Forget this format?'),
         content: const Text(
           'Similar messages go to Review again. Logged payments stay.',

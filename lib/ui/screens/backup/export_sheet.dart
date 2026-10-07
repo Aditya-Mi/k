@@ -1,7 +1,10 @@
 import 'dart:typed_data';
 
+import '../../widgets/k_sheet.dart';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/backup/backup_service.dart';
 import '../../../di.dart';
@@ -12,9 +15,8 @@ import 'passphrase_screen.dart';
 /// Export (design 06h): payments as CSV, or the encrypted backup file;
 /// either is saved where the owner picks (Android's save dialog).
 Future<void> showExportSheet(BuildContext context) async {
-  final pick = await showModalBottomSheet<_Kind>(
+  final pick = await showKSheet<_Kind>(
     context: context,
-    showDragHandle: true,
     builder: (context) {
       final t = context.kt;
       return SafeArea(
@@ -34,13 +36,13 @@ Future<void> showExportSheet(BuildContext context) async {
               ),
             ),
             SettingsItem(
-              icon: Icons.table_view_outlined,
+              icon: Symbols.table_view,
               title: 'Payments as CSV',
               subtitle: 'Every payment. Not encrypted: anyone with the file can read it.',
               onTap: () => Navigator.pop(context, _Kind.csv),
             ),
             SettingsItem(
-              icon: Icons.lock_outline_rounded,
+              icon: Symbols.lock,
               title: 'Backup file',
               subtitle: 'Everything, encrypted with your backup passphrase',
               onTap: () => Navigator.pop(context, _Kind.backup),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -236,7 +237,7 @@ class _Step extends StatelessWidget {
           SizedBox(
             width: 28,
             child: done
-                ? Icon(Icons.check_circle_rounded, size: 20, color: c.text)
+                ? Icon(Symbols.check_circle, size: 20, color: c.text)
                 : Text('$number', style: t.title.copyWith(color: c.text2)),
           ),
           Expanded(

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:txn_parser/txn_parser.dart';
+
+import '../../widgets/k_sheet.dart';
 
 import '../categories/category_edit_screen.dart';
 import '../../../data/repositories/bank_repository.dart';
@@ -141,7 +144,7 @@ class _Editor extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Close',
-          icon: const Icon(Icons.close_rounded),
+          icon: const Icon(Symbols.close),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(cubit.editing ? 'Edit format' : 'Review'),
@@ -185,7 +188,7 @@ class _Editor extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        isSms ? Icons.sms_outlined : Icons.mail_outline_rounded,
+                        isSms ? Symbols.sms : Symbols.mail,
                         size: 20,
                         color: c.text2,
                       ),
@@ -439,7 +442,7 @@ class _Editor extends StatelessWidget {
                             color: c.onInk,
                           ),
                         )
-                      : const Icon(Icons.check_rounded),
+                      : const Icon(Symbols.check),
                   label: Text(
                     cubit.editing
                         ? 'Save format'
@@ -503,7 +506,7 @@ class _Editor extends StatelessWidget {
         extentOffset: existing.end - base,
       );
     }
-    final picked = await showModalBottomSheet<Object>(
+    final picked = await showKSheet<Object>(
       context: context,
       isScrollControlled: true,
       builder: (context) => StatefulBuilder(
@@ -530,7 +533,7 @@ class _Editor extends StatelessWidget {
                         onPressed: first > 0
                             ? () => words2(() => first--)
                             : null,
-                        icon: const Icon(Icons.keyboard_arrow_left_rounded),
+                        icon: const Icon(Symbols.keyboard_arrow_left),
                       ),
                       Expanded(
                         child: Container(
@@ -563,14 +566,14 @@ class _Editor extends StatelessWidget {
                         onPressed: last > first
                             ? () => words2(() => last--)
                             : null,
-                        icon: const Icon(Icons.remove_rounded),
+                        icon: const Icon(Symbols.remove),
                       ),
                       IconButton(
                         tooltip: 'One word more',
                         onPressed: last < words.length - 1
                             ? () => words2(() => last++)
                             : null,
-                        icon: const Icon(Icons.add_rounded),
+                        icon: const Icon(Symbols.add),
                       ),
                     ],
                   ),
@@ -619,7 +622,7 @@ class _Editor extends StatelessWidget {
                     const SizedBox(height: 8),
                     TextButton.icon(
                       onPressed: () => Navigator.pop(context, 'clear'),
-                      icon: const Icon(Icons.close_rounded),
+                      icon: const Icon(Symbols.close),
                       label: const Text('Remove mark'),
                     ),
                   ],
@@ -726,9 +729,8 @@ class _Editor extends StatelessWidget {
   Future<void> _notATransaction(BuildContext context) async {
     final cubit = context.read<ReviewEditorCubit>();
     final bank = cubit.bankShort();
-    final skip = await showModalBottomSheet<bool>(
+    final skip = await showKSheet<bool>(
       context: context,
-      showDragHandle: true,
       builder: (context) => _NotATransactionSheet(bank: bank),
     );
     if (skip == null || !context.mounted) return;
@@ -791,9 +793,8 @@ class _Editor extends StatelessWidget {
     );
     if (!context.mounted || picked == null) return;
     if (picked == newBankPick) {
-      final choice = await showModalBottomSheet<BankChoice>(
+      final choice = await showKSheet<BankChoice>(
         context: context,
-        showDragHandle: true,
         isScrollControlled: true,
         builder: (_) => _NewBankSheet(
           sender: item.raw.sender,
@@ -837,14 +838,14 @@ class _Editor extends StatelessWidget {
   Future<void> _pickAccount(BuildContext context) async {
     final cubit = context.read<ReviewEditorCubit>();
     final accounts = cubit.bankAccounts();
-    final picked = await showModalBottomSheet<(String?,)>(
+    final picked = await showKSheet<(String?,)>(
       context: context,
       builder: (context) => SafeArea(
         child: ListView(
           shrinkWrap: true,
           children: [
             ListTile(
-              leading: const Icon(Icons.short_text_rounded),
+              leading: const Icon(Symbols.short_text),
               title: const Text('From the message'),
               subtitle: const Text('Use the account number marked above'),
               onTap: () => Navigator.pop(context, (null,)),
@@ -853,7 +854,7 @@ class _Editor extends StatelessWidget {
               ListTile(
                 title: Text(a.long),
                 trailing: a.id == state.accountId
-                    ? const Icon(Icons.check_rounded)
+                    ? const Icon(Symbols.check)
                     : null,
                 onTap: () => Navigator.pop(context, (a.id,)),
               ),
@@ -866,7 +867,7 @@ class _Editor extends StatelessWidget {
 
   Future<void> _pickCategory(BuildContext context) async {
     final cubit = context.read<ReviewEditorCubit>();
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showKSheet<String>(
       context: context,
       isScrollControlled: true,
       builder: (context) => SafeArea(
@@ -882,7 +883,7 @@ class _Editor extends StatelessWidget {
                   leading: Icon(categoryIcon(cat.icon), color: context.k.text2),
                   title: Text(cat.name),
                   trailing: cat.id == state.categoryId
-                      ? const Icon(Icons.check_rounded)
+                      ? const Icon(Symbols.check)
                       : null,
                   onTap: () => Navigator.pop(context, cat.id),
                 ),
@@ -1023,6 +1024,7 @@ class _NewBankSheetState extends State<_NewBankSheet> {
             ),
             const SizedBox(height: 16),
             TextField(
+              style: context.kt.input,
               controller: _name,
               autofocus: true,
               textCapitalization: TextCapitalization.words,

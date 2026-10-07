@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:rxdart/rxdart.dart';
 
 import '../../../data/backup/backup_service.dart';
@@ -55,9 +56,7 @@ class _BackupSettingsState extends State<BackupSettings> {
           children: [
             const SettingsHead('Backup'),
             SettingsItem(
-              icon: error == null
-                  ? Icons.cloud_upload_outlined
-                  : Icons.cloud_off_outlined,
+              icon: error == null ? Symbols.cloud_upload : Symbols.cloud_off,
               iconColor: error == null ? null : c.alert,
               title: 'Google Drive backup',
               subtitle: !on
@@ -76,7 +75,7 @@ class _BackupSettingsState extends State<BackupSettings> {
               trailing: Switch(value: on, onChanged: _busy ? null : _toggle),
             ),
             SettingsItem(
-              icon: Icons.download_rounded,
+              icon: Symbols.download,
               title: 'Export',
               subtitle: 'CSV or encrypted backup file',
               onTap: () => showExportSheet(context),

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/db/enums.dart';
 import '../../../data/email/email_sync.dart';
@@ -27,9 +30,7 @@ class EmailSettings extends StatelessWidget {
             const SettingsHead('Email'),
             for (final a in inboxes)
               SettingsItem(
-                icon: a.error == null
-                    ? Icons.mail_outline_rounded
-                    : Icons.error_outline_rounded,
+                icon: a.error == null ? Symbols.mail : Symbols.error,
                 iconColor: a.error == null ? null : c.alert,
                 title: a.row.email,
                 subtitle: a.error == null
@@ -37,14 +38,10 @@ class EmailSettings extends StatelessWidget {
                     : 'Sign-in failed · tap to fix',
                 subtitleColor: a.error == null ? null : c.alert,
                 onTap: () => _inboxSheet(context, a),
-                trailing: Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: c.text3,
-                ),
+                trailing: Icon(Symbols.chevron_right, size: 20, color: c.text3),
               ),
             SettingsItem(
-              icon: Icons.add_rounded,
+              icon: Symbols.add,
               title: inboxes.isEmpty
                   ? 'Connect an inbox'
                   : 'Connect another inbox',
@@ -79,9 +76,8 @@ class EmailSettings extends StatelessWidget {
     final sync = getIt<EmailSync>();
     final t = context.kt;
     final c = context.k;
-    final action = await showModalBottomSheet<String>(
+    final action = await showKSheet<String>(
       context: context,
-      showDragHandle: true,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -105,23 +101,23 @@ class EmailSettings extends StatelessWidget {
             ),
             if (a.row.authType == EmailAuthType.imap)
               ListTile(
-                leading: const Icon(Icons.key_outlined),
+                leading: const Icon(Symbols.key),
                 title: const Text('Enter a new app password'),
                 onTap: () => Navigator.pop(context, 'password'),
               )
             else if (a.error != null)
               ListTile(
-                leading: const Icon(Icons.account_circle_outlined),
+                leading: const Icon(Symbols.account_circle),
                 title: const Text('Sign in with Google again'),
                 onTap: () => Navigator.pop(context, 'google'),
               ),
             ListTile(
-              leading: const Icon(Icons.refresh_rounded),
+              leading: const Icon(Symbols.refresh),
               title: const Text('Check now'),
               onTap: () => Navigator.pop(context, 'check'),
             ),
             ListTile(
-              leading: const Icon(Icons.link_off_rounded),
+              leading: const Icon(Symbols.link_off),
               title: const Text('Disconnect'),
               onTap: () => Navigator.pop(context, 'remove'),
             ),
@@ -154,9 +150,10 @@ class EmailSettings extends StatelessWidget {
           );
         }
       case 'remove':
-        final ok = await showDialog<bool>(
+        final ok = await showKDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (context) => KDialog(
+            destructive: true,
             title: Text('Disconnect ${a.row.email}?'),
             content: Text(
               a.row.authType == EmailAuthType.oauth

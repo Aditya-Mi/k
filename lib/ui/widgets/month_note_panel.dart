@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../format.dart';
 import '../motion.dart';
@@ -118,7 +119,7 @@ class MonthNotePanel extends StatelessWidget {
                           if (syncedAt != null) ...[
                             const SizedBox(width: 12),
                             Icon(
-                              Icons.check_circle_outline_rounded,
+                              Symbols.check_circle,
                               size: 14,
                               color: c.text3,
                             ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../data/repositories/ledger_models.dart';
 import '../format.dart';
 import '../theme/k_theme.dart';
+import 'k_icons.dart';
 import 'note_chip.dart';
 
 /// Chip · payee over meta · amount. Columns never move between row states.
@@ -43,6 +45,8 @@ class TxnRow extends StatelessWidget {
             dayMonth(txn.occurredAt),
             'not spent',
           ].nonNulls.join(' · ')
+        : txn.isAtmWithdrawal
+        ? ['${txn.account?.short ?? 'Bank'} → Cash', when].join(' · ')
         : txn.isTransfer
         ? [
             txn.transferRoute,
@@ -65,6 +69,8 @@ class TxnRow extends StatelessWidget {
             ? 'Bill payment'
             : txn.isCardBill
             ? 'Card bill payment'
+            : txn.isAtmWithdrawal
+            ? 'ATM withdrawal'
             : txn.isTransfer
             ? 'Self transfer'
             : txn.payee);
@@ -78,30 +84,24 @@ class TxnRow extends StatelessWidget {
       title: title,
       meta: meta,
       trailing: [
-        if (txn.isTransfer && !cardBill)
+        if ((txn.isTransfer && !cardBill) || txn.isAtmWithdrawal)
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Tooltip(
-              message: txn.isCardBill
+              message: txn.isAtmWithdrawal
+                  ? 'To cash in hand, not counted as spent'
+                  : txn.isCardBill
                   ? 'Card bill, not counted as spent'
                   : 'Own accounts, not counted as spent',
-              child: Icon(
-                Icons.swap_horiz_rounded,
-                size: 16,
-                color: context.k.text2,
-              ),
+              child: KIcon(KIcons.transfer, size: 16, color: context.k.text2),
             ),
           ),
         if (txn.isCash && txn.isDebit)
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Tooltip(
-              message: 'Cash, counted at the ATM',
-              child: Icon(
-                Icons.payments_outlined,
-                size: 16,
-                color: context.k.text2,
-              ),
+              message: 'Paid in cash',
+              child: Icon(Symbols.payments, size: 16, color: context.k.text2),
             ),
           ),
         if (txn.merged)
@@ -109,11 +109,7 @@ class TxnRow extends StatelessWidget {
             padding: const EdgeInsets.only(right: 8),
             child: Tooltip(
               message: '${txn.sourceCount} messages merged',
-              child: Icon(
-                Icons.merge_rounded,
-                size: 16,
-                color: context.k.text2,
-              ),
+              child: KIcon(KIcons.merged, size: 16, color: context.k.text2),
             ),
           ),
         Text(
@@ -122,7 +118,7 @@ class TxnRow extends StatelessWidget {
         ),
       ],
       semantics:
-          '$title, ${txn.isTransfer
+          '$title, ${txn.isTransfer || txn.isAtmWithdrawal
               ? 'moved'
               : txn.isDebit
               ? 'paid'

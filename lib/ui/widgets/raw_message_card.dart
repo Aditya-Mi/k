@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:txn_parser/txn_parser.dart';
 
 import '../../data/db/app_database.dart' hide ParserTemplate, SenderRule;
@@ -38,7 +39,7 @@ class RawMessageCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 2),
                 child: Icon(
-                  isSms ? Icons.sms_outlined : Icons.mail_outline_rounded,
+                  isSms ? Symbols.sms : Symbols.mail,
                   size: 20,
                   color: c.text2,
                 ),

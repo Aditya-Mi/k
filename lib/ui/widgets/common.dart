@@ -1,49 +1,171 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../data/db/app_database.dart' show Category;
 import '../theme/k_theme.dart';
 import 'rosette.dart';
 
-/// Icons a category can use (design 06j), by the Material Symbols name
-/// stored on the row. Built-ins use the first ones too.
-const categoryIcons = <String, IconData>{
-  'home': Icons.home_rounded,
-  'restaurant': Icons.restaurant_rounded,
-  'shopping_basket': Icons.shopping_basket_rounded,
-  'shopping_bag': Icons.shopping_bag_outlined,
-  'flight': Icons.flight_rounded,
-  'local_gas_station': Icons.local_gas_station_rounded,
-  'directions_car': Icons.directions_car_rounded,
-  'local_taxi': Icons.local_taxi_rounded,
-  'receipt_long': Icons.receipt_long_rounded,
-  'call': Icons.call_rounded,
-  'wifi': Icons.wifi_rounded,
-  'autorenew': Icons.autorenew_rounded,
-  'movie': Icons.movie_rounded,
-  'sports_esports': Icons.sports_esports_rounded,
-  'medical_services': Icons.medical_services_rounded,
-  'fitness_center': Icons.fitness_center_rounded,
-  'spa': Icons.spa_rounded,
-  'school': Icons.school_rounded,
-  'child_care': Icons.child_care_rounded,
-  'pets': Icons.pets_rounded,
-  'redeem': Icons.redeem_rounded,
-  'volunteer_activism': Icons.volunteer_activism_rounded,
-  'account_balance': Icons.account_balance_rounded,
-  'savings': Icons.savings_rounded,
-  'trending_up': Icons.trending_up_rounded,
-  'local_cafe': Icons.local_cafe_rounded,
-  'checkroom': Icons.checkroom_rounded,
-  'build': Icons.build_rounded,
-  'celebration': Icons.celebration_rounded,
-  'payments': Icons.payments_rounded,
+/// Icons a category can use (design 06j), grouped for the picker, by the
+/// Material Symbols name stored on the row. Never rename a key: rows store it.
+const categoryIconGroups = <(String, Map<String, IconData>)>[
+  (
+    'Home & bills',
+    {
+      'home': Symbols.home,
+      'cottage': Symbols.cottage,
+      'key': Symbols.key,
+      'bolt': Symbols.bolt,
+      'water_drop': Symbols.water_drop,
+      'propane_tank': Symbols.propane_tank,
+      'wifi': Symbols.wifi,
+      'call': Symbols.call,
+      'smartphone': Symbols.smartphone,
+      'tv': Symbols.tv,
+      'cleaning_services': Symbols.cleaning_services,
+      'chair': Symbols.chair,
+      'receipt_long': Symbols.receipt_long,
+      'autorenew': Symbols.autorenew,
+      'subscriptions': Symbols.subscriptions,
+    },
+  ),
+  (
+    'Food',
+    {
+      'restaurant': Symbols.restaurant,
+      'local_cafe': Symbols.local_cafe,
+      'lunch_dining': Symbols.lunch_dining,
+      'local_pizza': Symbols.local_pizza,
+      'ramen_dining': Symbols.ramen_dining,
+      'bakery_dining': Symbols.bakery_dining,
+      'icecream': Symbols.icecream,
+      'delivery_dining': Symbols.delivery_dining,
+      'shopping_basket': Symbols.shopping_basket,
+      'nutrition': Symbols.nutrition,
+      'liquor': Symbols.liquor,
+    },
+  ),
+  (
+    'Getting around',
+    {
+      'directions_car': Symbols.directions_car,
+      'two_wheeler': Symbols.two_wheeler,
+      'local_taxi': Symbols.local_taxi,
+      'electric_rickshaw': Symbols.electric_rickshaw,
+      'directions_bus': Symbols.directions_bus,
+      'train': Symbols.train,
+      'subway': Symbols.subway,
+      'flight': Symbols.flight,
+      'local_gas_station': Symbols.local_gas_station,
+      'ev_station': Symbols.ev_station,
+      'local_parking': Symbols.local_parking,
+      'toll': Symbols.toll,
+      'pedal_bike': Symbols.pedal_bike,
+    },
+  ),
+  (
+    'Shopping',
+    {
+      'shopping_bag': Symbols.shopping_bag,
+      'shopping_cart': Symbols.shopping_cart,
+      'local_mall': Symbols.local_mall,
+      'checkroom': Symbols.checkroom,
+      'diamond': Symbols.diamond,
+      'devices': Symbols.devices,
+      'laptop_mac': Symbols.laptop_mac,
+      'headphones': Symbols.headphones,
+      'menu_book': Symbols.menu_book,
+      'local_florist': Symbols.local_florist,
+      'redeem': Symbols.redeem,
+    },
+  ),
+  (
+    'Health & care',
+    {
+      'medical_services': Symbols.medical_services,
+      'local_pharmacy': Symbols.local_pharmacy,
+      'medication': Symbols.medication,
+      'dentistry': Symbols.dentistry,
+      'health_and_safety': Symbols.health_and_safety,
+      'fitness_center': Symbols.fitness_center,
+      'spa': Symbols.spa,
+      'content_cut': Symbols.content_cut,
+    },
+  ),
+  (
+    'Fun & travel',
+    {
+      'movie': Symbols.movie,
+      'theater_comedy': Symbols.theater_comedy,
+      'music_note': Symbols.music_note,
+      'sports_esports': Symbols.sports_esports,
+      'sports_cricket': Symbols.sports_cricket,
+      'sports_soccer': Symbols.sports_soccer,
+      'stadium': Symbols.stadium,
+      'celebration': Symbols.celebration,
+      'cake': Symbols.cake,
+      'luggage': Symbols.luggage,
+      'hotel': Symbols.hotel,
+      'beach_access': Symbols.beach_access,
+      'photo_camera': Symbols.photo_camera,
+    },
+  ),
+  (
+    'People',
+    {
+      'child_care': Symbols.child_care,
+      'school': Symbols.school,
+      'family_restroom': Symbols.family_restroom,
+      'elderly': Symbols.elderly,
+      'pets': Symbols.pets,
+      'favorite': Symbols.favorite,
+      'volunteer_activism': Symbols.volunteer_activism,
+      'temple_hindu': Symbols.temple_hindu,
+      'mosque': Symbols.mosque,
+      'church': Symbols.church,
+    },
+  ),
+  (
+    'Money & work',
+    {
+      'payments': Symbols.payments,
+      'account_balance': Symbols.account_balance,
+      'savings': Symbols.savings,
+      'trending_up': Symbols.trending_up,
+      'credit_card': Symbols.credit_card,
+      'currency_rupee': Symbols.currency_rupee,
+      'percent': Symbols.percent,
+      'request_quote': Symbols.request_quote,
+      'receipt': Symbols.receipt,
+      'shield': Symbols.shield,
+      'work': Symbols.work,
+      'storefront': Symbols.storefront,
+    },
+  ),
+  (
+    'Other',
+    {
+      'build': Symbols.build,
+      'handyman': Symbols.handyman,
+      'local_laundry_service': Symbols.local_laundry_service,
+      'local_shipping': Symbols.local_shipping,
+      'print': Symbols.print,
+      'cloud': Symbols.cloud,
+      'sell': Symbols.sell,
+      'label': Symbols.label,
+    },
+  ),
+];
+
+/// Every pickable icon, in picker order.
+final categoryIcons = <String, IconData>{
+  for (final (_, icons) in categoryIconGroups) ...icons,
 };
 
-/// Material Symbols Rounded names stored on categories → icons.
+/// Material Symbols names stored on categories → icons.
 IconData categoryIcon(String? name) => switch (name) {
-  'swap_horiz' => Icons.swap_horiz_rounded,
-  'local_atm' => Icons.local_atm_rounded,
-  _ => categoryIcons[name] ?? Icons.help_outline_rounded,
+  'swap_horiz' => Symbols.swap_horiz,
+  'local_atm' => Symbols.local_atm,
+  _ => categoryIcons[name] ?? Symbols.help,
 };
 
 /// 32dp outlined chip with a trailing dropdown arrow.
@@ -82,7 +204,7 @@ class KFilterChip extends StatelessWidget {
             children: [
               Text(label, style: context.kt.body),
               const SizedBox(width: 4),
-              Icon(Icons.arrow_drop_down_rounded, size: 20, color: c.text2),
+              Icon(Symbols.arrow_drop_down, size: 20, color: c.text2),
             ],
           ),
         ),
@@ -286,7 +408,7 @@ class CategoryButton extends StatelessWidget {
                 style: context.kt.body.copyWith(fontWeight: FontWeight.w500),
               ),
               const SizedBox(width: 10),
-              Icon(Icons.edit_outlined, size: 16, color: c.text2),
+              Icon(Symbols.edit, size: 16, color: c.text2),
             ],
           ),
         ),
@@ -329,7 +451,7 @@ class SelectButton extends StatelessWidget {
             label ?? 'Choose',
             style: t.body.copyWith(color: label == null ? c.text2 : c.text),
           ),
-          Icon(Icons.arrow_drop_down_rounded, color: c.text2),
+          Icon(Symbols.arrow_drop_down, color: c.text2),
         ],
       ),
     );

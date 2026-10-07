@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rxdart/rxdart.dart';
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/emis/emi_service.dart';
 import '../../../data/subscriptions/subscription_service.dart';
@@ -39,7 +42,7 @@ class SubscriptionsScreen extends StatelessWidget {
               Expanded(child: Text('Recurring', style: t.headline)),
               IconButton(
                 tooltip: 'Add',
-                icon: const Icon(Icons.add_rounded),
+                icon: const Icon(Symbols.add),
                 onPressed: () => _add(context),
               ),
             ],
@@ -62,7 +65,7 @@ class SubscriptionsScreen extends StatelessWidget {
                           'Repeating charges, AutoPays and EMIs show up here.',
                       action: OutlinedButton.icon(
                         onPressed: () => _add(context),
-                        icon: const Icon(Icons.add_rounded, size: 20),
+                        icon: const Icon(Symbols.add, size: 20),
                         label: const Text('Add one yourself'),
                       ),
                     ),
@@ -130,26 +133,26 @@ class SubscriptionsScreen extends StatelessWidget {
 }
 
 Future<void> _add(BuildContext context) async {
-  final loan = await showModalBottomSheet<bool>(
+  final loan = await showKSheet<bool>(
     context: context,
     builder: (context) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.autorenew_rounded),
+            leading: const Icon(Symbols.autorenew),
             title: const Text('Subscription'),
             onTap: () => Navigator.pop(context, false),
           ),
           ListTile(
-            leading: const Icon(Icons.home_outlined),
+            leading: const Icon(Symbols.home),
             title: const Text('Loan EMI'),
             subtitle: const Text('Paid from a bank account each month'),
             onTap: () => Navigator.pop(context, true),
           ),
           ListTile(
             enabled: false,
-            leading: const Icon(Icons.credit_card_rounded),
+            leading: const Icon(Symbols.credit_card),
             title: const Text('Card EMI'),
             subtitle: const Text('Open the card payment, then Convert to EMI'),
           ),
@@ -272,8 +275,8 @@ class _ListHead extends StatelessWidget {
               children: [
                 Icon(
                   reminderDays == 0
-                      ? Icons.notifications_off_outlined
-                      : Icons.notifications_outlined,
+                      ? Symbols.notifications_off
+                      : Symbols.notifications,
                   size: 16,
                   color: c.text3,
                 ),

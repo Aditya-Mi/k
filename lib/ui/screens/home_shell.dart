@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app/sms_controller.dart';
@@ -9,6 +10,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../di.dart';
 import '../motion.dart';
 import '../theme/k_theme.dart';
+import '../widgets/k_icons.dart';
 import 'accounts/accounts_screen.dart';
 import 'review/review_queue_screen.dart';
 import 'subscriptions/subscriptions_screen.dart';
@@ -74,28 +76,26 @@ class _HomeShellState extends State<HomeShell> {
                 onDestinationSelected: (i) => setState(() => _tab = i),
                 destinations: [
                   const NavigationDestination(
-                    icon: Icon(Icons.receipt_long_outlined),
-                    selectedIcon: Icon(Icons.receipt_long_rounded),
+                    icon: KIcon(KIcons.transactions),
                     label: 'Transactions',
                   ),
                   NavigationDestination(
                     icon: _ReviewBadge(
                       count: reviewCount,
-                      child: const Icon(Icons.rule_rounded),
+                      child: const KIcon(KIcons.review),
                     ),
                     label: 'Review',
                   ),
                   const NavigationDestination(
-                    icon: Icon(Icons.autorenew_rounded),
+                    icon: KIcon(KIcons.recurring),
                     label: 'Recurring',
                   ),
                   const NavigationDestination(
-                    icon: Icon(Icons.account_balance_wallet_outlined),
-                    selectedIcon: Icon(Icons.account_balance_wallet_rounded),
+                    icon: KIcon(KIcons.accounts),
                     label: 'Accounts',
                   ),
                   const NavigationDestination(
-                    icon: Icon(Icons.donut_large_rounded),
+                    icon: KIcon(KIcons.summary),
                     label: 'Summary',
                   ),
                 ],
@@ -121,7 +121,7 @@ class _AddFab extends StatelessWidget {
       backgroundColor: c.text,
       foregroundColor: c.onInk,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      icon: const Icon(Icons.add_rounded),
+      icon: const Icon(Symbols.add),
       label: Text('Add', style: context.kt.title.copyWith(color: c.onInk)),
       onPressed: () => Navigator.of(context).push(
         MaterialPageRoute<void>(

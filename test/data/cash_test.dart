@@ -67,7 +67,7 @@ void main() {
     expect(b.estimatedFrom, 2);
   });
 
-  test('rent from ATM cash is counted once, at the ATM', () {
+  test('cash counts once, when it is spent, not at the ATM', () {
     const axis = AccountView(
       id: 'acc_axis',
       bankId: 'AXIS',
@@ -80,9 +80,9 @@ void main() {
       bankName: 'Cash',
       type: AccountType.cash,
     );
-    TxnView v(AccountView a, TxnType type) => TxnView(
+    TxnView v(AccountView a, TxnType type, int minor) => TxnView(
       id: '${_n++}',
-      amountMinor: 1100000,
+      amountMinor: minor,
       currency: 'INR',
       direction: Direction.debit,
       txnType: type,
@@ -91,7 +91,11 @@ void main() {
       sourceCount: 0,
       account: a,
     );
-    final s = summarize(_t0, [v(axis, TxnType.atm), v(cash, TxnType.other)]);
+    final atm = v(axis, TxnType.atm, 1000000);
+    final rent = v(cash, TxnType.other, 1100000);
+    expect(atm.isAtmWithdrawal, isTrue);
+    expect(atm.spentMinor, 0);
+    final s = summarize(_t0, [atm, rent]);
     expect(s.spentMinor, 1100000);
     expect(s.spends, 1);
   });

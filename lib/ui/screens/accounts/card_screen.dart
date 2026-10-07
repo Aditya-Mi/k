@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/repositories/ledger_models.dart';
 import '../../../data/repositories/ledger_repository.dart';
@@ -44,14 +45,14 @@ class CardScreen extends StatelessWidget {
           appBar: AppBar(
             leading: IconButton(
               tooltip: 'Back',
-              icon: const Icon(Icons.arrow_back_rounded),
+              icon: const Icon(Symbols.arrow_back),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(a.long),
             actions: [
               IconButton(
                 tooltip: 'More',
-                icon: const Icon(Icons.more_vert_rounded),
+                icon: const Icon(Symbols.more_vert),
                 onPressed: () => accountActions(context, row, all),
               ),
             ],

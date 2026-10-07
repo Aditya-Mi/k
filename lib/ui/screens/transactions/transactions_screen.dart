@@ -1,7 +1,10 @@
 import 'dart:async';
 
+import '../../widgets/k_sheet.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:txn_parser/txn_parser.dart';
@@ -125,155 +128,163 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         _noteArrivals(s);
         final showUpcoming =
             s.isCurrentMonth && !s.narrowed && s.upcoming.isNotEmpty;
-        return CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              titleSpacing: 16,
-              automaticallyImplyLeading: false,
-              title: _searching
-                  ? TextField(
-                      controller: _search,
-                      autofocus: true,
-                      style: t.body,
-                      textInputAction: TextInputAction.search,
-                      decoration: const InputDecoration(
-                        hintText: 'Search payee, note or ref',
-                      ),
-                      onChanged: _onSearch,
-                    )
-                  : Text('k', style: t.wordmark),
-              actions: [
-                if (_searching)
-                  IconButton(
-                    tooltip: 'Close search',
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: _closeSearch,
-                  )
-                else
-                  IconButton(
-                    tooltip: 'Search',
-                    icon: const Icon(Icons.search_rounded),
-                    onPressed: () => setState(() => _searching = true),
-                  ),
-                if (!_searching)
-                  IconButton(
-                    tooltip: 'Settings',
-                    icon: const Icon(Icons.settings_outlined),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const SettingsScreen(),
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 4),
-              ],
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                child: MonthNotePanel(
-                  summary: s.summary,
-                  syncedAt: s.isCurrentMonth ? s.lastSync : null,
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: _FilterBar(state: s, cubit: cubit),
-            ),
-            SliverToBoxAdapter(
-              child: ValueListenableBuilder<bool?>(
-                valueListenable: widget.smsGranted,
-                builder: (context, granted, _) => granted == false
-                    ? Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                        child: NoticeBanner(
-                          icon: Icons.sms_failed_outlined,
-                          problem: true,
-                          text: 'SMS access is off',
-                          detail: "New payments aren't being logged",
-                          action: 'Turn on',
-                          onTap: _turnOnSms,
+        // Top inset kept clear: the floating bar scrolls away, the list
+        // must not run under the status bar.
+        return SafeArea(
+          bottom: false,
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                floating: true,
+                titleSpacing: 16,
+                automaticallyImplyLeading: false,
+                title: _searching
+                    ? TextField(
+                        controller: _search,
+                        autofocus: true,
+                        style: t.input,
+                        textInputAction: TextInputAction.search,
+                        decoration: const InputDecoration(
+                          hintText: 'Search payee, note or ref',
                         ),
+                        onChanged: _onSearch,
                       )
-                    : const SizedBox.shrink(),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: StreamBuilder<List<EmailAccountView>>(
-                stream: _inboxes,
-                builder: (context, snap) {
-                  final failing = (snap.data ?? const <EmailAccountView>[])
-                      .where((a) => a.error != null && a.row.enabled)
-                      .firstOrNull;
-                  if (failing == null) return const SizedBox.shrink();
-                  final gmail = failing.row.authType == EmailAuthType.oauth;
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: NoticeBanner(
-                      icon: Icons.mail_outline_rounded,
-                      problem: true,
-                      text: gmail
-                          ? 'Gmail stopped syncing'
-                          : 'Inbox stopped syncing',
-                      detail: '${failing.row.email} · ${failing.error}',
-                      action: gmail ? 'Sign in' : 'Fix',
-                      onTap: () => _fixInbox(failing),
+                    : Text('k', style: t.wordmark),
+                actions: [
+                  if (_searching)
+                    IconButton(
+                      tooltip: 'Close search',
+                      icon: const Icon(Symbols.close),
+                      onPressed: _closeSearch,
+                    )
+                  else
+                    IconButton(
+                      tooltip: 'Search',
+                      icon: const Icon(Symbols.search),
+                      onPressed: () => setState(() => _searching = true),
                     ),
-                  );
-                },
+                  if (!_searching)
+                    IconButton(
+                      tooltip: 'Settings',
+                      icon: const Icon(Symbols.settings),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SettingsScreen(),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 4),
+                ],
               ),
-            ),
-            if (s.reviewCount > 0)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: NoticeBanner(
-                    icon: Icons.rule_rounded,
-                    text: s.reviewCount == 1
-                        ? '1 bank message needs review'
-                        : '${s.reviewCount} bank messages need review',
-                    action: 'Review',
-                    onTap: widget.onOpenReview,
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                  child: MonthNotePanel(
+                    summary: s.summary,
+                    syncedAt: s.isCurrentMonth ? s.lastSync : null,
                   ),
                 ),
               ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SectionHead(
-                span: s.txns.isEmpty
-                    ? null
-                    : daySpan(s.txns.last.occurredAt, s.txns.first.occurredAt),
-                background: c.bg,
-                style: t.title,
-                spanStyle: t.meta,
-              ),
-            ),
-            if (showUpcoming) ...[
-              const SliverToBoxAdapter(
-                child: DayHeader(label: 'Upcoming · AutoPay'),
-              ),
-              SliverList.builder(
-                itemCount: s.upcoming.length,
-                itemBuilder: (_, i) => UpcomingRow(charge: s.upcoming[i]),
-              ),
-            ],
-            if (s.loaded && s.txns.isEmpty)
               SliverToBoxAdapter(
-                child: EmptyState(
-                  title: s.narrowed
-                      ? 'Nothing matches these filters'
-                      : 'No payments logged this month',
-                  body: s.narrowed
-                      ? null
-                      : 'Bank alerts appear here as they arrive.',
+                child: _FilterBar(state: s, cubit: cubit),
+              ),
+              SliverToBoxAdapter(
+                child: ValueListenableBuilder<bool?>(
+                  valueListenable: widget.smsGranted,
+                  builder: (context, granted, _) => granted == false
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                          child: NoticeBanner(
+                            icon: Symbols.sms_failed,
+                            problem: true,
+                            text: 'SMS access is off',
+                            detail: "New payments aren't being logged",
+                            action: 'Turn on',
+                            onTap: _turnOnSms,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
                 ),
-              )
-            else
-              ..._dayGroups(context, s.txns),
-            // The last row clears the Add FAB.
-            const SliverToBoxAdapter(child: SizedBox(height: 88)),
-          ],
+              ),
+              SliverToBoxAdapter(
+                child: StreamBuilder<List<EmailAccountView>>(
+                  stream: _inboxes,
+                  builder: (context, snap) {
+                    final failing = (snap.data ?? const <EmailAccountView>[])
+                        .where((a) => a.error != null && a.row.enabled)
+                        .firstOrNull;
+                    if (failing == null) return const SizedBox.shrink();
+                    final gmail = failing.row.authType == EmailAuthType.oauth;
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: NoticeBanner(
+                        icon: Symbols.mail,
+                        problem: true,
+                        text: gmail
+                            ? 'Gmail stopped syncing'
+                            : 'Inbox stopped syncing',
+                        detail: '${failing.row.email} · ${failing.error}',
+                        action: gmail ? 'Sign in' : 'Fix',
+                        onTap: () => _fixInbox(failing),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              if (s.reviewCount > 0)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: NoticeBanner(
+                      icon: Symbols.rule,
+                      text: s.reviewCount == 1
+                          ? '1 bank message needs review'
+                          : '${s.reviewCount} bank messages need review',
+                      action: 'Review',
+                      onTap: widget.onOpenReview,
+                    ),
+                  ),
+                ),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SectionHead(
+                  span: s.txns.isEmpty
+                      ? null
+                      : daySpan(
+                          s.txns.last.occurredAt,
+                          s.txns.first.occurredAt,
+                        ),
+                  background: c.bg,
+                  style: t.title,
+                  spanStyle: t.meta,
+                ),
+              ),
+              if (showUpcoming) ...[
+                const SliverToBoxAdapter(
+                  child: DayHeader(label: 'Upcoming · AutoPay'),
+                ),
+                SliverList.builder(
+                  itemCount: s.upcoming.length,
+                  itemBuilder: (_, i) => UpcomingRow(charge: s.upcoming[i]),
+                ),
+              ],
+              if (s.loaded && s.txns.isEmpty)
+                SliverToBoxAdapter(
+                  child: EmptyState(
+                    title: s.narrowed
+                        ? 'Nothing matches these filters'
+                        : 'No payments logged this month',
+                    body: s.narrowed
+                        ? null
+                        : 'Bank alerts appear here as they arrive.',
+                  ),
+                )
+              else
+                ..._dayGroups(context, s.txns),
+              // The last row clears the Add FAB.
+              const SliverToBoxAdapter(child: SizedBox(height: 88)),
+            ],
+          ),
         );
       },
     );
@@ -443,7 +454,7 @@ class _FilterBar extends StatelessWidget {
     final months = [
       for (var i = 0; i < 12; i++) DateTime(now.year, now.month - i),
     ];
-    final picked = await showModalBottomSheet<DateTime>(
+    final picked = await showKSheet<DateTime>(
       context: context,
       builder: (context) => SafeArea(
         child: ListView(
@@ -456,9 +467,7 @@ class _FilterBar extends StatelessWidget {
                       ? monthYear(m)
                       : '${_monthLabel(m)} · ${monthYear(m)}',
                 ),
-                trailing: m == state.month
-                    ? const Icon(Icons.check_rounded)
-                    : null,
+                trailing: m == state.month ? const Icon(Symbols.check) : null,
                 onTap: () => Navigator.pop(context, m),
               ),
           ],
@@ -495,7 +504,7 @@ class _FilterBar extends StatelessWidget {
       (Direction.debit, 'Money out'),
       (Direction.credit, 'Money in'),
     ];
-    final picked = await showModalBottomSheet<(Direction?,)>(
+    final picked = await showKSheet<(Direction?,)>(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
@@ -505,7 +514,7 @@ class _FilterBar extends StatelessWidget {
               ListTile(
                 title: Text(label),
                 trailing: d == state.filter.direction
-                    ? const Icon(Icons.check_rounded)
+                    ? const Icon(Symbols.check)
                     : null,
                 onTap: () => Navigator.pop(context, (d,)),
               ),
@@ -524,7 +533,7 @@ Future<Set<String>?> _multiPick(
   required Map<String, String> options,
   required Set<String> selected,
   Map<String, IconData> icons = const {},
-}) => showModalBottomSheet<Set<String>>(
+}) => showKSheet<Set<String>>(
   context: context,
   isScrollControlled: true,
   builder: (context) {

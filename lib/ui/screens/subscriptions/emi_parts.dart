@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/emis/emi_service.dart';
 import '../../format.dart';
@@ -48,7 +49,7 @@ class EmiRow extends StatelessWidget {
                     border: Border.all(color: c.outline),
                   ),
                   child: Icon(
-                    e.isCard ? Icons.credit_card_rounded : Icons.home_outlined,
+                    e.isCard ? Symbols.credit_card : Symbols.home,
                     size: 20,
                     color: c.text2,
                   ),

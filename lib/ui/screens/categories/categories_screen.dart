@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/db/app_database.dart' show Category;
 import '../../../data/repositories/ledger_repository.dart';
@@ -21,14 +22,14 @@ class CategoriesScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Symbols.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Categories'),
         actions: [
           IconButton(
             tooltip: 'New category',
-            icon: const Icon(Icons.add_rounded),
+            icon: const Icon(Symbols.add),
             onPressed: () => createCategory(context),
           ),
         ],
@@ -77,7 +78,7 @@ class CategoriesScreen extends StatelessWidget {
               const SettingsHead('Yours'),
               if (yours.isEmpty)
                 SettingsItem(
-                  icon: Icons.add_rounded,
+                  icon: Symbols.add,
                   iconColor: c.text2,
                   title: 'Add your own',
                   subtitle: 'Rent, Gym, Pets: anything k doesn’t have',

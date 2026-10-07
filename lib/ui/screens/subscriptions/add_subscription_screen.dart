@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
+
+import '../../widgets/k_sheet.dart';
 
 import '../../../data/db/enums.dart';
 import '../../../data/subscriptions/subscription_service.dart';
@@ -64,7 +67,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
           ),
         ),
         const SizedBox(width: 6),
-        Icon(Icons.edit_outlined, size: 16, color: c.text2),
+        Icon(Symbols.edit, size: 16, color: c.text2),
       ],
     );
     final name = _name.trim();
@@ -72,7 +75,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       appBar: AppBar(
         leading: IconButton(
           tooltip: 'Close',
-          icon: const Icon(Icons.close_rounded),
+          icon: const Icon(Symbols.close),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Add subscription'),
@@ -153,7 +156,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
         child: FilledButton.icon(
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
           onPressed: _ready && !_saving ? _save : null,
-          icon: const Icon(Icons.check_rounded, size: 20),
+          icon: const Icon(Symbols.check, size: 20),
           label: const Text('Track it'),
         ),
       ),
@@ -182,7 +185,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   }
 
   Future<void> _editFrequency() async {
-    final picked = await showModalBottomSheet<SubscriptionFrequency>(
+    final picked = await showKSheet<SubscriptionFrequency>(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
@@ -196,9 +199,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
             ])
               ListTile(
                 title: Text(frequencyLabel(f, 30)),
-                trailing: f == _frequency
-                    ? const Icon(Icons.check_rounded)
-                    : null,
+                trailing: f == _frequency ? const Icon(Symbols.check) : null,
                 onTap: () => Navigator.pop(context, f),
               ),
           ],
