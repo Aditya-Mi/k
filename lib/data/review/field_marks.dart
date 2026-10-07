@@ -4,6 +4,11 @@ import 'package:txn_parser/txn_parser.dart';
 /// that must exist, but marking the word lets one format serve both ways.
 enum MarkField {
   account(Fields.last4, 'ACCOUNT'),
+
+  /// A debit card named in the message ("BLOCKCARD XX2432"). Not a parser
+  /// group yet: saving adds the card to the payment's account, the learned
+  /// format doesn't read it.
+  card('card', 'CARD'),
   direction(Fields.direction, 'DIRECTION'),
   amount(Fields.amount, 'AMOUNT'),
   payee(Fields.payee, 'PAYEE'),
@@ -19,6 +24,9 @@ enum MarkField {
   /// txn_parser named group.
   final String group;
   final String caption;
+
+  /// Read by a learned format (the parser has a group for it).
+  bool get learnable => this != card;
 }
 
 /// A marked character range in the normalized message text.
@@ -52,11 +60,12 @@ final _directionWords = RegExp(
   RegExpMatch? m;
   switch (field) {
     case MarkField.account:
-      final all = RegExp(r'\d{4}').allMatches(s).toList();
-      if (all.isEmpty) return null;
-      final last = all.last;
-      // Last four digits of the run ("XXXXXX3333" → "3333").
-      final runEnd = last.end;
+    case MarkField.card:
+      final runs = RegExp(r'\d{4,}').allMatches(s).toList();
+      if (runs.isEmpty) return null;
+      // Last four digits of the last run ("XXXXXX3333" → "3333",
+      // "XX100640" → "0640").
+      final runEnd = runs.last.end;
       return (start + runEnd - 4, start + runEnd);
     case MarkField.amount:
     case MarkField.balance:
@@ -84,6 +93,17 @@ final _directionWords = RegExp(
   }
   if (m == null) return null;
   return (start + m.start, start + m.end);
+}
+
+/// The owner's own range (dragged handles), kept as chosen when it can be
+/// that field. Account and card numbers must be exactly 4 digits.
+(int, int)? exactField(String text, MarkField field, int start, int end) {
+  if (start >= end) return null;
+  final s = text.substring(start, end);
+  if (field == MarkField.account || field == MarkField.card) {
+    return RegExp(r'^\d{4}$').hasMatch(s) ? (start, end) : null;
+  }
+  return trimToField(text, field, start, end) == null ? null : (start, end);
 }
 
 (int, int)? _trimPunct(String s) {

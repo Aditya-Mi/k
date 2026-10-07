@@ -6,6 +6,7 @@ import 'package:txn_parser/txn_parser.dart';
 import '../../core/ids.dart';
 import '../db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../db/enums.dart';
+import '../ingest/category_resolver.dart';
 import '../ingest/ingestion_service.dart';
 import '../ingest/unknown_sender.dart';
 import '../repositories/bank_repository.dart';
@@ -178,7 +179,10 @@ class ReviewService {
       amountMinor:
           d.amountMinor ?? (amount == null ? null : parseAmountMinor(amount)),
       direction: d.isMandate ? Direction.debit : d.direction,
-      txnType: item.guess.fields.txnType ?? TxnType.other,
+      // Filed as an ATM withdrawal: it's cash in hand, like a parsed one.
+      txnType: d.categoryId == atmCategoryId
+          ? TxnType.atm
+          : item.guess.fields.txnType ?? TxnType.other,
       last4: marked(MarkField.account),
       payee: payee == null ? null : cleanPayee(payee),
       ref: d.ref ?? marked(MarkField.ref),
@@ -259,6 +263,8 @@ class ReviewService {
       templateId: templateId,
     );
 
+    await _linkCard(item, d);
+
     // A category picked here is taught for the merchant too.
     if (d.categoryId != null && !d.isMandate) {
       final txnId = await _txnFor(item.raw.id);
@@ -275,6 +281,83 @@ class ReviewService {
       learnError: learnError,
       cleared: cleared,
     );
+  }
+
+  /// A learned format's sample, ready to re-mark (Message formats → Edit).
+  Future<ReviewItem?> itemById(String rawId) async {
+    final raw = await (_db.select(
+      _db.rawMessages,
+    )..where((r) => r.id.equals(rawId))).getSingleOrNull();
+    return raw == null ? null : item(raw);
+  }
+
+  /// Replaces learned format [oldId] with one built from the new marks on
+  /// its sample. Logs nothing (the sample's payment exists already). The
+  /// old format is kept when the new one doesn't read the sample back.
+  Future<SaveResult> relearn(
+    String oldId,
+    ReviewItem item,
+    ReviewDraft d,
+  ) async {
+    final old = await (_db.select(
+      _db.parserTemplates,
+    )..where((t) => t.id.equals(oldId))).getSingle();
+    final (template, error) = _learn(item, d, fieldsOf(item, d));
+    if (template == null) return SaveResult(learned: false, learnError: error);
+    final now = DateTime.now();
+    await _db.transaction(() async {
+      await _db
+          .into(_db.parserTemplates)
+          .insert(
+            ParserTemplatesCompanion.insert(
+              id: Value(template.id),
+              bankId: old.bankId,
+              channel: old.channel,
+              kind: d.kind,
+              name: old.name,
+              pattern: template.pattern,
+              fieldDefaults: Value(jsonEncode(template.defaults)),
+              priority: Value(template.priority),
+              sampleRawMessageId: Value(item.raw.id),
+              enabled: Value(old.enabled),
+            ),
+          );
+      await (_db.update(
+        _db.parserTemplates,
+      )..where((t) => t.id.equals(oldId))).write(
+        ParserTemplatesCompanion(updatedAt: Value(now), deletedAt: Value(now)),
+      );
+      // Messages it read count for the new one (uses stay).
+      await (_db.update(_db.rawMessages)
+            ..where((r) => r.templateId.equals(oldId)))
+          .write(RawMessagesCompanion(templateId: Value(template.id)));
+    });
+    _ingest.invalidate();
+    await _linkCard(item, d);
+    return SaveResult(learned: true, cleared: await _ingest.reprocessReview());
+  }
+
+  /// A marked debit card joins the payment's account.
+  Future<void> _linkCard(ReviewItem item, ReviewDraft d) async {
+    final card = d.marks.where((m) => m.field == MarkField.card).firstOrNull;
+    if (card != null && !d.isMandate) {
+      final txnId = await _txnFor(item.raw.id);
+      final txn = txnId == null
+          ? null
+          : await (_db.select(
+              _db.transactions,
+            )..where((t) => t.id.equals(txnId))).getSingleOrNull();
+      final account = txn?.accountId == null
+          ? null
+          : await (_db.select(
+              _db.accounts,
+            )..where((a) => a.id.equals(txn!.accountId!))).getSingleOrNull();
+      if (account != null &&
+          (account.type == AccountType.savings ||
+              account.type == AccountType.current)) {
+        await _ledger.addDebitCard(account.id, card.valueIn(item.text));
+      }
+    }
   }
 
   /// Not a transaction (design 03j). With [skipSimilar], k also learns a
@@ -373,7 +456,8 @@ class ReviewService {
     final values = <String, String>{
       for (final m in d.marks)
         // An AutoPay format reads the due date, not the message date.
-        if (!(d.isMandate && m.field == MarkField.date) &&
+        if (m.field.learnable &&
+            !(d.isMandate && m.field == MarkField.date) &&
             !(!d.isMandate && m.field == MarkField.dueDate))
           m.field.group: m.valueIn(item.text),
     };
@@ -396,9 +480,11 @@ class ReviewService {
         sampleText: item.text,
         fieldValues: v,
         kind: d.kind,
-        defaults: captureDirection || d.isMandate
-            ? const {}
-            : {'direction': d.direction.name},
+        defaults: {
+          if (!captureDirection && !d.isMandate) 'direction': d.direction.name,
+          // Later messages of this shape are ATM withdrawals too.
+          if (d.categoryId == atmCategoryId && !d.isMandate) 'txnType': 'atm',
+        },
       );
       if (!generated.ok) {
         lastError = generated.error;

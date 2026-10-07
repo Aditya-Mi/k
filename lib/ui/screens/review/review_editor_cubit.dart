@@ -135,16 +135,25 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
     this._ledger,
     this._banks, {
     required String startRawId,
+    this.editTemplateId,
   }) : super(const ReviewEditorState()) {
     _load(startRawId);
   }
+
+  /// Editing a learned format on its sample (Message formats → Edit):
+  /// one message, save replaces the format and logs nothing.
+  final String? editTemplateId;
+  bool get editing => editTemplateId != null;
 
   final ReviewService _review;
   final LedgerRepository _ledger;
   final BankRepository _banks;
 
   Future<void> _load(String? rawId) async {
-    final queue = await _review.watchQueue().first;
+    final sample = editing && rawId != null
+        ? await _review.itemById(rawId)
+        : null;
+    final queue = editing ? [?sample] : await _review.watchQueue().first;
     final accounts = await _ledger.watchAccounts().first;
     final categories = await _ledger.watchCategories().first;
     final banks = await _ledger.bankNames();
@@ -302,11 +311,14 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
     ];
   }
 
-  /// Marks [start, end) as [field] after trimming to what the field holds.
-  /// Returns false when the selection can't be that field.
-  bool mark(MarkField field, int start, int end) {
+  /// Marks [start, end) as [field]: trimmed to what the field holds, or as
+  /// chosen when [exact] (the owner dragged the handles). Returns false when
+  /// the selection can't be that field.
+  bool mark(MarkField field, int start, int end, {bool exact = false}) {
     final text = state.item!.text;
-    final range = trimToField(text, field, start, end);
+    final range = exact
+        ? exactField(text, field, start, end)
+        : trimToField(text, field, start, end);
     if (range == null) return false;
     final (s, e) = range;
     final marks = [
@@ -355,13 +367,21 @@ class ReviewEditorCubit extends Cubit<ReviewEditorState> {
     emit(state.copyWith(saving: true));
     final parsed = fields();
     try {
-      final result = await _review.save(item, state.draft);
+      final result = editing
+          ? await _review.relearn(editTemplateId!, item, state.draft)
+          : await _review.save(item, state.draft);
       emit(
         state.copyWith(
           saving: false,
           lastResult: () => (result: result, fields: parsed, bank: bankShort()),
         ),
       );
+      if (editing) {
+        // Done → empty queue closes the editor. Not learned → the old
+        // format stays and the marks can be fixed.
+        if (result.learned) emit(state.copyWith(queue: const []));
+        return;
+      }
       await _load(null);
     } catch (_) {
       emit(state.copyWith(saving: false));

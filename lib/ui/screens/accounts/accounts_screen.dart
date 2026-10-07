@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
 
+import '../../../data/db/enums.dart';
 import '../../../data/emis/emi_service.dart';
 import '../../../data/repositories/ledger_models.dart';
 import '../../../data/repositories/ledger_repository.dart';
@@ -171,7 +172,7 @@ class AccountsScreen extends StatelessWidget {
   }
 }
 
-/// Rename, set balance (or a card's limits), merge.
+/// Rename, set balance (or a card's limits), add a debit card, merge.
 Future<void> accountActions(
   BuildContext context,
   AccountRowData r,
@@ -200,6 +201,14 @@ Future<void> accountActions(
             title: Text(isCredit ? 'Set available limit' : 'Set balance'),
             onTap: () => Navigator.pop(context, 1),
           ),
+          if (r.account.type == AccountType.savings ||
+              r.account.type == AccountType.current)
+            ListTile(
+              leading: const Icon(Icons.credit_card_outlined),
+              title: const Text('Add a debit card'),
+              subtitle: const Text('Its payments log on this account'),
+              onTap: () => Navigator.pop(context, 4),
+            ),
           if (all.length > 1 && !r.account.isCash)
             ListTile(
               leading: const Icon(Icons.call_merge_rounded),
@@ -216,6 +225,31 @@ Future<void> accountActions(
   switch (choice) {
     case 2:
       await _merge(context, r, all);
+    case 4:
+      final digits = await promptText(
+        context,
+        title: 'Debit card',
+        hint: 'Last 4 digits',
+        help: 'From the card, or a message like "BLOCKCARD XX2432".',
+        action: 'Add',
+        numeric: true,
+      );
+      final last4 = digits?.replaceAll(RegExp(r'\D'), '');
+      if (last4 == null || !context.mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      final ok =
+          last4.length == 4 && await ledger.addDebitCard(r.account.id, last4);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            ok
+                ? 'Card ··$last4 added to ${r.account.short}'
+                : last4.length != 4
+                ? 'Enter the last 4 digits'
+                : '··$last4 is already another account',
+          ),
+        ),
+      );
     case 0:
       final name = await promptText(
         context,

@@ -22,9 +22,16 @@ import 'review_editor_cubit.dart';
 /// Fix a message (design 03b): mark fields in the text, confirm values,
 /// then Save & learn.
 class ReviewEditorScreen extends StatelessWidget {
-  const ReviewEditorScreen({super.key, required this.startRawId});
+  const ReviewEditorScreen({
+    super.key,
+    required this.startRawId,
+    this.editTemplateId,
+  });
 
   final String startRawId;
+
+  /// Edit this learned format on its sample ([startRawId]) instead.
+  final String? editTemplateId;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -33,6 +40,7 @@ class ReviewEditorScreen extends StatelessWidget {
       getIt<LedgerRepository>(),
       getIt<BankRepository>(),
       startRawId: startRawId,
+      editTemplateId: editTemplateId,
     ),
     child: const _EditorView(),
   );
@@ -70,7 +78,17 @@ class _EditorView extends StatelessWidget {
           : ' ${r.result.cleared} more waiting '
                 '${r.result.cleared == 1 ? 'message' : 'messages'} read too.';
       final autopay = r.fields.dueDate != null;
-      if (r.result.learned) {
+      if (cubit.editing) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              r.result.learned
+                  ? 'Format updated'
+                  : "Format not changed: ${r.result.learnError}",
+            ),
+          ),
+        );
+      } else if (r.result.learned) {
         await showLearnedOverlay(
           context,
           amountMinor: amount,
@@ -126,7 +144,7 @@ class _Editor extends StatelessWidget {
           icon: const Icon(Icons.close_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Review'),
+        title: Text(cubit.editing ? 'Edit format' : 'Review'),
         actions: [
           if (state.queue.length > 1)
             TextButton(
@@ -333,41 +351,49 @@ class _Editor extends StatelessWidget {
                   style: t.body,
                 ),
               ),
-              FieldRow(
-                label: 'Category',
-                value: SelectButton(
-                  label: category?.name,
-                  icon: category == null ? null : categoryIcon(category.icon),
-                  onPressed: () => _pickCategory(context),
-                ),
-              ),
-            ],
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Learn this format', style: t.title),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.unknownSender
-                            ? 'k reads ${item.raw.sender} as '
-                                  '${cubit.bankLabel() ?? 'that bank'} from now '
-                                  'on.'
-                            : mandate
-                            ? 'Similar AutoPay alerts go to Upcoming on their own.'
-                            : 'Similar messages are read on their own.',
-                        style: t.body.copyWith(color: c.text2),
-                      ),
-                    ],
+              if (!cubit.editing)
+                FieldRow(
+                  label: 'Category',
+                  value: SelectButton(
+                    label: category?.name,
+                    icon: category == null ? null : categoryIcon(category.icon),
+                    onPressed: () => _pickCategory(context),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Switch(value: state.learn, onChanged: cubit.setLearn),
-              ],
-            ),
+            ],
+            const SizedBox(height: 20),
+            if (cubit.editing)
+              Text(
+                'Saving replaces this format. Payments it already logged '
+                'stay as they are.',
+                style: t.body.copyWith(color: c.text2),
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Learn this format', style: t.title),
+                        const SizedBox(height: 4),
+                        Text(
+                          item.unknownSender
+                              ? 'k reads ${item.raw.sender} as '
+                                    '${cubit.bankLabel() ?? 'that bank'} from now '
+                                    'on.'
+                              : mandate
+                              ? 'Similar AutoPay alerts go to Upcoming on their own.'
+                              : 'Similar messages are read on their own.',
+                          style: t.body.copyWith(color: c.text2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Switch(value: state.learn, onChanged: cubit.setLearn),
+                ],
+              ),
             const SizedBox(height: 24),
           ],
         ),
@@ -380,18 +406,22 @@ class _Editor extends StatelessWidget {
           ),
           child: Row(
             children: [
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(minimumSize: const Size(0, 52)),
-                onPressed: state.saving
-                    ? null
-                    : () => item.unknownSender
-                          ? _notABank(context)
-                          : _notATransaction(context),
-                child: Text(
-                  item.unknownSender ? 'Not a bank' : 'Not a transaction',
+              if (!cubit.editing) ...[
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 52),
+                  ),
+                  onPressed: state.saving
+                      ? null
+                      : () => item.unknownSender
+                            ? _notABank(context)
+                            : _notATransaction(context),
+                  child: Text(
+                    item.unknownSender ? 'Not a bank' : 'Not a transaction',
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
+              ],
               Expanded(
                 child: FilledButton.icon(
                   onPressed:
@@ -410,7 +440,13 @@ class _Editor extends StatelessWidget {
                           ),
                         )
                       : const Icon(Icons.check_rounded),
-                  label: Text(state.learn ? 'Save & learn' : 'Save'),
+                  label: Text(
+                    cubit.editing
+                        ? 'Save format'
+                        : state.learn
+                        ? 'Save & learn'
+                        : 'Save',
+                  ),
                 ),
               ),
             ],
@@ -430,8 +466,10 @@ class _Editor extends StatelessWidget {
     }
   }
 
-  /// Long-press sheet: grow/shrink the selection word by word, then pick
-  /// which field it is (or clear an existing mark).
+  /// Long-press sheet: grow/shrink the selection word by word, or drag the
+  /// handles to mark part of it ("XX100640" → "0640"), then pick which
+  /// field it is (or clear an existing mark). Untouched selections are
+  /// trimmed to the field; a dragged one is kept as chosen.
   Future<void> _markSheet(
     BuildContext context,
     int start,
@@ -445,13 +483,37 @@ class _Editor extends StatelessWidget {
     var last = words.lastIndexWhere((w) => w.start < end);
     if (first < 0 || last < first) return;
 
+    final part = TextEditingController();
+    void resetPart() {
+      part.value = TextEditingValue(
+        text: text.substring(words[first].start, words[last].end),
+        selection: TextSelection(
+          baseOffset: 0,
+          extentOffset: words[last].end - words[first].start,
+        ),
+      );
+    }
+
+    resetPart();
+    // Tapping a mark starts from exactly what it holds.
+    if (existing != null) {
+      final base = words[first].start;
+      part.selection = TextSelection(
+        baseOffset: existing.start - base,
+        extentOffset: existing.end - base,
+      );
+    }
     final picked = await showModalBottomSheet<Object>(
       context: context,
+      isScrollControlled: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheet) {
           final t = context.kt;
           final c = context.k;
-          final selection = text.substring(words[first].start, words[last].end);
+          void words2(VoidCallback change) => setSheet(() {
+            change();
+            resetPart();
+          });
           return SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -466,7 +528,7 @@ class _Editor extends StatelessWidget {
                       IconButton(
                         tooltip: 'Start one word earlier',
                         onPressed: first > 0
-                            ? () => setSheet(() => first--)
+                            ? () => words2(() => first--)
                             : null,
                         icon: const Icon(Icons.keyboard_arrow_left_rounded),
                       ),
@@ -480,27 +542,42 @@ class _Editor extends StatelessWidget {
                             color: c.surface3,
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Text(
-                            selection,
+                          // Read-only: Android's own handles move the
+                          // start and end inside the words.
+                          child: TextField(
+                            controller: part,
+                            readOnly: true,
+                            autofocus: true,
+                            showCursor: false,
+                            maxLines: null,
+                            enableInteractiveSelection: true,
                             style: t.body.copyWith(fontWeight: FontWeight.w600),
+                            decoration: const InputDecoration.collapsed(
+                              hintText: '',
+                            ),
                           ),
                         ),
                       ),
                       IconButton(
                         tooltip: 'One word fewer',
                         onPressed: last > first
-                            ? () => setSheet(() => last--)
+                            ? () => words2(() => last--)
                             : null,
                         icon: const Icon(Icons.remove_rounded),
                       ),
                       IconButton(
                         tooltip: 'One word more',
                         onPressed: last < words.length - 1
-                            ? () => setSheet(() => last++)
+                            ? () => words2(() => last++)
                             : null,
                         icon: const Icon(Icons.add_rounded),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Drag the handles to mark part of it',
+                    style: t.meta.copyWith(color: c.text3),
                   ),
                   const SizedBox(height: 12),
                   Wrap(
@@ -514,11 +591,27 @@ class _Editor extends StatelessWidget {
                                 : MarkField.dueDate))
                           ActionChip(
                             label: Text(_fieldName(field)),
-                            onPressed: () => Navigator.pop(context, (
-                              field,
-                              words[first].start,
-                              words[last].end,
-                            )),
+                            onPressed: () {
+                              final sel = part.selection;
+                              final whole = part.text.length;
+                              // A dragged, non-empty part is kept as chosen.
+                              final dragged =
+                                  sel.isValid &&
+                                  !sel.isCollapsed &&
+                                  (sel.start > 0 || sel.end < whole);
+                              final base = words[first].start;
+                              Navigator.pop(
+                                context,
+                                dragged
+                                    ? (
+                                        field,
+                                        base + sel.start,
+                                        base + sel.end,
+                                        true,
+                                      )
+                                    : (field, base, words[last].end, false),
+                              );
+                            },
                           ),
                     ],
                   ),
@@ -537,10 +630,17 @@ class _Editor extends StatelessWidget {
         },
       ),
     );
+    // After the sheet has animated out (disposing earlier crashes).
+    Future<void>.delayed(const Duration(milliseconds: 500), part.dispose);
     if (picked == 'clear' && existing != null) {
       cubit.unmark(existing);
-    } else if (picked case (final MarkField field, final int s, final int e)) {
-      if (!cubit.mark(field, s, e) && context.mounted) {
+    } else if (picked case (
+      final MarkField field,
+      final int s,
+      final int e,
+      final bool exact,
+    )) {
+      if (!cubit.mark(field, s, e, exact: exact) && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("That doesn't look like ${_fieldArticle(field)}"),
@@ -552,6 +652,7 @@ class _Editor extends StatelessWidget {
 
   String _fieldName(MarkField f) => switch (f) {
     MarkField.account => 'Account no.',
+    MarkField.card => 'Card no.',
     MarkField.direction => 'Debit/credit word',
     MarkField.amount => 'Amount',
     MarkField.payee => 'Payee',
@@ -563,6 +664,7 @@ class _Editor extends StatelessWidget {
 
   String _fieldArticle(MarkField f) => switch (f) {
     MarkField.account => 'an account number (4 digits)',
+    MarkField.card => 'a card number (4 digits)',
     MarkField.amount => 'an amount',
     MarkField.balance => 'a balance',
     MarkField.ref => 'a reference',

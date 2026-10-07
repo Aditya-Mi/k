@@ -332,6 +332,32 @@ void main() {
     expect(rows.every((r) => r.account?.id == main.id), isTrue);
   });
 
+  test('a debit card added to an account takes its messages', () async {
+    await ingest.ingest(axisOut(100, DateTime(2026, 10, 1, 9)));
+    final main = (await ledger.watchAccounts().first).firstWhere(
+      (a) => a.last4 == '1111',
+    );
+    expect(await ledger.addDebitCard(main.id, '1111'), isFalse);
+    expect(await ledger.addDebitCard(main.id, '2432'), isTrue);
+    final accounts = (await ledger.watchAccounts().first)
+        .where((a) => !a.isCash)
+        .toList();
+    expect(accounts.single.includes, ['card ··2432']);
+    await ingest.ingest(
+      sms(
+        'AX-AXISBK-S',
+        'INR 75.00 debited\nA/c no. XX2432\n'
+            '${_d(DateTime(2026, 10, 2, 9))}, ${_t(DateTime(2026, 10, 2, 9))}\n'
+            'UPI/P2M/100000000099/GUPTA STORES\n'
+            'Not you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank',
+        DateTime(2026, 10, 2, 9),
+      ),
+    );
+    final rows = await txns();
+    expect(rows, hasLength(2));
+    expect(rows.every((r) => r.account?.id == main.id), isTrue);
+  });
+
   test('schema v1 → v4: transfer, origin, balance, merge', () async {
     final dir = Directory.systemTemp.createTempSync('k_mig');
     addTearDown(() => dir.deleteSync(recursive: true));

@@ -5,6 +5,7 @@ import 'package:txn_parser/txn_parser.dart';
 import '../db/app_database.dart';
 import '../db/enums.dart';
 import '../db/seed/seed_data.dart';
+import '../ingest/category_resolver.dart';
 import 'ledger_models.dart';
 
 /// Read models and edits for transactions, accounts and upcoming charges.
@@ -128,7 +129,10 @@ class LedgerRepository {
       }
       final atm = [
         for (final r in rows)
-          if (r.txnType == TxnType.atm && r.accountId != cashAccountId) r,
+          // Parsed as ATM, or filed under ATM withdrawal by the owner.
+          if ((r.txnType == TxnType.atm || r.categoryId == atmCategoryId) &&
+              r.accountId != cashAccountId)
+            r,
       ];
       return {
         for (final a in accs)
@@ -267,6 +271,44 @@ class LedgerRepository {
                 updatedAt: Value(now),
               ),
             );
+      });
+
+  /// A debit card on a bank account: messages naming the card log on the
+  /// account. A card k already made from a message is folded in with its
+  /// payments. False when those digits are a different kind of account.
+  Future<bool> addDebitCard(String accountId, String last4) =>
+      _db.transaction(() async {
+        final target = await (_db.select(
+          _db.accounts,
+        )..where((a) => a.id.equals(accountId))).getSingle();
+        final existing =
+            await (_db.select(_db.accounts)..where(
+                  (a) => a.bankId.equals(target.bankId) & a.last4.equals(last4),
+                ))
+                .getSingleOrNull();
+        if (existing == null) {
+          await _db
+              .into(_db.accounts)
+              .insert(
+                AccountsCompanion.insert(
+                  bankId: target.bankId,
+                  type: AccountType.debitCard,
+                  last4: Value(last4),
+                  autoCreated: const Value(false),
+                  mergedIntoId: Value(accountId),
+                ),
+              );
+          return true;
+        }
+        if (existing.id == accountId) return false;
+        if (existing.type != AccountType.debitCard) return false;
+        if (existing.deletedAt != null) {
+          await (_db.update(_db.accounts)
+                ..where((a) => a.id.equals(existing.id)))
+              .write(const AccountsCompanion(deletedAt: Value(null)));
+        }
+        await mergeAccount(existing.id, accountId);
+        return true;
       });
 
   /// Bank id → display name ("AXIS" → "Axis Bank").

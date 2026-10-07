@@ -2,6 +2,8 @@ import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:k/data/db/app_database.dart' hide ParserTemplate, SenderRule;
+import 'package:k/data/db/seed/seed_data.dart';
+import 'package:k/data/ingest/category_resolver.dart';
 import 'package:k/data/ingest/ingestion_service.dart';
 import 'package:k/data/repositories/bank_repository.dart';
 import 'package:k/data/repositories/ledger_models.dart';
@@ -52,6 +54,17 @@ void main() {
     final start = text.indexOf('NEFT/');
     final r = trimToField(text, MarkField.ref, start, text.length)!;
     expect(text.substring(r.$1, r.$2), 'IN26000000000001');
+  });
+
+  test('account selection keeps the last 4 of a longer number', () {
+    for (final (word, want) in [
+      ('XX100640', '0640'),
+      ('XXXXXX3333', '3333'),
+      ('X2222.', '2222'),
+    ]) {
+      final r = trimToField(word, MarkField.account, 0, word.length)!;
+      expect(word.substring(r.$1, r.$2), want, reason: word);
+    }
   });
 
   test('queue item: reason and prefilled marks', () async {
@@ -131,6 +144,126 @@ void main() {
       // Merchant rule taught by the category pick.
       expect(newest.category?.id, 'cat_shopping');
       expect(await db.parserTemplates.count().getSingle(), 1);
+    },
+  );
+
+  test('dragged selection is kept; account and card need 4 digits', () {
+    const text = 'A/c no. XX100640 card XX2432';
+    final at = text.indexOf('100640');
+    expect(exactField(text, MarkField.account, at + 2, at + 6), (
+      at + 2,
+      at + 6,
+    ));
+    expect(exactField(text, MarkField.account, at, at + 6), isNull);
+    final card = text.indexOf('2432');
+    expect(exactField(text, MarkField.card, card, card + 4), (card, card + 4));
+  });
+
+  test('a marked card joins the account; not part of the format', () async {
+    await ingest.ingest(
+      axis(
+        unknownShape('99', '1234', 'NEWMERCHANT', '88772432'),
+        DateTime(2026, 10, 3, 13),
+      ),
+    );
+    final item = (await review.watchQueue().first).single;
+    final refAt = item.text.indexOf('88772432');
+    final card = trimToField(item.text, MarkField.card, refAt, refAt + 8)!;
+    final result = await review.save(
+      item,
+      ReviewDraft(
+        marks: [
+          ...prefillMarks(
+            item.text,
+            item.guess.fields,
+          ).where((m) => m.field != MarkField.ref),
+          FieldMark(MarkField.card, card.$1, card.$2),
+        ],
+        direction: Direction.debit,
+      ),
+    );
+    expect(result.learned, isTrue);
+    final account = (await ledger.watchAccounts().first).firstWhere(
+      (a) => a.last4 == '1234',
+    );
+    expect(account.includes, ['card ··2432']);
+  });
+
+  test('editing a learned format replaces it and logs nothing', () async {
+    await ingest.ingest(
+      axis(
+        unknownShape('99', '1234', 'NEWMERCHANT', '88776655'),
+        DateTime(2026, 10, 3, 13),
+      ),
+    );
+    final item = (await review.watchQueue().first).single;
+    await review.save(
+      item,
+      ReviewDraft(
+        marks: prefillMarks(item.text, item.guess.fields),
+        direction: Direction.debit,
+      ),
+    );
+    final old = await db.select(db.parserTemplates).getSingle();
+    final sample = (await review.itemById(item.raw.id))!;
+    final payeeAt = sample.text.indexOf('NEWMERCHANT');
+    final result = await review.relearn(
+      old.id,
+      sample,
+      ReviewDraft(
+        marks: [
+          ...prefillMarks(
+            sample.text,
+            sample.guess.fields,
+          ).where((m) => m.field != MarkField.payee),
+          FieldMark(MarkField.payee, payeeAt, payeeAt + 'NEWMERCHANT'.length),
+        ],
+        direction: Direction.debit,
+      ),
+    );
+    expect(result.learned, isTrue);
+    final live = await (db.select(
+      db.parserTemplates,
+    )..where((t) => t.deletedAt.isNull())).get();
+    expect(live, hasLength(1));
+    expect(live.single.id, isNot(old.id));
+    expect(await ledger.watchTransactions(oct).first, hasLength(1));
+  });
+
+  test(
+    'filed as an ATM withdrawal: cash in hand, and learned as ATM',
+    () async {
+      await ingest.ingest(
+        axis(
+          unknownShape('10000', '1234', 'AXIS BANK L', '88776655'),
+          DateTime(2026, 10, 7, 19),
+        ),
+      );
+      final item = (await review.watchQueue().first).single;
+      await review.save(
+        item,
+        ReviewDraft(
+          marks: prefillMarks(item.text, item.guess.fields),
+          direction: Direction.debit,
+          categoryId: atmCategoryId,
+        ),
+      );
+      final row = (await ledger.watchTransactions(oct).first).single;
+      expect(row.txnType, TxnType.atm);
+      final cash = (await ledger.watchBalances().first)[cashAccountId]!;
+      expect(cash.amountMinor, 1000000);
+
+      await ingest.ingest(
+        axis(
+          unknownShape('500', '1234', 'AXIS BANK L', '11223344'),
+          DateTime(2026, 10, 8, 9),
+        ),
+      );
+      final next = (await ledger.watchTransactions(oct).first).firstWhere(
+        (r) => r.amountMinor == 50000,
+      );
+      expect(next.txnType, TxnType.atm);
+      expect(next.category?.id, atmCategoryId);
     },
   );
 

@@ -8,10 +8,11 @@ import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import 'message_marks.dart';
+import 'review_editor_screen.dart';
 
 /// Formats taught in Review: the sample each came from and what it reads.
-/// Pause stops it reading new messages; Forget removes it. Payments it
-/// already logged stay either way.
+/// Pause stops it reading new messages; Edit re-marks its sample; Forget
+/// removes it. Payments it already logged stay either way.
 class LearnedFormatsScreen extends StatelessWidget {
   const LearnedFormatsScreen({super.key});
 
@@ -147,6 +148,19 @@ class _FormatCard extends StatelessWidget {
                   style: t.meta.copyWith(color: c.text3),
                 ),
               ),
+              // Re-mark the sample; skip formats have nothing to mark.
+              if (format.sample != null && row.kind != TemplateKind.ignore)
+                TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ReviewEditorScreen(
+                        startRawId: format.sample!.id,
+                        editTemplateId: row.id,
+                      ),
+                    ),
+                  ),
+                  child: const Text('Edit'),
+                ),
               TextButton(
                 onPressed: () => _forget(context),
                 child: const Text('Forget'),
