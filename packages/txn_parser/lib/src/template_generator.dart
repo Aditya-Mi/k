@@ -25,6 +25,7 @@ class TemplateGenerator {
     Fields.amount: r'[\d,]+(?:\.\d{1,2})?',
     Fields.balance: r'[\d,]+(?:\.\d{1,2})?',
     Fields.last4: r'\d{4}',
+    Fields.card: r'\d{4}',
     Fields.ref: r'[A-Za-z0-9]+',
     Fields.mandateRef: r'[A-Za-z0-9]+',
     Fields.direction: r'[A-Za-z]+',

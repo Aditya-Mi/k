@@ -21,7 +21,8 @@ void main() {
     ],
   );
   const guessed = [
-    'amountMinor', 'direction', 'last4', 'payee', 'ref', 'balanceMinor', //
+    'amountMinor', 'direction', 'last4', 'card', 'payee', 'ref', //
+    'balanceMinor',
   ];
 
   final files =

@@ -56,6 +56,21 @@ final axisBank = BankDefinition(
       defaults: const {'direction': 'debit', 'txnType': 'atm'},
     ),
     ParserTemplate(
+      id: 'axis_sms_atm_withdrawal',
+      bankCode: 'AXIS',
+      channel: Channel.sms,
+      name: 'ATM withdrawal (debit card at terminal)',
+      // Never says "ATM": "on AXIS BANK L" is the terminal, BLOCKCARD names the
+      // debit card. Only ATM withdrawals seen in this shape so far, and the
+      // alert email for the same payment says ATM-WDL.
+      pattern: rx(
+        r'INR (?<amount>{amt}) debited from A/c no\. XX(?<last4>\d{4,8}) on .+? '
+        r'(?<date>\d{2}-\d{2}-\d{4} [\d:]+)(?: IST)?\. Avl bal:? INR (?<balance>{amt})\.'
+        r'.*?BLOCKCARD XX(?<card>\d{4})',
+      ),
+      defaults: const {'direction': 'debit', 'txnType': 'atm'},
+    ),
+    ParserTemplate(
       id: 'axis_sms_mandate',
       bankCode: 'AXIS',
       channel: Channel.sms,
@@ -76,6 +91,18 @@ final axisBank = BankDefinition(
         r'(?<payee>.+?) on (?<date>[\d\-]+ [\d:]+)(?: IST)?\. Available limit:? INR (?<balance>{amt})',
       ),
       defaults: const {'direction': 'debit', 'txnType': 'card'},
+    ),
+    ParserTemplate(
+      id: 'axis_email_atm_withdrawal',
+      bankCode: 'AXIS',
+      channel: Channel.email,
+      name: 'ATM withdrawal (email)',
+      pattern: rx(
+        r'INR (?<amount>{amt}) has been debited from your A/c no\. XX(?<last4>\d{4,8}) on '
+        r'(?<date>\d{2}-\d{2}-\d{4} [\d:]+) at ATM-WDL/\S+?\. '
+        r'Available balance:? INR (?<balance>{amt})\..*?BLOCKCARD (?:XX)?(?<card>\d{4})',
+      ),
+      defaults: const {'direction': 'debit', 'txnType': 'atm'},
     ),
     ParserTemplate(
       id: 'axis_email_txn_summary',

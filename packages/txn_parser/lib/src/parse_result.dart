@@ -24,6 +24,7 @@ class ParsedFields {
     this.direction,
     this.txnType,
     this.last4,
+    this.card,
     this.payee,
     this.ref,
     this.occurredAt,
@@ -37,6 +38,9 @@ class ParsedFields {
   final Direction? direction;
   final TxnType? txnType;
   final String? last4;
+
+  /// Debit card last 4 (the account is [last4]).
+  final String? card;
   final String? payee;
   final String? ref;
   final DateTime? occurredAt;
@@ -54,6 +58,7 @@ class ParsedFields {
     'direction': direction?.name,
     'txnType': txnType?.name,
     'last4': last4,
+    'card': card,
     'payee': payee,
     'ref': ref,
     'occurredAt': occurredAt?.toIso8601String(),

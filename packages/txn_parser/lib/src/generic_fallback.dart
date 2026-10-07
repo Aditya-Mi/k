@@ -22,10 +22,12 @@ final _direction = RegExp(
   r'|\b(autopay|made a (?:\w+ )?payment)\b',
   caseSensitive: false,
 );
+// "XX001111" → 1111. Not "BLOCKCARD XX6666": that names the debit card.
 final _last4 = RegExp(
-  r'(?:a/?c|acct|account|card)\s*(?:no\.?)?\s*(?:ending\s*)?[x*.]*(\d{4})\b',
+  r'\b(?:a/?c|acct|account|card)\s*(?:no\.?)?\s*(?:ending\s*)?[x*.]*\d{0,8}?(\d{4})\b',
   caseSensitive: false,
 );
+final _card = RegExp(r'\bBLOCKCARD\s+(?:XX)?(\d{4})\b', caseSensitive: false);
 // UPI/P2M/<ref>/<payee>, NEFT/<utr>/<payee> — Axis style.
 final _slashPath = RegExp(
   r'\b(?:UPI|NEFT|IMPS|RTGS)/(?:P2[AM]/)?([A-Za-z0-9]{6,})/([^/]+?)'
@@ -64,6 +66,7 @@ ParsedFields guessFields(String text) {
               (dir.group(3) != null ? Direction.debit : null),
     txnType: inferTxnType(text, isMandate: false),
     last4: _last4.firstMatch(text)?.group(1),
+    card: _card.firstMatch(text)?.group(1),
     payee: payee == null ? null : cleanPayee(payee),
     ref: path?.group(1) ?? _ref.firstMatch(text)?.group(1),
     balanceMinor: balance == null ? null : parseAmountMinor(balance),

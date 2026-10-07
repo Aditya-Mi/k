@@ -118,7 +118,8 @@ class ParserEngine {
           txnTypeFromWord(group(Fields.type)) ??
           txnTypeFromWord(template.defaults['txnType']) ??
           inferTxnType(text, isMandate: isMandate),
-      last4: group(Fields.last4),
+      last4: _lastFour(group(Fields.last4)),
+      card: _lastFour(group(Fields.card)),
       payee: payee == null ? null : cleanPayee(payee),
       ref: group(Fields.ref),
       occurredAt: resolveOccurredAt(
@@ -143,4 +144,12 @@ class ParserEngine {
       missing: missing,
     );
   }
+}
+
+/// "001111" → "1111": long masked numbers keep their last 4 digits.
+String? _lastFour(String? v) {
+  if (v == null) return null;
+  final digits = v.replaceAll(RegExp(r'\D'), '');
+  if (digits.length < 4) return v;
+  return digits.substring(digits.length - 4);
 }

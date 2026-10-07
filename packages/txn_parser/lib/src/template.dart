@@ -8,6 +8,9 @@ abstract final class Fields {
   static const direction = 'direction';
   static const type = 'type';
   static const last4 = 'last4';
+
+  /// Debit card last 4, when the alert names the card as well as the account.
+  static const card = 'card';
   static const payee = 'payee';
   static const ref = 'ref';
   static const date = 'date';
@@ -17,8 +20,8 @@ abstract final class Fields {
   static const currency = 'currency';
 
   static const all = [
-    amount, direction, type, last4, payee, ref, date, balance, dueDate, //
-    mandateRef, currency,
+    amount, direction, type, last4, card, payee, ref, date, balance, //
+    dueDate, mandateRef, currency,
   ];
 }
 

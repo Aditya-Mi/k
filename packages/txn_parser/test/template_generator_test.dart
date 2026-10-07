@@ -57,6 +57,32 @@ void main() {
     expect(r.fields.direction, Direction.debit);
   });
 
+  test('learned templates can read the debit card', () {
+    const text =
+        'INR 500.00 debited from A/c no. XX001234 on SOME ATM 05-10-2026 '
+        '10:00:00 IST. Not you? SMS BLOCKCARD XX4321 to 919951860002';
+    final g = generator.generate(
+      id: 'u2',
+      bankCode: 'AXIS',
+      channel: Channel.sms,
+      sampleText: text,
+      fieldValues: {'amount': '500.00', 'last4': '1234', 'card': '4321'},
+      defaults: const {'direction': 'debit'},
+    );
+    expect(g.ok, isTrue, reason: g.error);
+    final r = ParserEngine(banks: builtInBanks, userTemplates: [g.template!])
+        .parse(
+          RawInput(
+            channel: Channel.sms,
+            sender: 'AX-AXISBK-S',
+            body: text.replaceAll('4321', '8765'),
+            receivedAt: DateTime(2026, 10, 5, 10),
+          ),
+        );
+    expect(r.templateId, 'u2');
+    expect(r.fields.card, '8765');
+  });
+
   test('fails clearly when a selected value is not in the text', () {
     final g = generate({'amount': '12345.00'});
     expect(g.ok, isFalse);
