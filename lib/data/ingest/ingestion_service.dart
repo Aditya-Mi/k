@@ -517,6 +517,7 @@ class IngestionService {
             _db.accounts,
           )..where((a) => a.id.equals(accountId))).getSingle()
         : await _accountFor(bankId, fields, text);
+    await _rememberCard(account, fields.card);
     final occurredAt = fields.occurredAt ?? raw.receivedAt;
 
     // The same payment from the other channel (SMS ↔ email): one row, two
@@ -792,6 +793,35 @@ class IngestionService {
           ),
         );
     return _resolveMerged(created);
+  }
+
+  /// A debit card the message names ("BLOCKCARD XX6666") is remembered on
+  /// the account it spent from, so card-only alerts land there too. A card
+  /// k already holds is left as it is (merging is the owner's call).
+  Future<void> _rememberCard(Account account, String? card) async {
+    if (card == null ||
+        card == account.last4 ||
+        (account.type != AccountType.savings &&
+            account.type != AccountType.current)) {
+      return;
+    }
+    final known =
+        await (_db.select(_db.accounts)..where(
+              (a) => a.bankId.equals(account.bankId) & a.last4.equals(card),
+            ))
+            .getSingleOrNull();
+    if (known != null) return;
+    await _db
+        .into(_db.accounts)
+        .insert(
+          AccountsCompanion.insert(
+            bankId: account.bankId,
+            type: AccountType.debitCard,
+            last4: Value(card),
+            autoCreated: const Value(true),
+            mergedIntoId: Value(account.id),
+          ),
+        );
   }
 
   Future<Account?> _soleSavings(String bankId) async {

@@ -234,7 +234,9 @@ Owner hit an Axis ATM withdrawal that went to Review, saved it as ATM withdrawal
 - Emulator: Card no. mark from the sheet works (the guess had marked 6666 as ACCOUNT, now CARD). adb long-press on a word didn't open the sheet on this emulator (tap on a mark did); check long-press on the phone.
 - Designs synced: new `03l Review — mark as (sheet)` (handles, hint, Card no. chip) and 03e Edit button.
 
-### For the parser session: Axis ATM withdrawal (real, masked)
+**Card field live (parser 688c468, 2026-10-07):** `MarkField.card` uses `Fields.card` and is learnable; `fieldsOf` passes `card`; `prefillMarks` places it from the guess. Ingestion `_rememberCard`: a message naming a card (`ParsedFields.card`) adds it as a debit card folded into the savings/current account it spent from (only if k doesn't know those digits yet; merging an existing card stays the owner's call via Add a debit card / Card no. mark). Built-in Axis ATM SMS/email now parse (txnType atm → cash in hand). Tests in `review_service_test.dart`.
+
+### For the parser session: Axis ATM withdrawal (real, masked) — done in 688c468
 SMS (no word "ATM"; "AXIS BANK L" is the terminal; `BLOCKCARD XX6666` names the debit card):
 `INR 10000.00 debited from A/c no. XX001111 on AXIS BANK L 07-10-2026 19:15:17 IST. Avl bal: INR 4321.50. Not you? SMS BLOCKCARD XX6666 to +919951860002 - Axis Bank`
 Email (same payment):

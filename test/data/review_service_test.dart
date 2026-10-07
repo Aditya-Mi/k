@@ -189,6 +189,54 @@ void main() {
     expect(account.includes, ['card ··6666']);
   });
 
+  test('Axis ATM SMS: cash in hand and its card remembered', () async {
+    await ingest.ingest(
+      axis(
+        'INR 10000.00 debited from A/c no. XX001111 on AXIS BANK L '
+        '07-10-2026 19:15:17 IST. Avl bal: INR 4321.50. Not you? SMS '
+        'BLOCKCARD XX6666 to +919951860002 - Axis Bank',
+        DateTime(2026, 10, 7, 19, 15, 40),
+      ),
+    );
+    final row = (await ledger.watchTransactions(oct).first).single;
+    expect(row.txnType, TxnType.atm);
+    expect(row.account?.last4, '1111');
+    final account = (await ledger.watchAccounts().first).firstWhere(
+      (a) => a.last4 == '1111',
+    );
+    expect(account.includes, ['card ··6666']);
+    final cash = (await ledger.watchBalances().first)[cashAccountId]!;
+    expect(cash.amountMinor, 1000000);
+  });
+
+  test('a learned format reads the card too', () async {
+    String shape(String ref, String card) =>
+        '${unknownShape('99', '1234', 'NEWMERCHANT', ref)} SMS BLOCKCARD '
+        'XX$card';
+    await ingest.ingest(axis(shape('88776655', '6666'), DateTime(2026, 10, 3)));
+    final item = (await review.watchQueue().first).single;
+    final at = item.text.lastIndexOf('6666');
+    final result = await review.save(
+      item,
+      ReviewDraft(
+        marks: [
+          ...prefillMarks(
+            item.text,
+            item.guess.fields,
+          ).where((m) => m.field != MarkField.card),
+          FieldMark(MarkField.card, at, at + 4),
+        ],
+        direction: Direction.debit,
+      ),
+    );
+    expect(result.learned, isTrue);
+    await ingest.ingest(axis(shape('11223344', '7777'), DateTime(2026, 10, 4)));
+    final account = (await ledger.watchAccounts().first).firstWhere(
+      (a) => a.last4 == '1234',
+    );
+    expect(account.includes, unorderedEquals(['card ··6666', 'card ··7777']));
+  });
+
   test('editing a learned format replaces it and logs nothing', () async {
     await ingest.ingest(
       axis(

@@ -5,10 +5,9 @@ import 'package:txn_parser/txn_parser.dart';
 enum MarkField {
   account(Fields.last4, 'ACCOUNT'),
 
-  /// A debit card named in the message ("BLOCKCARD XX6666"). Not a parser
-  /// group yet: saving adds the card to the payment's account, the learned
-  /// format doesn't read it.
-  card('card', 'CARD'),
+  /// A debit card named in the message ("BLOCKCARD XX6666"); remembered on
+  /// the payment's account.
+  card(Fields.card, 'CARD'),
   direction(Fields.direction, 'DIRECTION'),
   amount(Fields.amount, 'AMOUNT'),
   payee(Fields.payee, 'PAYEE'),
@@ -24,9 +23,6 @@ enum MarkField {
   /// txn_parser named group.
   final String group;
   final String caption;
-
-  /// Read by a learned format (the parser has a group for it).
-  bool get learnable => this != card;
 }
 
 /// A marked character range in the normalized message text.
@@ -143,6 +139,14 @@ List<FieldMark> prefillMarks(String text, ParsedFields f) {
     for (final m in RegExp(RegExp.escape(f.last4!)).allMatches(text)) {
       if (free(m.start, m.end)) {
         add(MarkField.account, m.start, m.end);
+        break;
+      }
+    }
+  }
+  if (f.card != null) {
+    for (final m in RegExp(RegExp.escape(f.card!)).allMatches(text)) {
+      if (free(m.start, m.end)) {
+        add(MarkField.card, m.start, m.end);
         break;
       }
     }

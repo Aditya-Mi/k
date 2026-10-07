@@ -184,6 +184,7 @@ class ReviewService {
           ? TxnType.atm
           : item.guess.fields.txnType ?? TxnType.other,
       last4: marked(MarkField.account),
+      card: marked(MarkField.card),
       payee: payee == null ? null : cleanPayee(payee),
       ref: d.ref ?? marked(MarkField.ref),
       occurredAt:
@@ -456,8 +457,7 @@ class ReviewService {
     final values = <String, String>{
       for (final m in d.marks)
         // An AutoPay format reads the due date, not the message date.
-        if (m.field.learnable &&
-            !(d.isMandate && m.field == MarkField.date) &&
+        if (!(d.isMandate && m.field == MarkField.date) &&
             !(!d.isMandate && m.field == MarkField.dueDate))
           m.field.group: m.valueIn(item.text),
     };
