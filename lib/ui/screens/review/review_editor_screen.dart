@@ -467,7 +467,7 @@ class _Editor extends StatelessWidget {
   }
 
   /// Long-press sheet: grow/shrink the selection word by word, or drag the
-  /// handles to mark part of it ("XX100640" → "0640"), then pick which
+  /// handles to mark part of it ("XX001111" → "1111"), then pick which
   /// field it is (or clear an existing mark). Untouched selections are
   /// trimmed to the field; a dragged one is kept as chosen.
   Future<void> _markSheet(

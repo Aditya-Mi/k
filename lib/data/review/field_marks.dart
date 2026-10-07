@@ -5,7 +5,7 @@ import 'package:txn_parser/txn_parser.dart';
 enum MarkField {
   account(Fields.last4, 'ACCOUNT'),
 
-  /// A debit card named in the message ("BLOCKCARD XX2432"). Not a parser
+  /// A debit card named in the message ("BLOCKCARD XX6666"). Not a parser
   /// group yet: saving adds the card to the payment's account, the learned
   /// format doesn't read it.
   card('card', 'CARD'),
@@ -64,7 +64,7 @@ final _directionWords = RegExp(
       final runs = RegExp(r'\d{4,}').allMatches(s).toList();
       if (runs.isEmpty) return null;
       // Last four digits of the last run ("XXXXXX3333" → "3333",
-      // "XX100640" → "0640").
+      // "XX001111" → "1111").
       final runEnd = runs.last.end;
       return (start + runEnd - 4, start + runEnd);
     case MarkField.amount:

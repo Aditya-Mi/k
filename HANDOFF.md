@@ -222,24 +222,24 @@ Emulator-checked (release arm64 APK on `Medium_Phone_API_36.1`; it is arm64, x64
 Next: commit (owner approves first), then release.
 
 ## ATM withdrawal + debit cards (2026-10-07)
-Owner hit an Axis ATM withdrawal that went to Review, saved it as ATM withdrawal, and cash in hand didn't change. Also the account mark on `XX100640` picked the wrong digits.
+Owner hit an Axis ATM withdrawal that went to Review, saved it as ATM withdrawal, and cash in hand didn't change. Also the account mark on `XX001111` picked the wrong digits.
 - **Cash:** cash in hand counted only `txnType == atm`; Review saved `other`. Now `watchBalances` also counts the ATM withdrawal category (`atmCategoryId` = `cat_cash`, so the owner's already-saved row counts after updating), Review save sets `txnType: atm` when that category is picked, and a learned format gets default `txnType: atm` (later messages of that shape are ATM withdrawals automatically). Test in `review_service_test.dart`.
-- **Account mark:** `trimToField` matched non-overlapping 4-digit chunks (`XX100640` → `1006`); now last 4 of the last digit run (`0640`). Test added.
-- **Debit cards on an account:** Accounts → tap a savings/current account → "Add a debit card" (last 4) → `LedgerRepository.addDebitCard`: a debit-card account folded into it (shows "Includes card ··2432"); an auto-made card with those digits is merged with its payments. Messages naming the card log on the account. Test in `transfer_linker_test.dart`. (Sheet item only; no Pencil change.)
+- **Account mark:** `trimToField` matched non-overlapping 4-digit chunks (`XX001111` → `0011`); now last 4 of the last digit run (`1111`). Test added.
+- **Debit cards on an account:** Accounts → tap a savings/current account → "Add a debit card" (last 4) → `LedgerRepository.addDebitCard`: a debit-card account folded into it (shows "Includes card ··6666"); an auto-made card with those digits is merged with its payments. Messages naming the card log on the account. Test in `transfer_linker_test.dart`. (Sheet item only; no Pencil change.)
 
 **Review marking follow-ups (owner asked, same day):**
 - Mark sheet: the selection sits in a read-only TextField, so Android's own handles move start/end inside a word. Untouched → trimmed to the field as before; dragged → kept exactly (`exactField`; account/card must be exactly 4 digits). Tapping a mark starts with its range selected.
 - New **Card no.** mark (`MarkField.card`, caption CARD, `learnable: false`): on save the card is added to the payment's savings/current account (`_linkCard` → `addDebitCard`). Not part of the learned format until the parser has a group for it.
 - **Edit a learned format:** Message formats → Edit → `ReviewEditorScreen(editTemplateId:)` on the sample (title "Edit format", no category / learn switch / Not a transaction; button "Save format") → `ReviewService.relearn`: new template from the new marks, old one soft-deleted, its messages re-pointed (uses kept), nothing logged; if the new marks don't read the sample back, the old format stays.
-- Emulator: Card no. mark from the sheet works (the guess had marked 2432 as ACCOUNT, now CARD). adb long-press on a word didn't open the sheet on this emulator (tap on a mark did); check long-press on the phone.
-- **Designs not yet synced** (Pencil app was closed): mark sheet (handles + "Drag the handles to mark part of it" + Card no. chip) and 03e Edit button.
+- Emulator: Card no. mark from the sheet works (the guess had marked 6666 as ACCOUNT, now CARD). adb long-press on a word didn't open the sheet on this emulator (tap on a mark did); check long-press on the phone.
+- Designs synced: new `03l Review — mark as (sheet)` (handles, hint, Card no. chip) and 03e Edit button.
 
 ### For the parser session: Axis ATM withdrawal (real, masked)
-SMS (no word "ATM"; "AXIS BANK L" is the terminal; `BLOCKCARD XX2432` names the debit card):
-`INR 10000.00 debited from A/c no. XX000640 on AXIS BANK L 07-10-2026 19:15:17 IST. Avl bal: INR 5363.50. Not you? SMS BLOCKCARD XX2432 to +919951860002 - Axis Bank`
+SMS (no word "ATM"; "AXIS BANK L" is the terminal; `BLOCKCARD XX6666` names the debit card):
+`INR 10000.00 debited from A/c no. XX001111 on AXIS BANK L 07-10-2026 19:15:17 IST. Avl bal: INR 4321.50. Not you? SMS BLOCKCARD XX6666 to +919951860002 - Axis Bank`
 Email (same payment):
-`Dear Customer, Thank you for banking with us. We wish to inform you that INR 10000.00 has been debited from your A/c no. XX000640 on 07-10-2026 19:15:17 at ATM-WDL/AXPR/5947. Available balance: INR 5363.50. Please SMS BLOCKCARD 2432 to +919951860002 or call 1860 500 5555, if the transaction has not been initiated by you.`
-Expected: debit, amount 1000000, last4 0640, balance 536350, date 07-10-2026 19:15:17; email txnType atm (ATM-WDL). For the SMS, decide whether "debited … on <terminal> … BLOCKCARD" means ATM or card spend (only this sample so far; the email copy merges with it). Six-digit account numbers (`XX100640` style) must give the last 4. Today the guesser marks the BLOCKCARD digits (2432) as the account: in Axis "BLOCKCARD XXnnnn" is the card, not the account.
+`Dear Customer, Thank you for banking with us. We wish to inform you that INR 10000.00 has been debited from your A/c no. XX001111 on 07-10-2026 19:15:17 at ATM-WDL/AXPR/0000. Available balance: INR 4321.50. Please SMS BLOCKCARD 6666 to +919951860002 or call 1860 500 5555, if the transaction has not been initiated by you.`
+Expected: debit, amount 1000000, last4 1111, balance 432150, date 07-10-2026 19:15:17; email txnType atm (ATM-WDL). For the SMS, decide whether "debited … on <terminal> … BLOCKCARD" means ATM or card spend (only this sample so far; the email copy merges with it). Six-digit account numbers (`XX001111` style) must give the last 4. Today the guesser marks the BLOCKCARD digits (6666) as the account: in Axis "BLOCKCARD XXnnnn" is the card, not the account.
 **API ask:** a `card` named group (debit card last 4) in `ParsedFields` / `Fields`, so templates (built-in and learned) can read it. The app will then link the card to the account on every message and make `MarkField.card` learnable.
 
 ## Device test of 1.1.1 + fixes (2026-10-06)

@@ -338,15 +338,15 @@ void main() {
       (a) => a.last4 == '1111',
     );
     expect(await ledger.addDebitCard(main.id, '1111'), isFalse);
-    expect(await ledger.addDebitCard(main.id, '2432'), isTrue);
+    expect(await ledger.addDebitCard(main.id, '6666'), isTrue);
     final accounts = (await ledger.watchAccounts().first)
         .where((a) => !a.isCash)
         .toList();
-    expect(accounts.single.includes, ['card ··2432']);
+    expect(accounts.single.includes, ['card ··6666']);
     await ingest.ingest(
       sms(
         'AX-AXISBK-S',
-        'INR 75.00 debited\nA/c no. XX2432\n'
+        'INR 75.00 debited\nA/c no. XX6666\n'
             '${_d(DateTime(2026, 10, 2, 9))}, ${_t(DateTime(2026, 10, 2, 9))}\n'
             'UPI/P2M/100000000099/GUPTA STORES\n'
             'Not you? SMS BLOCKUPI Cust ID to 919951860002\nAxis Bank',

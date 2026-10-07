@@ -58,7 +58,7 @@ void main() {
 
   test('account selection keeps the last 4 of a longer number', () {
     for (final (word, want) in [
-      ('XX100640', '0640'),
+      ('XX001111', '1111'),
       ('XXXXXX3333', '3333'),
       ('X2222.', '2222'),
     ]) {
@@ -148,26 +148,26 @@ void main() {
   );
 
   test('dragged selection is kept; account and card need 4 digits', () {
-    const text = 'A/c no. XX100640 card XX2432';
-    final at = text.indexOf('100640');
+    const text = 'A/c no. XX001111 card XX6666';
+    final at = text.indexOf('001111');
     expect(exactField(text, MarkField.account, at + 2, at + 6), (
       at + 2,
       at + 6,
     ));
     expect(exactField(text, MarkField.account, at, at + 6), isNull);
-    final card = text.indexOf('2432');
+    final card = text.indexOf('6666');
     expect(exactField(text, MarkField.card, card, card + 4), (card, card + 4));
   });
 
   test('a marked card joins the account; not part of the format', () async {
     await ingest.ingest(
       axis(
-        unknownShape('99', '1234', 'NEWMERCHANT', '88772432'),
+        unknownShape('99', '1234', 'NEWMERCHANT', '88776666'),
         DateTime(2026, 10, 3, 13),
       ),
     );
     final item = (await review.watchQueue().first).single;
-    final refAt = item.text.indexOf('88772432');
+    final refAt = item.text.indexOf('88776666');
     final card = trimToField(item.text, MarkField.card, refAt, refAt + 8)!;
     final result = await review.save(
       item,
@@ -186,7 +186,7 @@ void main() {
     final account = (await ledger.watchAccounts().first).firstWhere(
       (a) => a.last4 == '1234',
     );
-    expect(account.includes, ['card ··2432']);
+    expect(account.includes, ['card ··6666']);
   });
 
   test('editing a learned format replaces it and logs nothing', () async {

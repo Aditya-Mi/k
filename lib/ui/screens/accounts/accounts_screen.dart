@@ -230,7 +230,7 @@ Future<void> accountActions(
         context,
         title: 'Debit card',
         hint: 'Last 4 digits',
-        help: 'From the card, or a message like "BLOCKCARD XX2432".',
+        help: 'From the card, or a message like "BLOCKCARD XX6666".',
         action: 'Add',
         numeric: true,
       );
