@@ -133,7 +133,7 @@ void main() {
     expect(lines[1], contains(',milk,'));
     expect(
       lines[2],
-      '2026-10-06,18:05,1200.05,INR,received,"\'=HYPERLINK(""x""), Inc",,,neft,,,',
+      '2026-10-06,18:05,1200.05,INR,received,"\'=HYPERLINK(""x""), Inc",,,neft,,,,',
     );
   });
 }

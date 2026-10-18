@@ -5,7 +5,7 @@ import 'package:k/data/summary/month_report.dart';
 import 'package:k/ui/theme/bands.dart';
 import 'package:txn_parser/txn_parser.dart';
 
-Category cat(String id) => Category(
+Category cat(String id, {String? parent}) => Category(
   id: id,
   createdAt: DateTime(2026),
   updatedAt: DateTime(2026),
@@ -15,6 +15,7 @@ Category cat(String id) => Category(
   isSystem: true,
   sortOrder: 0,
   hidden: false,
+  parentId: parent,
 );
 
 var _n = 0;
@@ -25,6 +26,7 @@ TxnView txn(
   Category? category,
   bool credit = false,
   String? transferId,
+  List<SplitPart> splits = const [],
 }) => TxnView(
   id: '${_n++}',
   amountMinor: rupees * 100,
@@ -36,6 +38,7 @@ TxnView txn(
   sourceCount: 1,
   category: category,
   transferId: transferId,
+  splits: splits,
 );
 
 void main() {
@@ -87,5 +90,42 @@ void main() {
     expect(r.biggestDay, isNull);
     expect(r.trendAverage, isNull);
     expect(r.categories, isEmpty);
+  });
+
+  test('split parts count in their own category; sub-categories add up '
+      'under the parent', () {
+    final groceries = cat('cat_groceries');
+    final habits = cat('c_habits');
+    final cigs = cat('c_cigs', parent: 'c_habits');
+    final drinks = cat('c_drinks', parent: 'c_habits');
+    final r = MonthReport.build(
+      oct,
+      [
+        txn(
+          1240,
+          DateTime(2026, 10, 4),
+          payee: 'Zepto',
+          category: groceries,
+          splits: [SplitPart(id: 's1', category: cigs, amountMinor: 30000)],
+        ),
+        txn(500, DateTime(2026, 10, 5), payee: 'Bar', category: drinks),
+        txn(100, DateTime(2026, 10, 6), payee: 'Shop', category: habits),
+      ],
+      categories: {
+        for (final c in [groceries, habits, cigs, drinks]) c.id: c,
+      },
+    );
+    expect(r.spentMinor, 184000, reason: 'a split payment counts once');
+    expect(r.categories.map((c) => (c.category?.id, c.spentMinor)), [
+      ('cat_groceries', 94000),
+      ('c_habits', 90000),
+    ]);
+    final h = r.categories.last;
+    expect(h.children.map((c) => (c.category?.id, c.spentMinor)), [
+      ('c_drinks', 50000),
+      ('c_cigs', 30000),
+      ('c_habits', 10000),
+    ]);
+    expect(r.categories.first.children, isEmpty);
   });
 }

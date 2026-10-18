@@ -209,36 +209,33 @@ void main() {
     );
   });
 
-  test(
-    'not a transaction + skip similar learns a skip format; undo forgets it',
-    () async {
-      String notice(String d) =>
-          'Your Axis Bank statement for $d is ready. Rs 0.00 due. Axis Bank';
-      for (final (i, d) in ['09-2026', '08-2026'].indexed) {
-        await ingest.ingest(
-          IncomingMessage(
-            channel: Channel.sms,
-            sender: 'AX-AXISBK-S',
-            body: notice(d),
-            receivedAt: DateTime(2026, 10, 1 + i),
-          ),
-        );
-      }
-      final queue = await review.watchQueue().first;
-      expect(queue, hasLength(2));
-      final undo = await review.notATransaction(queue.first, skipSimilar: true);
-      expect(undo.templateId, isNotNull);
-      expect(undo.rawIds, hasLength(2));
-      expect(await review.watchQueue().first, isEmpty);
-      final template = await db.select(db.parserTemplates).getSingle();
-      expect(template.kind, TemplateKind.ignore);
+  test('not a transaction + skip similar learns a skip format; undo forgets it', () async {
+    String notice(String d) =>
+        'Rs 50 reward for $d credited as points to your Axis Bank card. Axis Bank';
+    for (final (i, d) in ['09-2026', '08-2026'].indexed) {
+      await ingest.ingest(
+        IncomingMessage(
+          channel: Channel.sms,
+          sender: 'AX-AXISBK-S',
+          body: notice(d),
+          receivedAt: DateTime(2026, 10, 1 + i),
+        ),
+      );
+    }
+    final queue = await review.watchQueue().first;
+    expect(queue, hasLength(2));
+    final undo = await review.notATransaction(queue.first, skipSimilar: true);
+    expect(undo.templateId, isNotNull);
+    expect(undo.rawIds, hasLength(2));
+    expect(await review.watchQueue().first, isEmpty);
+    final template = await db.select(db.parserTemplates).getSingle();
+    expect(template.kind, TemplateKind.ignore);
 
-      await review.undo(undo);
-      expect(await review.watchQueue().first, hasLength(2));
-      final forgotten = await db.select(db.parserTemplates).getSingle();
-      expect(forgotten.deletedAt, isNotNull);
-    },
-  );
+    await review.undo(undo);
+    expect(await review.watchQueue().first, hasLength(2));
+    final forgotten = await db.select(db.parserTemplates).getSingle();
+    expect(forgotten.deletedAt, isNotNull);
+  });
 
   test('an AutoPay alert saved from Review becomes an upcoming charge and '
       'teaches the format', () async {

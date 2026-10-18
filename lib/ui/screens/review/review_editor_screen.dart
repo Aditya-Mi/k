@@ -134,6 +134,7 @@ class _Editor extends StatelessWidget {
     final t = context.kt;
     final cubit = context.read<ReviewEditorCubit>();
     final f = cubit.fields();
+    final payee = state.direction == Direction.credit ? 'Payer' : 'Payee';
     final category = state.categories
         .where((x) => x.id == state.categoryId)
         .firstOrNull;
@@ -222,6 +223,7 @@ class _Editor extends StatelessWidget {
                   MessageMarks(
                     text: item.text,
                     marks: state.marks,
+                    credit: state.direction == Direction.credit,
                     onLongPressWord: (s, e) => _markSheet(context, s, e, null),
                     onTapMark: (m) => _markSheet(context, m.start, m.end, m),
                   ),
@@ -312,8 +314,8 @@ class _Editor extends StatelessWidget {
               ),
             ],
             FieldRow(
-              label: 'Payee',
-              onTap: () => _editText(context, 'Payee', f.payee, cubit.setPayee),
+              label: payee,
+              onTap: () => _editText(context, payee, f.payee, cubit.setPayee),
               value: Text(
                 f.payee ?? 'None',
                 style: t.body.copyWith(
@@ -593,7 +595,12 @@ class _Editor extends StatelessWidget {
                                 ? MarkField.date
                                 : MarkField.dueDate))
                           ActionChip(
-                            label: Text(_fieldName(field)),
+                            label: Text(
+                              _fieldName(
+                                field,
+                                credit: state.direction == Direction.credit,
+                              ),
+                            ),
                             onPressed: () {
                               final sel = part.selection;
                               final whole = part.text.length;
@@ -653,12 +660,12 @@ class _Editor extends StatelessWidget {
     }
   }
 
-  String _fieldName(MarkField f) => switch (f) {
+  String _fieldName(MarkField f, {bool credit = false}) => switch (f) {
     MarkField.account => 'Account no.',
     MarkField.card => 'Card no.',
     MarkField.direction => 'Debit/credit word',
     MarkField.amount => 'Amount',
-    MarkField.payee => 'Payee',
+    MarkField.payee => credit ? 'Payer' : 'Payee',
     MarkField.ref => 'Reference',
     MarkField.date => 'Date',
     MarkField.balance => 'Balance',
@@ -878,15 +885,12 @@ class _Editor extends StatelessWidget {
           child: ListView(
             shrinkWrap: true,
             children: [
-              for (final cat in state.categories)
-                ListTile(
-                  leading: Icon(categoryIcon(cat.icon), color: context.k.text2),
-                  title: Text(cat.name),
-                  trailing: cat.id == state.categoryId
-                      ? const Icon(Symbols.check)
-                      : null,
-                  onTap: () => Navigator.pop(context, cat.id),
-                ),
+              ...categoryTiles(
+                context,
+                state.categories,
+                selectedId: state.categoryId,
+                onPick: (cat) => Navigator.pop(context, cat.id),
+              ),
               newCategoryTile(context, (c) => c.id),
             ],
           ),

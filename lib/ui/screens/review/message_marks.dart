@@ -14,9 +14,13 @@ class MessageMarks extends StatelessWidget {
     required this.marks,
     required this.onLongPressWord,
     required this.onTapMark,
+    this.credit = false,
   });
 
   final String text;
+
+  /// Money received: the payee mark reads PAYER.
+  final bool credit;
   final List<FieldMark> marks;
 
   /// Character range of the pressed plain word.
@@ -67,6 +71,7 @@ class MessageMarks extends StatelessWidget {
       children.add(
         _Mark(
           mark: m,
+          caption: m.field.captionFor(credit: credit),
           value: m.valueIn(text),
           style: style,
           onTap: () => onTapMark(m),
@@ -88,12 +93,14 @@ class MessageMarks extends StatelessWidget {
 class _Mark extends StatelessWidget {
   const _Mark({
     required this.mark,
+    required this.caption,
     required this.value,
     required this.style,
     required this.onTap,
   });
 
   final FieldMark mark;
+  final String caption;
   final String value;
   final TextStyle style;
   final VoidCallback onTap;
@@ -107,7 +114,7 @@ class _Mark extends StatelessWidget {
     final accent = minor == null ? c.text3 : c.ink(Bands.of(minor));
     return Semantics(
       button: true,
-      label: '${mark.field.caption.toLowerCase()}: $value',
+      label: '${caption.toLowerCase()}: $value',
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
@@ -119,7 +126,7 @@ class _Mark extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 2, bottom: 2),
               child: Text(
-                mark.field.caption,
+                caption,
                 style: context.kt.label.copyWith(
                   letterSpacing: 1.4,
                   fontWeight: FontWeight.w600,

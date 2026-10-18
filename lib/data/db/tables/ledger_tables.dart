@@ -97,6 +97,16 @@ class Transactions extends Table with SyncColumns {
   TextColumn get emiId => text().nullable()();
 }
 
+/// A part of a payment filed under another category ("₹300 of this
+/// grocery order was cigarettes"). The rest of the amount stays in the
+/// payment's own category.
+class TransactionSplits extends Table with SyncColumns {
+  TextColumn get transactionId => text().references(Transactions, #id)();
+  TextColumn get categoryId => text().references(Categories, #id)();
+  IntColumn get amountMinor => integer()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
 /// Dedup link: one transaction ← many raw messages (SMS + email).
 class TransactionSources extends Table with SyncColumns {
   TextColumn get transactionId => text().references(Transactions, #id)();

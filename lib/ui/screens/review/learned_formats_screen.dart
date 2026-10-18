@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:txn_parser/txn_parser.dart' show Channel, TemplateKind;
@@ -137,6 +139,9 @@ class _FormatCard extends StatelessWidget {
                   : MessageMarks(
                       text: format.sampleText!,
                       marks: format.marks,
+                      credit:
+                          (jsonDecode(row.fieldDefaults) as Map)['direction'] ==
+                          'credit',
                       onLongPressWord: (_, _) {},
                       onTapMark: (_) {},
                     ),

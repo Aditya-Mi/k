@@ -424,4 +424,35 @@ void main() {
     expect(rows, hasLength(3));
     expect(rows.every((r) => r.category?.id == 'cat_food'), isTrue);
   });
+
+  test('bank notices with no money moved skip Review and list as skipped; '
+      'own rejects stay out; sent back stays in Review', () async {
+    final at = DateTime(2026, 10, 7, 10);
+    await ingest.ingest(
+      axis(
+        'Welcome to Axis Bank! Your Savings A/c no. XX1111 is now active. '
+        'Maintain a minimum balance of INR 10,000.00.',
+        at,
+      ),
+    );
+    await ingest.ingest(
+      axis(unknownShape('99', '1111', 'SOMETHING NEW', '88776655'), at),
+    );
+    final queue = await review.watchQueue().first;
+    expect(queue, hasLength(1));
+    var skipped = await review.watchSkipped().first;
+    expect(skipped.single.body, contains('Welcome'));
+
+    await review.notATransaction(queue.single);
+    skipped = await review.watchSkipped().first;
+    expect(skipped, hasLength(1), reason: 'own reject is not "skipped"');
+
+    await review.sendToReview(skipped.single.id);
+    await ingest.reprocessReview();
+    expect(await review.watchSkipped().first, isEmpty);
+    expect(
+      (await review.watchQueue().first).single.raw.body,
+      contains('Welcome'),
+    );
+  });
 }

@@ -25,6 +25,7 @@ part 'app_database.g.dart';
     RawMessages,
     Transactions,
     TransactionSources,
+    TransactionSplits,
     Subscriptions,
     UpcomingCharges,
     Emis,
@@ -36,7 +37,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   /// Alerts that name no account used to create a "no last4" account even when
   /// the bank had exactly one savings/current account; move those rows over.
@@ -227,6 +228,10 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(accounts, accounts.creditLimitMinor);
         await m.addColumn(transactions, transactions.emiId);
         await m.createTable(emis);
+      }
+      if (from < 10) {
+        await m.addColumn(categories, categories.parentId);
+        await m.createTable(transactionSplits);
       }
     },
     beforeOpen: (details) async {

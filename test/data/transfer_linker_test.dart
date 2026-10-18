@@ -424,6 +424,8 @@ void main() {
       ..execute('ALTER TABLE accounts DROP COLUMN credit_limit_minor')
       ..execute('ALTER TABLE transactions DROP COLUMN emi_id')
       ..execute('DROP TABLE emis')
+      ..execute('ALTER TABLE categories DROP COLUMN parent_id')
+      ..execute('DROP TABLE transaction_splits')
       ..execute('PRAGMA user_version = 1')
       ..close();
 

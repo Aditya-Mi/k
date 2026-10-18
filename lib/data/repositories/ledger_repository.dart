@@ -6,6 +6,7 @@ import '../db/app_database.dart';
 import '../db/enums.dart';
 import '../db/seed/seed_data.dart';
 import '../ingest/category_resolver.dart';
+import '../ingest/raw_notes.dart';
 import 'ledger_models.dart';
 
 /// Read models and edits for transactions, accounts and upcoming charges.
@@ -29,7 +30,25 @@ class LedgerRepository {
       ..orderBy([OrderingTerm.desc(t.occurredAt)]);
     if (f.accountIds.isNotEmpty) query.where(t.accountId.isIn(f.accountIds));
     if (f.categoryIds.isNotEmpty) {
-      query.where(t.categoryId.isIn(f.categoryIds));
+      // A parent takes in its sub-categories; a split payment matches any
+      // of its parts.
+      final cats = _db.categories;
+      final inside = _db.selectOnly(cats)
+        ..addColumns([cats.id])
+        ..where(cats.parentId.isIn(f.categoryIds));
+      final sp = _db.transactionSplits;
+      final parts = _db.selectOnly(sp)
+        ..addColumns([sp.transactionId])
+        ..where(
+          sp.deletedAt.isNull() &
+              (sp.categoryId.isIn(f.categoryIds) |
+                  sp.categoryId.isInQuery(inside)),
+        );
+      query.where(
+        t.categoryId.isIn(f.categoryIds) |
+            t.categoryId.isInQuery(inside) |
+            t.id.isInQuery(parts),
+      );
     }
     if (f.direction != null) query.where(t.direction.equalsValue(f.direction));
     final q = f.query.trim();
@@ -42,7 +61,7 @@ class LedgerRepository {
             t.refNo.like(like),
       );
     }
-    return query.watch().map((rows) => rows.map(_toView).toList());
+    return _withSplits(query.watch().map((rows) => rows.map(_toView).toList()));
   }
 
   /// Charges matched to subscriptions, newest first.
@@ -83,6 +102,12 @@ class LedgerRepository {
     return query
         .watchSingleOrNull()
         .map((r) => r == null ? null : _toView(r))
+        .switchMap(
+          (view) => view == null
+              ? Stream<TxnView?>.value(null)
+              : _watchSplits({view.id})
+                    .map((m) => view.withSplits(m[view.id] ?? const [])),
+        )
         .switchMap((view) {
           if (view == null) return Stream.value(null);
           return _watchSources(id).switchMap((own) {
@@ -96,6 +121,74 @@ class LedgerRepository {
           });
         });
   }
+
+  /// Live split parts by transaction id, all or only [ids].
+  Stream<Map<String, List<SplitPart>>> _watchSplits([Set<String>? ids]) {
+    final sp = _db.transactionSplits;
+    final c = _db.categories;
+    final q = _db.select(sp).join([innerJoin(c, c.id.equalsExp(sp.categoryId))])
+      ..where(
+        sp.deletedAt.isNull() &
+            (ids == null ? const Constant(true) : sp.transactionId.isIn(ids)),
+      )
+      ..orderBy([OrderingTerm.asc(sp.sortOrder)]);
+    return q.watch().map((rows) {
+      final out = <String, List<SplitPart>>{};
+      for (final r in rows) {
+        final s = r.readTable(sp);
+        out
+            .putIfAbsent(s.transactionId, () => [])
+            .add(
+              SplitPart(
+                id: s.id,
+                category: r.readTable(c),
+                amountMinor: s.amountMinor,
+              ),
+            );
+      }
+      return out;
+    });
+  }
+
+  Stream<List<TxnView>> _withSplits(Stream<List<TxnView>> views) =>
+      Rx.combineLatest2(
+        views,
+        _watchSplits(),
+        (List<TxnView> list, Map<String, List<SplitPart>> parts) => [
+          for (final v in list)
+            parts[v.id] == null ? v : v.withSplits(parts[v.id]!),
+        ],
+      );
+
+  /// Files parts of a payment under other categories; the rest stays in its
+  /// own. An empty [parts] removes the split.
+  Future<void> setSplits(
+    String txnId,
+    List<({String categoryId, int amountMinor})> parts,
+  ) => _db.transaction(() async {
+    final now = DateTime.now();
+    await (_db.update(_db.transactionSplits)
+          ..where((s) => s.transactionId.equals(txnId) & s.deletedAt.isNull()))
+        .write(
+          TransactionSplitsCompanion(
+            deletedAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
+    for (final (i, p) in parts.indexed) {
+      await _db
+          .into(_db.transactionSplits)
+          .insert(
+            TransactionSplitsCompanion.insert(
+              transactionId: txnId,
+              categoryId: p.categoryId,
+              amountMinor: p.amountMinor,
+              sortOrder: Value(i),
+            ),
+          );
+    }
+    await _updateTxn(txnId, const TransactionsCompanion());
+  });
 
   Stream<List<RawMessage>> _watchSources(String txnId) =>
       (_db.select(_db.rawMessages).join([
@@ -349,7 +442,11 @@ class LedgerRepository {
   }
 
   /// Owner-made category, last in every list.
-  Future<Category> addCategory(String name, String icon) async {
+  Future<Category> addCategory(
+    String name,
+    String icon, {
+    String? parentId,
+  }) async {
     final max = await _db
         .customSelect(
           'SELECT COALESCE(MAX(sort_order), 0) AS m FROM categories',
@@ -363,18 +460,26 @@ class LedgerRepository {
             icon: icon,
             color: 0,
             sortOrder: Value(max.read<int>('m') + 1),
+            parentId: Value(parentId),
           ),
         );
   }
 
-  Future<void> updateCategory(String id, {String? name, String? icon}) =>
-      (_db.update(_db.categories)..where((c) => c.id.equals(id))).write(
-        CategoriesCompanion(
-          name: name == null ? const Value.absent() : Value(name.trim()),
-          icon: icon == null ? const Value.absent() : Value(icon),
-          updatedAt: Value(DateTime.now()),
-        ),
-      );
+  /// [parentId] given (a value or null) moves it inside another category
+  /// or back to the top.
+  Future<void> updateCategory(
+    String id, {
+    String? name,
+    String? icon,
+    Value<String?> parentId = const Value.absent(),
+  }) => (_db.update(_db.categories)..where((c) => c.id.equals(id))).write(
+    CategoriesCompanion(
+      name: name == null ? const Value.absent() : Value(name.trim()),
+      icon: icon == null ? const Value.absent() : Value(icon),
+      parentId: parentId,
+      updatedAt: Value(DateTime.now()),
+    ),
+  );
 
   Future<void> setCategoryHidden(String id, bool hidden) async {
     await (_db.update(_db.categories)..where((c) => c.id.equals(id))).write(
@@ -574,7 +679,7 @@ class LedgerRepository {
               : RawMessageStatus.ignored,
         ),
         parseNote: Value(
-          notATransaction ? 'marked not a transaction' : 'transaction deleted',
+          notATransaction ? userRejectedNote : 'transaction deleted',
         ),
         updatedAt: Value(now),
       ),

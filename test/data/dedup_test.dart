@@ -105,7 +105,7 @@ void main() {
     expect(rows.where((r) => r.merged), hasLength(1));
   });
 
-  test('bank email with no amount skips Review; SMS without one does not', () async {
+  test('bank email or SMS with no money moved skips Review', () async {
     final at = DateTime(2026, 10, 3, 22, 18);
     expect(
       await ingest.ingest(
@@ -130,7 +130,7 @@ void main() {
           receivedAt: at,
         ),
       ),
-      IngestOutcome.needsReview,
+      IngestOutcome.nonTransaction,
     );
   });
 

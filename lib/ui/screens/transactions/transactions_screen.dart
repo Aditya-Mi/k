@@ -145,7 +145,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         style: t.input,
                         textInputAction: TextInputAction.search,
                         decoration: const InputDecoration(
-                          hintText: 'Search payee, note or ref',
+                          hintText: 'Search payee, payer, note or ref',
                         ),
                         onChanged: _onSearch,
                       )
@@ -491,7 +491,12 @@ class _FilterBar extends StatelessWidget {
     final picked = await _multiPick(
       context,
       title: 'Categories',
-      options: {for (final c in state.categories) c.id: c.name},
+      options: {
+        for (final (c, depth) in categoryTree(state.categories))
+          c.id: depth == 0
+              ? c.name
+              : '${c.name} · in ${state.categories.firstWhere((p) => p.id == c.parentId).name}',
+      },
       icons: {for (final c in state.categories) c.id: categoryIcon(c.icon)},
       selected: state.filter.categoryIds,
     );

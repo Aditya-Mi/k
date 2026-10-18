@@ -30,6 +30,7 @@ import '../../../data/subscriptions/subscription_service.dart';
 import '../subscriptions/emi_form_screen.dart';
 import '../subscriptions/subscription_detail_screen.dart';
 import '../subscriptions/track_subscription_sheet.dart';
+import 'split_sheet.dart';
 
 class TxnDetailState {
   const TxnDetailState({
@@ -84,6 +85,7 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
 
   Future<void> setCategory(String id, {bool forMerchant = false}) =>
       _ledger.setCategory(txnId, id, applyToMerchant: forMerchant);
+  Future<void> setSplits(SplitParts parts) => _ledger.setSplits(txnId, parts);
   Future<int> renamePayee(String merchantId, String name) =>
       _ledger.renameMerchant(merchantId, name);
   Future<void> unlinkTransfer() => _transfers.unlink(txnId);
@@ -259,13 +261,20 @@ class _Loaded extends StatelessWidget {
                         style: t.body.copyWith(color: c.text2),
                       ),
                       const SizedBox(height: 24),
-                      FieldRow(
-                        label: 'Category',
-                        value: CategoryButton(
-                          category: txn.category,
-                          onTap: () => _pickCategory(context, cubit, txn),
+                      if (txn.isSplit)
+                        _SplitBlock(
+                          txn: txn,
+                          onCategory: () => _pickCategory(context, cubit, txn),
+                          onEdit: () => _split(context, cubit, txn),
+                        )
+                      else
+                        FieldRow(
+                          label: 'Category',
+                          value: CategoryButton(
+                            category: txn.category,
+                            onTap: () => _pickCategory(context, cubit, txn),
+                          ),
                         ),
-                      ),
                       if (txn.account != null)
                         FieldRow(
                           label: 'Account',
@@ -483,6 +492,9 @@ class _Loaded extends StatelessWidget {
   ) async {
     // Teach the merchant by default; transfers and payee-less rows can't.
     var forMerchant = txn.merchantId != null && !txn.isTransfer;
+    // Only spends that count can be split.
+    final canSplit = txn.isDebit && txn.countsInTotals && !txn.isSplit;
+    const split = '__split';
     final picked = await showKSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -502,22 +514,31 @@ class _Loaded extends StatelessWidget {
                     title: Text('Use for all ${txn.payee}'),
                     subtitle: const Text('Past and future payments'),
                   ),
+                if (canSplit) ...[
+                  ListTile(
+                    leading: const Icon(Symbols.call_split),
+                    title: const Text('Split into categories'),
+                    subtitle: const Text(
+                      'Part of this payment was something else',
+                    ),
+                    trailing: const Icon(Symbols.chevron_right),
+                    onTap: () => Navigator.pop(context, split),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: TearLine(),
+                  ),
+                ],
                 Flexible(
                   child: ListView(
                     shrinkWrap: true,
                     children: [
-                      for (final cat in categories)
-                        ListTile(
-                          leading: Icon(
-                            categoryIcon(cat.icon),
-                            color: context.k.text2,
-                          ),
-                          title: Text(cat.name),
-                          trailing: cat.id == txn.category?.id
-                              ? const Icon(Symbols.check)
-                              : null,
-                          onTap: () => Navigator.pop(context, cat.id),
-                        ),
+                      ...categoryTiles(
+                        context,
+                        categories,
+                        selectedId: txn.category?.id,
+                        onPick: (cat) => Navigator.pop(context, cat.id),
+                      ),
                       newCategoryTile(context, (c) => c.id),
                     ],
                   ),
@@ -528,9 +549,22 @@ class _Loaded extends StatelessWidget {
         ),
       ),
     );
+    if (picked == split) {
+      if (context.mounted) await _split(context, cubit, txn);
+      return;
+    }
     if (picked != null && (picked != txn.category?.id || forMerchant)) {
       await cubit.setCategory(picked, forMerchant: forMerchant);
     }
+  }
+
+  Future<void> _split(
+    BuildContext context,
+    TxnDetailCubit cubit,
+    TxnView txn,
+  ) async {
+    final parts = await showSplitSheet(context, txn, categories);
+    if (parts != null) await cubit.setSplits(parts);
   }
 
   Future<void> _renamePayee(
@@ -540,7 +574,7 @@ class _Loaded extends StatelessWidget {
   ) async {
     final name = await promptText(
       context,
-      title: 'Rename payee',
+      title: txn.isDebit ? 'Rename payee' : 'Rename payer',
       initial: txn.payee,
       help: 'Changes every payment to them.',
     );
@@ -549,7 +583,11 @@ class _Loaded extends StatelessWidget {
     final merged = await cubit.renamePayee(txn.merchantId!, name);
     if (merged > 0) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Now one payee with ${name.trim()}')),
+        SnackBar(
+          content: Text(
+            'Now one ${txn.isDebit ? 'payee' : 'payer'} with ${name.trim()}',
+          ),
+        ),
       );
     }
   }
@@ -965,6 +1003,115 @@ class _SourcesSection extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// A split payment's category (design 02f): the rest in the payment's own
+/// category, then each part, with Edit split.
+class _SplitBlock extends StatelessWidget {
+  const _SplitBlock({
+    required this.txn,
+    required this.onCategory,
+    required this.onEdit,
+  });
+
+  final TxnView txn;
+  final VoidCallback onCategory;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.k;
+    final t = context.kt;
+    Widget part(
+      Category? cat,
+      int minor,
+      String? note, {
+      VoidCallback? onTap,
+    }) => InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Icon(categoryIcon(cat?.icon), size: 20, color: c.text2),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  text: cat?.name ?? 'Uncategorized',
+                  style: t.body.copyWith(fontWeight: FontWeight.w500),
+                  children: [
+                    if (note != null)
+                      TextSpan(
+                        text: '  $note',
+                        style: t.meta.copyWith(color: c.text3),
+                      ),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(inr(minor, paise: true), style: t.amountRow),
+          ],
+        ),
+      ),
+    );
+    return Container(
+      padding: const EdgeInsets.fromLTRB(0, 12, 0, 10),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.outline)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Category · split in ${txn.pieces.length}',
+                  style: t.body.copyWith(color: c.text2),
+                ),
+              ),
+              Material(
+                color: c.surface2,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  onTap: onEdit,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 7, 12, 7),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Symbols.call_split, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Edit split',
+                          style: t.meta.copyWith(
+                            color: c.text,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          part(
+            txn.category,
+            txn.restMinor,
+            'rest of the payment',
+            onTap: onCategory,
+          ),
+          for (final p in txn.splits) part(p.category, p.amountMinor, null),
+        ],
+      ),
     );
   }
 }

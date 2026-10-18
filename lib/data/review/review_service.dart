@@ -8,6 +8,7 @@ import '../db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../db/enums.dart';
 import '../ingest/category_resolver.dart';
 import '../ingest/ingestion_service.dart';
+import '../ingest/raw_notes.dart';
 import '../ingest/unknown_sender.dart';
 import '../repositories/bank_repository.dart';
 import '../repositories/ledger_repository.dart';
@@ -131,6 +132,32 @@ class ReviewService {
   final IngestionService _ingest;
   final LedgerRepository _ledger;
   final BankRepository _banks;
+
+  /// Bank messages k skipped on its own (OTPs, offers, declines, account
+  /// notices with no money moved), newest first. The owner's own rejects
+  /// stay out so this list never fills up with them.
+  Stream<List<RawMessage>> watchSkipped() =>
+      (_db.select(_db.rawMessages)
+            ..where(
+              (r) =>
+                  r.deletedAt.isNull() &
+                  r.status.equalsValue(RawMessageStatus.nonTransaction) &
+                  (r.parseNote.isNull() |
+                      r.parseNote.isNotIn(ownerRejectNotes)),
+            )
+            ..orderBy([(r) => OrderingTerm.desc(r.receivedAt)]))
+          .watch();
+
+  /// A skipped message the owner wants to look at: back into Review, and
+  /// kept there by the startup re-check.
+  Future<void> sendToReview(String rawId) =>
+      (_db.update(_db.rawMessages)..where((r) => r.id.equals(rawId))).write(
+        RawMessagesCompanion(
+          status: const Value(RawMessageStatus.needsReview),
+          parseNote: const Value(sentToReviewNote),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
 
   Stream<List<ReviewItem>> watchQueue() =>
       (_db.select(_db.rawMessages)

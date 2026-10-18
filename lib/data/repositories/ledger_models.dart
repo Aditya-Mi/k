@@ -108,6 +108,7 @@ class TxnView extends Equatable {
     this.partnerAccount,
     this.subscriptionId,
     this.emi,
+    this.splits = const [],
   });
 
   final String id;
@@ -141,6 +142,49 @@ class TxnView extends Equatable {
 
   /// The EMI this is the purchase or an instalment of.
   final EmiLink? emi;
+
+  /// Parts filed under other categories; the rest stays in [category].
+  final List<SplitPart> splits;
+
+  bool get isSplit => splits.isNotEmpty;
+
+  TxnView withSplits(List<SplitPart> parts) => TxnView(
+    id: id,
+    amountMinor: amountMinor,
+    currency: currency,
+    direction: direction,
+    txnType: txnType,
+    occurredAt: occurredAt,
+    payee: payee,
+    sourceCount: sourceCount,
+    account: account,
+    category: category,
+    balanceMinor: balanceMinor,
+    notes: notes,
+    refNo: refNo,
+    transferId: transferId,
+    merchantId: merchantId,
+    origin: origin,
+    transferPartnerId: transferPartnerId,
+    partnerAccount: partnerAccount,
+    subscriptionId: subscriptionId,
+    emi: emi,
+    splits: parts,
+  );
+
+  /// What's left in [category] after the split parts (never below 0).
+  int get restMinor {
+    final rest = amountMinor - splits.fold<int>(0, (s, p) => s + p.amountMinor);
+    return rest < 0 ? 0 : rest;
+  }
+
+  /// (category, amount) pieces adding up to the payment: the rest first,
+  /// then each split part. One piece when not split.
+  List<(Category?, int)> get pieces => [
+    if (!isSplit || restMinor > 0)
+      (category, isSplit ? restMinor : amountMinor),
+    for (final p in splits) (p.category, p.amountMinor),
+  ];
 
   bool get isTransfer => transferId != null;
 
@@ -211,9 +255,50 @@ class TxnView extends Equatable {
     transferId,
     merchantId,
     origin,
-    transferPartnerId, partnerAccount, subscriptionId, emi,
+    transferPartnerId, partnerAccount, subscriptionId, emi, splits,
   ];
 }
+
+/// One part of a split payment.
+class SplitPart extends Equatable {
+  const SplitPart({
+    required this.id,
+    required this.category,
+    required this.amountMinor,
+  });
+
+  final String id;
+  final Category category;
+  final int amountMinor;
+
+  @override
+  List<Object?> get props => [id, category, amountMinor];
+}
+
+/// Categories as a one-level tree: each top-level category followed by
+/// the ones inside it, both in sort order. A child whose parent is gone or
+/// not in [all] shows as top-level.
+List<(Category, int)> categoryTree(List<Category> all) {
+  final ids = {for (final c in all) c.id};
+  bool top(Category c) => c.parentId == null || !ids.contains(c.parentId);
+  return [
+    for (final p in all.where(top)) ...[
+      (p, 0),
+      for (final c in all)
+        if (!top(c) && c.parentId == p.id) (c, 1),
+    ],
+  ];
+}
+
+/// Categories that hold payments of their own only: k's structural ones
+/// can't go inside another or hold sub-categories.
+const structuralCategoryIds = {
+  'cat_transfers',
+  'cat_card_bill',
+  'cat_cash',
+  'cat_income',
+  'cat_uncategorized',
+};
 
 /// What a transaction is to its EMI.
 class EmiLink extends Equatable {

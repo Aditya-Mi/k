@@ -158,15 +158,12 @@ class SubscriptionDetailScreen extends StatelessWidget {
           child: ListView(
             shrinkWrap: true,
             children: [
-              for (final cat in categories)
-                ListTile(
-                  leading: Icon(categoryIcon(cat.icon), color: context.k.text2),
-                  title: Text(cat.name),
-                  trailing: cat.id == sub.row.categoryId
-                      ? const Icon(Symbols.check)
-                      : null,
-                  onTap: () => Navigator.pop(context, cat.id),
-                ),
+              ...categoryTiles(
+                context,
+                categories,
+                selectedId: sub.row.categoryId,
+                onPick: (cat) => Navigator.pop(context, cat.id),
+              ),
               newCategoryTile(context, (c) => c.id),
             ],
           ),

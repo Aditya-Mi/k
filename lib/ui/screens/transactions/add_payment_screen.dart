@@ -125,7 +125,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
           ),
           const SizedBox(height: 20),
           FieldRow(
-            label: _direction == Direction.debit ? 'Payee' : 'From',
+            label: _direction == Direction.debit ? 'Payee' : 'Payer',
             onTap: _editPayee,
             value: value(_payee.isEmpty ? null : _payee, 'Who'),
           ),
@@ -191,7 +191,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
   Future<void> _editPayee() async {
     final v = await promptText(
       context,
-      title: _direction == Direction.debit ? 'Payee' : 'From',
+      title: _direction == Direction.debit ? 'Payee' : 'Payer',
       initial: _payee,
       hint: 'e.g. Hostinger',
     );
@@ -257,15 +257,12 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
           child: ListView(
             shrinkWrap: true,
             children: [
-              for (final cat in categories)
-                ListTile(
-                  leading: Icon(categoryIcon(cat.icon), color: context.k.text2),
-                  title: Text(cat.name),
-                  trailing: cat.id == _category?.id
-                      ? const Icon(Symbols.check)
-                      : null,
-                  onTap: () => Navigator.pop(context, cat),
-                ),
+              ...categoryTiles(
+                context,
+                categories,
+                selectedId: _category?.id,
+                onPick: (cat) => Navigator.pop(context, cat),
+              ),
               newCategoryTile(context, (c) => c),
             ],
           ),

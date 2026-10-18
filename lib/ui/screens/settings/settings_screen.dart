@@ -12,13 +12,15 @@ import '../../../data/ingest/sms_sync.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../data/review/learned_formats.dart';
+import '../../../data/review/review_service.dart';
 import '../../../di.dart';
 import '../../format.dart';
 import '../../theme/k_theme.dart';
 import '../../widgets/date_pick.dart';
-import '../../../data/db/app_database.dart' show Category;
+import '../../../data/db/app_database.dart' show Category, RawMessage;
 import '../categories/categories_screen.dart';
 import '../review/learned_formats_screen.dart';
+import '../review/skipped_screen.dart';
 import 'appearance_settings.dart';
 import 'backup_settings.dart';
 import 'bank_settings.dart';
@@ -71,6 +73,28 @@ class SettingsScreen extends StatelessWidget {
             subtitle: 'SMS access and checks',
             onTap: () => open('Sync', const [_SyncSection()]),
             trailing: const SettingsChevron(),
+          ),
+          StreamBuilder<List<RawMessage>>(
+            stream: getIt<ReviewService>().watchSkipped(),
+            builder: (context, snap) {
+              final n = snap.data?.length;
+              return SettingsItem(
+                icon: Symbols.block,
+                title: 'Skipped messages',
+                subtitle: n == null
+                    ? '…'
+                    : n == 0
+                    ? 'None yet'
+                    : '${grouped(n)} with no money moved',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => const SkippedScreen(),
+                  ),
+                ),
+                trailing: const SettingsChevron(),
+              );
+            },
           ),
           const SettingsHead('Your data'),
           StreamBuilder<List<Category>>(

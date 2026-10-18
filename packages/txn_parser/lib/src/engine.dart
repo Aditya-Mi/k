@@ -11,6 +11,9 @@ import 'prefilters.dart';
 import 'raw_input.dart';
 import 'template.dart';
 
+/// Why a bank message no format knows was skipped: no amount moved.
+const noMoneyMovedNote = 'no money moved';
+
 /// Pipeline: bank classify → prefilter → template match → normalize.
 class ParserEngine {
   ParserEngine({
@@ -66,10 +69,18 @@ class ParserEngine {
       return _fromMatch(bank, template, match, text, input.receivedAt);
     }
 
+    final guess = guessFields(text);
+    if (guess.amountMinor == null || !movesMoney(text)) {
+      return ParseResult(
+        status: ParseStatus.nonTransaction,
+        bankCode: bank,
+        note: noMoneyMovedNote,
+      );
+    }
     return ParseResult(
       status: ParseStatus.needsReview,
       bankCode: bank,
-      fields: guessFields(text),
+      fields: guess,
       missing: const ['template'],
       note: 'no template matched',
     );

@@ -30,3 +30,15 @@ final _reversal = RegExp(
   r'\b(revers(?:al|ed)|refund(?:ed)?|credited)\b',
   caseSensitive: false,
 );
+
+/// Words that say money moved. A bank message no format knows goes to
+/// Review only with one of these and an amount (see [ParserEngine.parse]);
+/// account-opening, KYC, statement and balance-only messages have neither.
+bool movesMoney(String text) => _movement.hasMatch(text);
+
+final _movement = RegExp(
+  r'\b(debited|credited|spent|withdrawn|deposited|sent|received|paid'
+  r'|transferred|deducted|charged|refund(?:ed)?|revers(?:al|ed)|dr|cr'
+  r'|successful(?:ly)?|autopay|purchased?|txn|transaction)\b',
+  caseSensitive: false,
+);

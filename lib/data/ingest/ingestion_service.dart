@@ -9,6 +9,7 @@ import '../db/enums.dart';
 import '../repositories/bank_repository.dart' show isWalletBank;
 import 'category_resolver.dart';
 import 'transfer_linker.dart';
+import 'raw_notes.dart';
 import 'unknown_sender.dart';
 
 /// A bank message as it enters the app, from any channel.
@@ -311,6 +312,8 @@ class IngestionService {
         continue;
       }
       if (result.status == ParseStatus.nonTransaction) {
+        // The owner sent it back from Skipped: keep it in Review.
+        if (raw.parseNote == sentToReviewNote) continue;
         await _setNonTransaction(raw.id, result.note ?? 'not a transaction');
         cleared.add(raw.id);
         continue;
@@ -450,7 +453,7 @@ class IngestionService {
   });
 
   Future<void> markNotTransaction(String rawId) =>
-      _setNonTransaction(rawId, 'marked not a transaction');
+      _setNonTransaction(rawId, userRejectedNote);
 
   Future<void> _setNonTransaction(String rawId, String note) =>
       (_db.update(_db.rawMessages)..where((r) => r.id.equals(rawId))).write(
@@ -461,7 +464,7 @@ class IngestionService {
         ),
       );
 
-  static const _noAmountNote = 'email without an amount';
+  static const _noAmountNote = noAmountNote;
 
   /// Bank mail no format reads and with no amount anywhere in it (e-statements,
   /// notices) never reaches Review. SMS still does: a short SMS with no amount

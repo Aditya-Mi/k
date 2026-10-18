@@ -57,7 +57,10 @@ class TxnRow extends StatelessWidget {
             if (txn.isRefund)
               'Refund'
             else
-              txn.category?.name ?? 'Uncategorized',
+              [
+                txn.category?.name ?? 'Uncategorized',
+                if (txn.isSplit) '+${txn.splits.length}',
+              ].join(' '),
             if (txn.emi != null)
               txn.emi!.isPurchase ? 'EMI ×${txn.emi!.count}' : 'EMI',
             if (txn.account != null && !onCard) txn.account!.short,

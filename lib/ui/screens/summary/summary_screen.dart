@@ -60,7 +60,15 @@ class _SummaryScreenState extends State<SummaryScreen> {
             for (var i = MonthReport.trendMonths - 1; i >= 0; i--)
               DateTime(m.year, m.month - i),
           ]);
-          return (MonthReport.build(m, [...txns, ...virtual]), txns);
+          final cats = await _ledger.watchCategories(includeHidden: true).first;
+          return (
+            MonthReport.build(
+              m,
+              [...txns, ...virtual],
+              categories: {for (final c in cats) c.id: c},
+            ),
+            txns,
+          );
         });
   }
 
@@ -676,60 +684,133 @@ class _Calendar extends StatelessWidget {
   }
 }
 
-/// Categories, biggest first, with neutral bars (inks never mark a category).
-class _Categories extends StatelessWidget {
+/// Categories, biggest first, with neutral bars (inks never mark a
+/// category). One with sub-categories opens to show them (design 05d).
+class _Categories extends StatefulWidget {
   const _Categories({required this.report});
 
   final MonthReport report;
 
   @override
+  State<_Categories> createState() => _CategoriesState();
+}
+
+class _CategoriesState extends State<_Categories> {
+  final _open = <String?>{};
+
+  @override
   Widget build(BuildContext context) {
     final c = context.k;
     final t = context.kt;
+    final report = widget.report;
     final max = report.categories.first.spentMinor;
+
+    Widget bar(int minor, {required double height, required Color color}) =>
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: (minor / max).clamp(0.02, 1.0)),
+            duration: Motion.of(context, Motion.medium),
+            curve: Motion.enter,
+            builder: (context, w, bar) =>
+                FractionallySizedBox(widthFactor: w, child: bar),
+            child: Container(
+              height: height,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(height / 2),
+              ),
+            ),
+          ),
+        );
+
     return Column(
       children: [
         for (final (i, s) in report.categories.indexed) ...[
           if (i > 0) const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(categoryIcon(s.category?.icon), size: 20, color: c.text2),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  s.category?.name ?? 'Uncategorized',
-                  style: t.body.copyWith(fontWeight: FontWeight.w500),
+          InkWell(
+            onTap: s.children.isEmpty
+                ? null
+                : () => setState(() {
+                    final id = s.category?.id;
+                    if (!_open.remove(id)) _open.add(id);
+                  }),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      categoryIcon(s.category?.icon),
+                      size: 20,
+                      color: c.text2,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        s.category?.name ?? 'Uncategorized',
+                        style: t.body.copyWith(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    if (s.children.isNotEmpty) ...[
+                      Icon(
+                        _open.contains(s.category?.id)
+                            ? Symbols.keyboard_arrow_up
+                            : Symbols.keyboard_arrow_down,
+                        size: 18,
+                        color: c.text3,
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Text(
+                      '${(s.spentMinor * 100 / report.spentMinor).round()}%',
+                      style: t.meta.copyWith(color: c.text3),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(inr(s.spentMinor), style: t.amountRow),
+                  ],
                 ),
-              ),
-              Text(
-                '${(s.spentMinor * 100 / report.spentMinor).round()}%',
-                style: t.meta.copyWith(color: c.text3),
-              ),
-              const SizedBox(width: 10),
-              Text(inr(s.spentMinor), style: t.amountRow),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.only(left: 30),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(end: (s.spentMinor / max).clamp(0.02, 1.0)),
-                duration: Motion.of(context, Motion.medium),
-                curve: Motion.enter,
-                builder: (context, w, bar) =>
-                    FractionallySizedBox(widthFactor: w, child: bar),
-                child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: c.text,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.only(left: 30),
+                  child: bar(s.spentMinor, height: 6, color: c.text),
                 ),
-              ),
+              ],
             ),
           ),
+          if (_open.contains(s.category?.id))
+            for (final k in s.children)
+              Padding(
+                padding: const EdgeInsets.only(left: 30, top: 12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            k.category?.id == s.category?.id
+                                ? 'Other'
+                                : k.category?.name ?? 'Uncategorized',
+                            style: t.meta.copyWith(
+                              color: k.category?.id == s.category?.id
+                                  ? c.text3
+                                  : c.text2,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          inr(k.spentMinor),
+                          style: t.meta.copyWith(
+                            color: c.text2,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    bar(k.spentMinor, height: 4, color: c.text3),
+                  ],
+                ),
+              ),
         ],
       ],
     );

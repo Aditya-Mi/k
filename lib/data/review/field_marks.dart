@@ -23,6 +23,10 @@ enum MarkField {
   /// txn_parser named group.
   final String group;
   final String caption;
+
+  /// [caption], naming who paid on money received: PAYER, not PAYEE.
+  String captionFor({required bool credit}) =>
+      this == payee && credit ? 'PAYER' : caption;
 }
 
 /// A marked character range in the normalized message text.

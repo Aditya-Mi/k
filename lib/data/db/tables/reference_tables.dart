@@ -37,6 +37,10 @@ class Categories extends Table with SyncColumns {
 
   /// Owner hid it: past payments keep it, pickers and rules skip it.
   BoolColumn get hidden => boolean().withDefault(const Constant(false))();
+
+  /// A sub-category sits inside this one (one level deep): its payments
+  /// also count toward the parent in Summary and filters.
+  TextColumn get parentId => text().nullable()();
 }
 
 class Merchants extends Table with SyncColumns {

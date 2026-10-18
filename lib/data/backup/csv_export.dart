@@ -20,6 +20,7 @@ class CsvExport {
     'note',
     'ref',
     'self_transfer',
+    'split',
   ];
 
   Future<String> build() async {
@@ -28,7 +29,13 @@ class CsvExport {
              t.txn_type, t.notes, t.ref_no, t.transfer_id,
              COALESCE(m.display_name, t.payee_raw) AS payee,
              c.name AS category,
-             b.name AS bank, a.nickname, a.last4
+             b.name AS bank, a.nickname, a.last4,
+             (SELECT group_concat(sc.name || ' ' || (s.amount_minor / 100) || '.'
+                       || printf('%02d', s.amount_minor % 100), '; ')
+              FROM transaction_splits s
+              JOIN categories sc ON sc.id = s.category_id
+              WHERE s.transaction_id = t.id AND s.deleted_at IS NULL
+              ORDER BY s.sort_order) AS split
       FROM transactions t
       LEFT JOIN merchants m ON m.id = t.merchant_id
       LEFT JOIN categories c ON c.id = t.category_id
@@ -63,6 +70,7 @@ class CsvExport {
           r.readNullable<String>('notes'),
           r.readNullable<String>('ref_no'),
           r.readNullable<String>('transfer_id') == null ? '' : 'yes',
+          r.readNullable<String>('split'),
         ].map(_cell).join(','),
       );
       out.write('\r\n');

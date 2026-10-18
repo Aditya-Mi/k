@@ -318,6 +318,12 @@ Every sheet and every confirmation is one thing: a surface-2 card with 24dp corn
 ### Quick Actions Sheet
 Long-pressing a Transactions row opens a Floating Note. A header repeats the row (ink chip, payee, "account · time", amount), then the tear line, then one-line 56dp actions with a text-2 icon on the left: Category (current value in text-2 and a chevron), Not a transaction, Mark as self transfer, Open details.
 
+### Sub-categories and Splits
+One level only. A sub-category row hangs off its parent's icon by a hairline rail (1dp outline, vertical + 14dp arm), 20dp icon, in Categories (06i-b) and every category picker (02h). The payment's category picker opens with "Split into categories" above a tear line. Split sheet (02g): rest row (payment's category, computed amount in text-2), then parts (surface-3 category chip + outlined amount field + remove), "Add a part", Save split. Detail (02f): "Category · split in N" with an Edit split chip, then one row per piece, amounts right-aligned. Summary (05d): a parent with sub-categories shows a chevron; open, its children list indented with 4dp text-3 bars, the parent's own spend as "Other".
+
+### Skipped Row
+Settings → Reading → Skipped messages (06m): messages k skipped on its own, under day labels. Row: sender (title) with time right in text-3, two-line preview in text-2, then the reason with a 16dp text-3 icon ("No money moved", "One-time password", "Offer", "Declined payment", "Email without an amount"), hairline divider, no card. Tap → Floating Note (06n): sender as headline, "reason · time", the full message on a surface-3 12dp block, a hint, tear line, "Send to Review" / Close.
+
 ### Upcoming Row
 A Txn Row whose chip is the Upcoming Chip and whose amount is text-2 (payee also text-2). Meta reads "Due Wed 8 Oct · UPI AutoPay · Kotak ··5555". Sits under an "Upcoming · AutoPay" day header, above Today.
 

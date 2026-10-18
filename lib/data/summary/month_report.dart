@@ -16,15 +16,25 @@ class MonthSpend extends Equatable {
 }
 
 class CategorySpend extends Equatable {
-  const CategorySpend(this.category, this.spentMinor, this.count);
+  const CategorySpend(
+    this.category,
+    this.spentMinor,
+    this.count, {
+    this.children = const [],
+  });
 
   /// Null = uncategorized.
   final Category? category;
   final int spentMinor;
   final int count;
 
+  /// Sub-categories with spend, biggest first; one whose category is this
+  /// one is spend filed on the parent itself ("Other"). Empty when no
+  /// sub-category had spend.
+  final List<CategorySpend> children;
+
   @override
-  List<Object?> get props => [category?.id, spentMinor, count];
+  List<Object?> get props => [category?.id, spentMinor, count, children];
 }
 
 class PayeeSpend extends Equatable {
@@ -111,8 +121,13 @@ class MonthReport extends Equatable {
     bandCounts, spentMinor, inMinor, spends,
   ];
 
-  /// [txns] covers the six trend months (any order).
-  static MonthReport build(DateTime month, List<TxnView> txns) {
+  /// [txns] covers the six trend months (any order). [categories] (all of
+  /// them, by id) lets sub-categories add up under their parent.
+  static MonthReport build(
+    DateTime month,
+    List<TxnView> txns, {
+    Map<String, Category> categories = const {},
+  }) {
     final start = DateTime(month.year, month.month);
     final end = DateTime(month.year, month.month + 1);
     final days = end.difference(start).inDays;
@@ -157,8 +172,12 @@ class MonthReport extends Equatable {
         bandCounts[band]++;
       }
 
-      final c = cats[t.category?.id];
-      cats[t.category?.id] = (t.category, (c?.$2 ?? 0) + a, (c?.$3 ?? 0) + one);
+      // A split payment counts each part in its own category.
+      final sign = a.sign;
+      for (final (cat, piece) in t.pieces) {
+        final c = cats[cat?.id];
+        cats[cat?.id] = (cat, (c?.$2 ?? 0) + sign * piece, (c?.$3 ?? 0) + one);
+      }
 
       final pk = t.merchantId ?? t.payee.toLowerCase();
       final p = payees[pk];
@@ -170,9 +189,26 @@ class MonthReport extends Equatable {
     if (spent < 0) spent = 0;
     perMonth.updateAll((_, v) => v < 0 ? 0 : v);
 
-    final categories = [
-      for (final c in cats.values)
-        if (c.$2 > 0) CategorySpend(c.$1, c.$2, c.$3),
+    // Sub-categories add up under their parent.
+    final groups = <String?, (Category?, List<CategorySpend>)>{};
+    for (final c in cats.values) {
+      if (c.$2 <= 0) continue;
+      final parent = categories[c.$1?.parentId];
+      final key = parent?.id ?? c.$1?.id;
+      final g = groups[key] ?? (parent ?? c.$1, <CategorySpend>[]);
+      g.$2.add(CategorySpend(c.$1, c.$2, c.$3));
+      groups[key] = g;
+    }
+    final categories0 = [
+      for (final g in groups.values)
+        CategorySpend(
+          g.$1,
+          g.$2.fold(0, (s, x) => s + x.spentMinor),
+          g.$2.fold(0, (s, x) => s + x.count),
+          children: g.$2.any((x) => x.category?.id != g.$1?.id)
+              ? (g.$2..sort((a, b) => b.spentMinor.compareTo(a.spentMinor)))
+              : const [],
+        ),
     ]..sort((a, b) => b.spentMinor.compareTo(a.spentMinor));
     final ranked = [
       for (final p in payees.values)
@@ -191,7 +227,7 @@ class MonthReport extends Equatable {
       month: start,
       trend: [for (final e in perMonth.entries) MonthSpend(e.key, e.value)],
       dayTotals: dayTotals,
-      categories: categories,
+      categories: categories0,
       payees: ranked.take(topPayees).toList(),
       payeeCount: ranked.length,
       bandTotals: bandTotals,

@@ -84,5 +84,8 @@
     "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-09-29T06:10:40",
     "body": "AUTOPAY of Rs.195.00 to APPLE MEDIA SERVICES on 29-Sep-26 was successful. View details: https://kotk.in/KOTAKD/XXXXXX -Kotak",
     "expected": {"status": "parsed", "kind": "transaction", "templateId": "kotak_sms_autopay_done", "amountMinor": 19500, "direction": "debit", "txnType": "autopay", "payee": "APPLE MEDIA SERVICES", "occurredAt": "2026-09-29T06:10:40"}
-  }
+  },
+  {"name": "Skip: KYC reminder", "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-07T10:00:00", "body": "Dear Customer, complete your re-KYC for Kotak Bank A/c X2222 by 31-10-26 to keep your account active. Visit https://kotak.bank.in/KYC", "expected": {"status": "nonTransaction"}},
+  {"name": "Skip: net banking login", "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-07T10:00:00", "body": "Your Kotak Net Banking was logged in on 07-10-26 at 09:12. Not you? Call 18602662666", "expected": {"status": "nonTransaction"}},
+  {"name": "Skip: cheque book", "channel": "sms", "sender": "JD-KOTAKB-S", "receivedAt": "2026-10-07T10:00:00", "body": "Your cheque book request for Kotak Bank A/c X2222 (25 leaves) has been processed and will be delivered soon.", "expected": {"status": "nonTransaction"}}
 ]
