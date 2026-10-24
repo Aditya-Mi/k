@@ -290,6 +290,36 @@ class LedgerRepository {
         ),
       );
 
+  /// Savings ↔ current ↔ credit card ↔ wallet, when k guessed wrong.
+  Future<void> setAccountType(String id, AccountType type) =>
+      (_db.update(_db.accounts)..where((a) => a.id.equals(id))).write(
+        AccountsCompanion(type: Value(type), updatedAt: Value(DateTime.now())),
+      );
+
+  /// The live account with these digits at this bank, folded or not.
+  Future<Account?> findAccount(String bankId, String last4) =>
+      (_db.select(_db.accounts)..where(
+            (a) =>
+                a.bankId.equals(bankId) &
+                a.last4.equals(last4) &
+                a.deletedAt.isNull(),
+          ))
+          .getSingleOrNull();
+
+  /// Debit cards folded into [accountId].
+  Future<List<Account>> cardsIn(String accountId) =>
+      (_db.select(_db.accounts)..where(
+            (a) =>
+                a.mergedIntoId.equals(accountId) &
+                a.type.equalsValue(AccountType.debitCard) &
+                a.deletedAt.isNull(),
+          ))
+          .get();
+
+  /// Logs the payment on another of the owner's accounts.
+  Future<void> moveTransaction(String txnId, String accountId) =>
+      _updateTxn(txnId, TransactionsCompanion(accountId: Value(accountId)));
+
   Future<void> setCreditLimit(String id, int? minor) =>
       (_db.update(_db.accounts)..where((a) => a.id.equals(id))).write(
         AccountsCompanion(

@@ -76,6 +76,67 @@ void main() {
     expect(await ledger.watchTransactions(oct).first, hasLength(1));
   });
 
+  Future<void> edit(TxnView t, {int? amount, DateTime? at, String? payee}) =>
+      ingest.editTransaction(
+        t.id,
+        direction: t.direction,
+        amountMinor: amount ?? t.amountMinor,
+        occurredAt: at ?? t.occurredAt,
+        accountId: t.account?.id,
+        payee: payee,
+        txnType: t.txnType,
+        categoryId: null,
+        note: t.notes ?? '',
+      );
+
+  test('an edit stays when the message is read again', () async {
+    final at = DateTime(2026, 10, 1, 13, 51, 20);
+    await ingest.ingest(sms(25, at));
+    final row = (await ledger.watchTransactions(oct).first).single;
+    await edit(row, amount: 3000, at: DateTime(2026, 10, 2, 9));
+    expect(await ingest.ingest(sms(25, at)), IngestOutcome.duplicate);
+    final after = (await ledger.watchTransactions(oct).first).single;
+    expect(after.amountMinor, 3000);
+    expect(after.occurredAt, DateTime(2026, 10, 2, 9));
+    final said = await ingest.bankSaid(row.id);
+    expect(said?.amountMinor, 2500);
+    expect(said?.occurredAt, at);
+  });
+
+  test('the email of an edited payment still merges into it', () async {
+    final at = DateTime(2026, 10, 1, 13, 51, 20);
+    await ingest.ingest(sms(25, at));
+    final row = (await ledger.watchTransactions(oct).first).single;
+    await edit(row, amount: 3000);
+    expect(await ingest.ingest(email(25, at)), IngestOutcome.merged);
+    final rows = await ledger.watchTransactions(oct).first;
+    expect(rows.single.amountMinor, 3000);
+    expect(rows.single.sourceCount, 2);
+  });
+
+  test('a new payee changes only that payment', () async {
+    final at = DateTime(2026, 10, 1, 13, 51, 20);
+    await ingest.ingest(sms(25, at, ref: '1'));
+    await ingest.ingest(sms(40, at.add(const Duration(hours: 2)), ref: '2'));
+    final rows = await ledger.watchTransactions(oct).first;
+    final first = rows.firstWhere((t) => t.amountMinor == 2500);
+    await edit(first, payee: 'Ramesh (rent)');
+    final after = await ledger.watchTransactions(oct).first;
+    expect(
+      after.firstWhere((t) => t.amountMinor == 2500).payee,
+      'Ramesh (rent)',
+    );
+    expect(
+      after.firstWhere((t) => t.amountMinor == 4000).payee,
+      isNot('Ramesh (rent)'),
+    );
+    // Unedited rows have nothing to show.
+    expect(
+      await ingest.bankSaid(after.firstWhere((t) => t.amountMinor == 4000).id),
+      isNull,
+    );
+  });
+
   test('two SMS for the same amount stay two payments', () async {
     final at = DateTime(2026, 10, 2, 21, 36, 2);
     await ingest.ingest(sms(25, at));

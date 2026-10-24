@@ -93,6 +93,91 @@ void main() {
     expect(maskedDigits('to card XX5678 from XX1111', own: '1111'), {'5678'});
   });
 
+  test(
+    'a credit card saved as a debit card comes out with its spends',
+    () async {
+      await ingest.ingest(
+        axisOut(200, DateTime(2026, 10, 1, 9), payee: 'Chai Point'),
+      );
+      final savings = (await txns()).single.account!;
+      // Owner took ··5678 for the savings account's debit card.
+      expect(await ledger.addDebitCard(savings.id, '5678'), isTrue);
+      await ingest.ingest(cardSpend(1299, DateTime(2026, 10, 2, 12)));
+      expect((await txns()).map((t) => t.account!.id).toSet(), {savings.id});
+      // Its available limit isn't the savings account's balance.
+      expect(
+        (await txns())
+            .where((t) => t.amountMinor == 129900)
+            .single
+            .balanceMinor,
+        isNull,
+      );
+      // Adding it as a credit card hits the folded row.
+      expect(
+        await ledger.addAccount(
+          bankId: 'AXIS',
+          type: AccountType.creditCard,
+          last4: '5678',
+        ),
+        isNull,
+      );
+      final folded = await ledger.findAccount('AXIS', '5678');
+      expect(folded!.mergedIntoId, savings.id);
+      expect((await ledger.cardsIn(savings.id)).single.id, folded.id);
+
+      await ingest.separateCard(folded.id, AccountType.creditCard);
+
+      final card = (await ledger.watchAccounts().first)
+          .where((a) => a.last4 == '5678')
+          .single;
+      expect(card.isCreditCard, isTrue);
+      final rows = await txns();
+      expect(
+        rows.where((t) => t.amountMinor == 129900).single.account!.id,
+        card.id,
+      );
+      expect(
+        rows.where((t) => t.amountMinor == 20000).single.account!.id,
+        savings.id,
+      );
+      // Later spends land on the card too.
+      await ingest.ingest(cardSpend(500, DateTime(2026, 10, 3, 12)));
+      expect((await txns()).where((t) => t.account!.id == card.id).length, 2);
+    },
+  );
+
+  test('with two cards, a bill goes to the card the owner picks', () async {
+    await ingest.ingest(cardSpend(1299, DateTime(2026, 10, 1, 12)));
+    final other = await ledger.addAccount(
+      bankId: 'AXIS',
+      type: AccountType.creditCard,
+      last4: '4321',
+    );
+    await ingest.ingest(
+      axisOut(5000, DateTime(2026, 10, 5, 10), payee: 'Ramesh Kumar'),
+    );
+    final bill = (await txns()).firstWhere((t) => t.amountMinor == 500000);
+    expect(bill.isTransfer, isFalse);
+    await TransferLinker(db).markCardBill(bill.id, force: true, cardId: other);
+    final rows = await txns();
+    final paid = rows.firstWhere((t) => t.id == bill.id);
+    expect(paid.isCardBill, isTrue);
+    expect(paid.partnerAccount?.id, other);
+    expect(summarize(oct.from, rows).spentMinor, 129900);
+  });
+
+  test('a payment moves to another account', () async {
+    await ingest.ingest(
+      axisOut(200, DateTime(2026, 10, 1, 9), payee: 'Chai Point'),
+    );
+    await ingest.ingest(cardSpend(1299, DateTime(2026, 10, 2, 12)));
+    final rows = await txns();
+    final spend = rows.firstWhere((t) => t.account!.isCreditCard);
+    final savings = rows.firstWhere((t) => !t.account!.isCreditCard).account!;
+    await ledger.moveTransaction(spend.id, savings.id);
+    expect((await txns()).map((t) => t.account!.id).toSet(), {savings.id});
+  });
+
   test('with no card in k, a CRED payment stays a payment', () async {
     await ingest.ingest(
       axisOut(12300, DateTime(2026, 10, 2, 10, 4), payee: 'CRED Club'),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:txn_parser/txn_parser.dart' show Direction, parseAmountMinor;
+import 'package:txn_parser/txn_parser.dart'
+    show Direction, TxnType, parseAmountMinor;
 
 import '../../widgets/k_sheet.dart';
 
@@ -18,8 +19,17 @@ import '../../widgets/text_prompt.dart';
 /// A payment no SMS or email reported, e.g. a checkout whose receipt went to
 /// another inbox (design 09). If the bank's message turns up later for the
 /// same account and amount, it merges into this row.
+///
+/// With [editing], the same form changes a logged payment: every field,
+/// kept over later re-parses.
 class AddPaymentScreen extends StatefulWidget {
-  const AddPaymentScreen({super.key});
+  const AddPaymentScreen({super.key, this.editing, this.bankSaid});
+
+  final TxnView? editing;
+
+  /// "Bank said ₹X on …" under the form when the row no longer matches
+  /// its message.
+  final String? bankSaid;
 
   @override
   State<AddPaymentScreen> createState() => _AddPaymentScreenState();
@@ -30,16 +40,24 @@ const _noAccount = '';
 
 class _AddPaymentScreenState extends State<AddPaymentScreen> {
   final _ledger = getIt<LedgerRepository>();
-  var _direction = Direction.debit;
-  int? _amount;
-  String _payee = '';
+  late final _old = widget.editing;
+  late var _direction = _old?.direction ?? Direction.debit;
+  late int? _amount = _old?.amountMinor;
+  late String _payee = _old == null || _old.merchantId == null
+      ? ''
+      : _old.payee;
+  var _payeeTouched = false;
 
   /// Null → not picked yet; [_noAccount] → not tracked.
-  String? _accountId;
+  late String? _accountId = _old == null
+      ? null
+      : _old.account?.id ?? _noAccount;
   List<AccountView> _accounts = const [];
-  Category? _category;
-  DateTime _when = DateTime.now();
-  String _note = '';
+  late Category? _category = _old?.category;
+  var _categoryTouched = false;
+  late DateTime _when = _old?.occurredAt ?? DateTime.now();
+  late String _note = _old?.notes ?? '';
+  late TxnType _type = _old?.txnType ?? TxnType.other;
   bool _saving = false;
 
   @override
@@ -50,10 +68,12 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
       setState(() {
         _accounts = a;
         // One account → nothing to choose.
-        if (a.length == 1) _accountId = a.single.id;
+        if (a.length == 1 && _old == null) _accountId = a.single.id;
       });
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _editAmount());
+    if (_old == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _editAmount());
+    }
   }
 
   bool get _ready => _amount != null && _accountId != null && !_saving;
@@ -92,7 +112,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
           icon: const Icon(Symbols.close),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Add payment'),
+        title: Text(_old == null ? 'Add payment' : 'Edit payment'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -134,6 +154,12 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
             onTap: _editAccount,
             value: value(account, 'Pick'),
           ),
+          if (_old != null)
+            FieldRow(
+              label: _direction == Direction.debit ? 'Paid by' : 'Came by',
+              onTap: _editType,
+              value: value(txnTypeLabel(_type), ''),
+            ),
           FieldRow(
             label: 'Category',
             onTap: _editCategory,
@@ -151,7 +177,15 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            'A matching bank message that arrives later merges into this.',
+            _old == null
+                ? 'A matching bank message that arrives later merges into this.'
+                : [
+                    ?widget.bankSaid,
+                    if (_old.isTransfer)
+                      'Changing the amount, direction or account unlinks the '
+                          'self transfer.',
+                    'Your changes stay even if the message is read again.',
+                  ].join(' '),
             style: t.meta.copyWith(color: c.text3, height: 1.35),
           ),
         ],
@@ -171,7 +205,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
           onPressed: _ready ? _save : null,
           icon: const Icon(Symbols.check, size: 20),
-          label: const Text('Save payment'),
+          label: Text(_old == null ? 'Save payment' : 'Save changes'),
         ),
       ),
     );
@@ -195,7 +229,33 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
       initial: _payee,
       hint: 'e.g. Hostinger',
     );
-    if (v != null) setState(() => _payee = v.trim());
+    if (v != null) {
+      setState(() {
+        _payee = v.trim();
+        _payeeTouched = true;
+      });
+    }
+  }
+
+  Future<void> _editType() async {
+    final picked = await showKSheet<TxnType>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final type in TxnType.values)
+              ListTile(
+                title: Text(txnTypeLabel(type)),
+                trailing: type == _type ? const Icon(Symbols.check) : null,
+                onTap: () => Navigator.pop(context, type),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) setState(() => _type = picked);
   }
 
   Future<void> _editAccount() async {
@@ -269,7 +329,12 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         ),
       ),
     );
-    if (picked != null) setState(() => _category = picked);
+    if (picked != null) {
+      setState(() {
+        _category = picked;
+        _categoryTouched = true;
+      });
+    }
   }
 
   Future<void> _editWhen() async {
@@ -279,7 +344,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
       helpText: 'When',
       initialDate: _when,
       firstDate: DateTime(now.year - 2),
-      lastDate: now,
+      lastDate: _when.isAfter(now) ? _when : now,
     );
     if (day == null || !mounted) return;
     final time = await showTimePicker(
@@ -299,6 +364,22 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
 
   Future<void> _save() async {
     setState(() => _saving = true);
+    final old = _old;
+    if (old != null) {
+      await getIt<IngestionService>().editTransaction(
+        old.id,
+        direction: _direction,
+        amountMinor: _amount!,
+        occurredAt: _when,
+        accountId: _accountId == _noAccount ? null : _accountId,
+        payee: _payeeTouched ? _payee : null,
+        txnType: _type,
+        categoryId: _categoryTouched ? _category?.id : null,
+        note: _note,
+      );
+      if (mounted) Navigator.pop(context);
+      return;
+    }
     await getIt<IngestionService>().addManual(
       direction: _direction,
       amountMinor: _amount!,
@@ -311,6 +392,18 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
     if (mounted) Navigator.pop(context);
   }
 }
+
+String txnTypeLabel(TxnType type) => switch (type) {
+  TxnType.upi => 'UPI',
+  TxnType.card => 'Card',
+  TxnType.neft => 'NEFT',
+  TxnType.imps => 'IMPS',
+  TxnType.rtgs => 'RTGS',
+  TxnType.atm => 'ATM',
+  TxnType.autopay => 'AutoPay',
+  TxnType.netBanking => 'Net banking',
+  TxnType.other => 'Other',
+};
 
 /// Paid | Received pill (design 09).
 class _DirectionToggle extends StatelessWidget {

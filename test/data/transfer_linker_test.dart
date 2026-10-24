@@ -94,6 +94,26 @@ void main() {
     expect(summary.spends, 0);
   });
 
+  test('changing a transfer side\'s amount unlinks it', () async {
+    await ingest.ingest(axisOut(5000, DateTime(2026, 10, 2, 10, 0)));
+    await ingest.ingest(kotakIn(5000, DateTime(2026, 10, 2, 10, 4)));
+    final out = (await txns()).firstWhere((r) => r.isDebit);
+    await ingest.editTransaction(
+      out.id,
+      direction: out.direction,
+      amountMinor: 450000,
+      occurredAt: out.occurredAt,
+      accountId: out.account?.id,
+      txnType: out.txnType,
+      categoryId: null,
+      note: '',
+    );
+    final rows = await txns();
+    expect(rows, hasLength(2));
+    expect(rows.any((r) => r.isTransfer), isFalse);
+    expect(rows.firstWhere((r) => r.isDebit).amountMinor, 450000);
+  });
+
   test('outside 30 minutes or different amount does not link', () async {
     await ingest.ingest(axisOut(5000, DateTime(2026, 10, 2, 10, 0)));
     await ingest.ingest(kotakIn(5000, DateTime(2026, 10, 2, 10, 45)));

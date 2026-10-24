@@ -53,10 +53,13 @@ class TransferLinker {
   ///
   /// [force]: the owner said so ("Card bill payment" on detail), so the
   /// payee doesn't have to look like one and an unlinked row qualifies.
+  /// [cardId] / [notInK]: the owner picked the card, or said it isn't in k.
   Future<bool> markCardBill(
     String txnId, {
     String text = '',
     bool force = false,
+    String? cardId,
+    bool notInK = false,
   }) async {
     final t = await _byId(txnId);
     if (t == null ||
@@ -83,9 +86,14 @@ class TransferLinker {
       _db.accounts,
     )..where((a) => a.id.equals(t.accountId!))).getSingleOrNull();
     final named = maskedDigits(text, own: own?.last4);
-    final card =
-        cards.where((c) => named.contains(c.last4)).firstOrNull ??
-        (cards.length == 1 ? cards.single : null);
+    // The owner's pick wins; else the card the message names, else the
+    // only one.
+    final card = notInK
+        ? null
+        : cardId != null
+        ? cards.where((c) => c.id == cardId).firstOrNull
+        : cards.where((c) => named.contains(c.last4)).firstOrNull ??
+              (cards.length == 1 ? cards.single : null);
     Transaction? credit;
     if (card != null) {
       const span = Duration(days: 3);

@@ -6,6 +6,7 @@ import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
 import '../../widgets/k_sheet.dart';
 
 import '../../../data/db/enums.dart';
+import '../../../data/ingest/ingestion_service.dart';
 import '../../../data/repositories/bank_repository.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../di.dart';
@@ -13,6 +14,7 @@ import '../../theme/k_theme.dart';
 import '../../widgets/bank_picker.dart';
 import '../../widgets/common.dart';
 import '../../widgets/text_prompt.dart';
+import 'accounts_screen.dart';
 
 /// Add an account before any message names it (design 10c): bank from the
 /// catalogue, type, last 4, nickname, and optionally the balance now.
@@ -301,15 +303,76 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         creditLimitMinor: _isCard ? parseAmountMinor(_limit.text) : null,
       );
       if (id == null) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('That account is already in k')),
-        );
+        if (await _convertExisting(bankId)) {
+          nav.pop();
+        } else {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('That account is already in k')),
+          );
+        }
         return;
       }
       nav.pop();
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+extension on _AddAccountScreenState {
+  /// These digits are already an account of another type (often a credit
+  /// card k took for a debit card): offer to change it to this one, then
+  /// apply the form's nickname, limit and balance. True when changed.
+  Future<bool> _convertExisting(String bankId) async {
+    final ledger = getIt<LedgerRepository>();
+    final existing = await ledger.findAccount(bankId, _last4.text.trim());
+    if (existing == null || existing.type == _type || !mounted) return false;
+    final bool changed;
+    if (existing.mergedIntoId != null &&
+        existing.type == AccountType.debitCard &&
+        _type == AccountType.creditCard) {
+      changed = await separateCard(context, existing, from: 'its bank account');
+    } else {
+      final ok = await showKDialog<bool>(
+        context: context,
+        builder: (context) => KDialog(
+          title: Text('··${existing.last4} is already in k'),
+          content: Text(
+            'It\'s saved as ${accountTypeLabels[existing.type]!.toLowerCase()}. '
+            'Change it to ${_AddAccountScreenState._types[_type]!.toLowerCase()}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Change'),
+            ),
+          ],
+        ),
+      );
+      changed = ok == true;
+      if (changed) {
+        // A folded account comes out on its own as the new type.
+        await getIt<IngestionService>().separateCard(existing.id, _type);
+      }
+    }
+    if (!changed) return false;
+    final name = _nickname.text.trim();
+    if (name.isNotEmpty) await ledger.renameAccount(existing.id, name);
+    final limit = _isCard ? parseAmountMinor(_limit.text) : null;
+    if (limit != null) await ledger.setCreditLimit(existing.id, limit);
+    final typed = parseAmountMinor(_balance.text);
+    if (typed != null) {
+      await ledger.setManualBalance(
+        existing.id,
+        _overdrawn ? -typed : typed,
+        DateTime.now(),
+      );
+    }
+    return true;
   }
 }
 

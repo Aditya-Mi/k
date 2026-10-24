@@ -522,6 +522,12 @@ class IngestionService {
         : await _accountFor(bankId, fields, text);
     await _rememberCard(account, fields.card);
     final occurredAt = fields.occurredAt ?? raw.receivedAt;
+    // A credit card filed as a bank account's debit card: its available
+    // limit must not become that account's balance.
+    final balance =
+        account.type != AccountType.creditCard && namesCardLimit(text)
+        ? null
+        : fields.balanceMinor;
 
     // The same payment from the other channel (SMS ↔ email): one row, two
     // sources. The earlier copy keeps its fields; gaps are filled in.
@@ -539,8 +545,8 @@ class IngestionService {
           refNo: twin.refNo == null && fields.ref != null
               ? Value(fields.ref)
               : const Value.absent(),
-          balanceMinor: twin.balanceMinor == null && fields.balanceMinor != null
-              ? Value(fields.balanceMinor)
+          balanceMinor: twin.balanceMinor == null && balance != null
+              ? Value(balance)
               : const Value.absent(),
           merchantId: twin.merchantId == null && merchant != null
               ? Value(merchant.id)
@@ -576,7 +582,7 @@ class IngestionService {
           merchantId: Value(added.merchantId ?? merchant?.id),
           payeeRaw: Value(added.payeeRaw ?? fields.payee),
           refNo: Value(fields.ref),
-          balanceMinor: Value(fields.balanceMinor),
+          balanceMinor: Value(balance),
           updatedAt: Value(DateTime.now()),
         ),
       );
@@ -604,7 +610,7 @@ class IngestionService {
             payeeRaw: Value(fields.payee),
             refNo: Value(fields.ref),
             occurredAt: occurredAt,
-            balanceMinor: Value(fields.balanceMinor),
+            balanceMinor: Value(balance),
             categoryId: Value(
               categoryId ??
                   categories.resolve(
@@ -686,8 +692,150 @@ class IngestionService {
         best = c;
       }
     }
-    return best;
+    return best ?? await _editedTwin(channel, f, at, window);
   }
+
+  /// A row the owner edited (amount, date, account) no longer matches the
+  /// other channel's copy: compare against what its own message said.
+  Future<Transaction?> _editedTwin(
+    Channel channel,
+    ParsedFields f,
+    DateTime at,
+    Duration window,
+  ) async {
+    final t = _db.transactions;
+    final src = _db.transactionSources;
+    final raw = _db.rawMessages;
+    final rows =
+        await (_db.select(t).join([
+              innerJoin(src, src.transactionId.equalsExp(t.id)),
+              innerJoin(raw, raw.id.equalsExp(src.rawMessageId)),
+            ])..where(
+              t.deletedAt.isNull() &
+                  t.userEdited.equals(true) &
+                  raw.receivedAt.isBetweenValues(
+                    at.subtract(const Duration(days: 1)),
+                    at.add(const Duration(days: 1)),
+                  ),
+            ))
+            .get();
+    final seen = <String, Set<Channel>>{};
+    for (final r in rows) {
+      (seen[r.readTable(t).id] ??= {}).add(r.readTable(raw).channel);
+    }
+    for (final r in rows) {
+      final txn = r.readTable(t);
+      if (seen[txn.id]!.contains(channel)) continue;
+      final message = r.readTable(raw);
+      final was = (await parseRaw(message)).fields;
+      final wasAt = was.occurredAt ?? message.receivedAt;
+      if (was.amountMinor == f.amountMinor &&
+          was.direction == f.direction &&
+          wasAt.difference(at).abs() <= window) {
+        return txn;
+      }
+    }
+    return null;
+  }
+
+  /// What the bank's message said, for a row the owner changed: null when
+  /// it has no message or still matches it.
+  Future<({int amountMinor, DateTime occurredAt})?> bankSaid(
+    String txnId,
+  ) async {
+    final txn = await (_db.select(
+      _db.transactions,
+    )..where((t) => t.id.equals(txnId))).getSingleOrNull();
+    if (txn == null || !txn.userEdited) return null;
+    final src = _db.transactionSources;
+    final first =
+        await (_db.select(_db.rawMessages).join([
+                innerJoin(src, src.rawMessageId.equalsExp(_db.rawMessages.id)),
+              ])
+              ..where(src.transactionId.equals(txnId))
+              ..orderBy([OrderingTerm.asc(_db.rawMessages.receivedAt)])
+              ..limit(1))
+            .map((r) => r.readTable(_db.rawMessages))
+            .getSingleOrNull();
+    if (first == null) return null;
+    final f = (await parseRaw(first)).fields;
+    final amount = f.amountMinor;
+    final at = f.occurredAt ?? first.receivedAt;
+    if (amount == null) return null;
+    // Bank times are to the minute at best.
+    final sameTime =
+        at.difference(txn.occurredAt).abs() < const Duration(minutes: 1);
+    if (amount == txn.amountMinor && sameTime) return null;
+    return (amountMinor: amount, occurredAt: at);
+  }
+
+  /// The owner's edit of any field ([payee] and [categoryId] null when
+  /// unchanged). Kept over later re-parses and twins
+  /// ([Transactions.userEdited]). A self transfer whose money or account
+  /// changes is unlinked first: its sides no longer match.
+  Future<void> editTransaction(
+    String txnId, {
+    required Direction direction,
+    required int amountMinor,
+    required DateTime occurredAt,
+    required String? accountId,
+    String? payee,
+    required TxnType txnType,
+    required String? categoryId,
+    required String note,
+  }) => _db.transaction(() async {
+    final t = await (_db.select(
+      _db.transactions,
+    )..where((o) => o.id.equals(txnId))).getSingle();
+    final moneyMoved =
+        t.amountMinor != amountMinor ||
+        t.direction != direction ||
+        t.accountId != accountId;
+    if (t.transferId != null && moneyMoved) {
+      if (t.origin == TxnOrigin.user) {
+        // Unlinking deletes owner-added sides: free this one first, then
+        // unlink what's left on the other side.
+        final partner =
+            await (_db.select(_db.transactions)..where(
+                  (o) =>
+                      o.transferId.equals(t.transferId!) &
+                      o.id.equals(txnId).not(),
+                ))
+                .getSingleOrNull();
+        await (_db.update(_db.transactions)..where((o) => o.id.equals(txnId)))
+            .write(const TransactionsCompanion(transferId: Value(null)));
+        if (partner != null) await _transfers.unlink(partner.id);
+      } else {
+        await _transfers.unlink(txnId);
+      }
+    }
+    // Null payee: unchanged. A new one re-resolves this row's merchant only.
+    final name = payee?.trim() ?? '';
+    final payeeChanged = payee != null;
+    final merchant = payeeChanged ? await _merchantFor(name) : null;
+    final text = note.trim();
+    await (_db.update(
+      _db.transactions,
+    )..where((o) => o.id.equals(txnId))).write(
+      TransactionsCompanion(
+        direction: Value(direction),
+        amountMinor: Value(amountMinor),
+        occurredAt: Value(occurredAt),
+        accountId: Value(accountId),
+        txnType: Value(txnType),
+        merchantId: payeeChanged ? Value(merchant?.id) : const Value.absent(),
+        payeeRaw: payeeChanged
+            ? Value(name.isEmpty ? null : name)
+            : const Value.absent(),
+        categoryId: categoryId == null
+            ? const Value.absent()
+            : Value(categoryId),
+        notes: Value(text.isEmpty ? null : text),
+        userEdited: const Value(true),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  });
 
   /// Same account, amount and direction, added by the owner within ±3 days.
   Future<Transaction?> _ownerAddedRow(
@@ -827,6 +975,45 @@ class IngestionService {
         );
   }
 
+  /// A card k folded into a bank account as a debit card that is really
+  /// its own account (a credit card): it comes out as [type], and payments
+  /// whose message names its digits move back onto it.
+  Future<void> separateCard(String cardId, AccountType type) => _db.transaction(
+    () async {
+      final card = await (_db.select(
+        _db.accounts,
+      )..where((a) => a.id.equals(cardId))).getSingle();
+      final from = card.mergedIntoId;
+      final now = DateTime.now();
+      await (_db.update(_db.accounts)..where((a) => a.id.equals(cardId))).write(
+        AccountsCompanion(
+          type: Value(type),
+          mergedIntoId: const Value(null),
+          deletedAt: const Value(null),
+          updatedAt: Value(now),
+        ),
+      );
+      if (from == null || card.last4 == null) return;
+      final t = _db.transactions;
+      final s = _db.transactionSources;
+      final rows = await (_db.select(_db.rawMessages).join([
+        innerJoin(s, s.rawMessageId.equalsExp(_db.rawMessages.id)),
+        innerJoin(t, t.id.equalsExp(s.transactionId)),
+      ])..where(t.accountId.equals(from) & t.deletedAt.isNull())).get();
+      final moving = <String>{};
+      for (final r in rows) {
+        final parsed = await parseRaw(r.readTable(_db.rawMessages));
+        if (parsed.fields.last4 == card.last4) {
+          moving.add(r.readTable(t).id);
+        }
+      }
+      if (moving.isEmpty) return;
+      await (_db.update(t)..where((o) => o.id.isIn(moving))).write(
+        TransactionsCompanion(accountId: Value(cardId), updatedAt: Value(now)),
+      );
+    },
+  );
+
   Future<Account?> _soleSavings(String bankId) async {
     final rows =
         await (_db.select(_db.accounts)..where(
@@ -910,13 +1097,18 @@ class IngestionService {
   }
 }
 
+/// The figure in the message is a card's available limit, not a balance.
+bool namesCardLimit(String text) {
+  final t = text.toLowerCase();
+  return t.contains('avl limit') ||
+      t.contains('avl lmt') ||
+      t.contains('available limit');
+}
+
 /// Card alerts rarely say which kind; a limit means credit card.
 AccountType inferAccountType(TxnType? type, String text) {
   final t = text.toLowerCase();
-  if (t.contains('credit card') ||
-      t.contains('avl limit') ||
-      t.contains('avl lmt') ||
-      t.contains('available limit')) {
+  if (t.contains('credit card') || namesCardLimit(text)) {
     return AccountType.creditCard;
   }
   if (t.contains('debit card')) return AccountType.debitCard;

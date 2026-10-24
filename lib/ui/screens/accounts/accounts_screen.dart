@@ -7,7 +7,9 @@ import 'package:txn_parser/txn_parser.dart' show parseAmountMinor;
 import '../../widgets/k_sheet.dart';
 
 import '../../../data/db/enums.dart';
+import '../../../data/db/app_database.dart' show Account;
 import '../../../data/emis/emi_service.dart';
+import '../../../data/ingest/ingestion_service.dart';
 import '../../../data/repositories/ledger_models.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../di.dart';
@@ -175,13 +177,17 @@ class AccountsScreen extends StatelessWidget {
   }
 }
 
-/// Rename, set balance (or a card's limits), add a debit card, merge.
+/// Rename, set balance (or a card's limits), change type, add a debit
+/// card, split out a card saved as a debit card, merge.
 Future<void> accountActions(
   BuildContext context,
   AccountRowData r,
   List<AccountRowData> all,
 ) async {
   final isCredit = r.account.isCreditCard;
+  final ledger = getIt<LedgerRepository>();
+  final cards = await ledger.cardsIn(r.account.id);
+  if (!context.mounted) return;
   final choice = await showKSheet<int>(
     context: context,
     builder: (context) => SafeArea(
@@ -204,6 +210,21 @@ Future<void> accountActions(
             title: Text(isCredit ? 'Set available limit' : 'Set balance'),
             onTap: () => Navigator.pop(context, 1),
           ),
+          if (!r.account.isCash)
+            ListTile(
+              leading: const Icon(Symbols.swap_horiz),
+              title: const Text('Change type'),
+              subtitle: Text('Now ${accountTypeLabels[r.account.type]}'),
+              onTap: () => Navigator.pop(context, 5),
+            ),
+          // Cards k took for debit cards: one tap makes each its own card.
+          for (final (i, card) in cards.indexed)
+            ListTile(
+              leading: const Icon(Symbols.credit_card),
+              title: Text('··${card.last4} is a credit card'),
+              subtitle: const Text('Saved here as a debit card'),
+              onTap: () => Navigator.pop(context, 100 + i),
+            ),
           if (r.account.type == AccountType.savings ||
               r.account.type == AccountType.current)
             ListTile(
@@ -224,8 +245,16 @@ Future<void> accountActions(
     ),
   );
   if (!context.mounted || choice == null) return;
-  final ledger = getIt<LedgerRepository>();
+  if (choice >= 100) {
+    await separateCard(context, cards[choice - 100], from: r.account.short);
+    return;
+  }
   switch (choice) {
+    case 5:
+      final type = await pickAccountType(context, r.account.type);
+      if (type != null && type != r.account.type) {
+        await ledger.setAccountType(r.account.id, type);
+      }
     case 2:
       await _merge(context, r, all);
     case 4:
@@ -236,6 +265,7 @@ Future<void> accountActions(
         help: 'From the card, or a message like "BLOCKCARD XX6666".',
         action: 'Add',
         numeric: true,
+        rupees: false,
       );
       final last4 = digits?.replaceAll(RegExp(r'\D'), '');
       if (last4 == null || !context.mounted) return;
@@ -288,6 +318,74 @@ Future<void> accountActions(
         await ledger.setManualBalance(r.account.id, minor, DateTime.now());
       }
   }
+}
+
+/// What an account can be changed to (cash and folded debit cards aside).
+const accountTypeLabels = {
+  AccountType.savings: 'Savings',
+  AccountType.current: 'Current',
+  AccountType.creditCard: 'Credit card',
+  AccountType.wallet: 'Wallet',
+  AccountType.debitCard: 'Debit card',
+  AccountType.other: 'Other',
+  AccountType.cash: 'Cash',
+};
+
+Future<AccountType?> pickAccountType(
+  BuildContext context,
+  AccountType current,
+) => showKSheet<AccountType>(
+  context: context,
+  builder: (context) => SafeArea(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final type in const [
+          AccountType.savings,
+          AccountType.current,
+          AccountType.creditCard,
+          AccountType.wallet,
+        ])
+          ListTile(
+            title: Text(accountTypeLabels[type]!),
+            trailing: type == current ? const Icon(Symbols.check) : null,
+            onTap: () => Navigator.pop(context, type),
+          ),
+      ],
+    ),
+  ),
+);
+
+/// Makes a card folded in as a debit card its own credit card; payments
+/// whose message names its digits move onto it. True when done.
+Future<bool> separateCard(
+  BuildContext context,
+  Account card, {
+  required String from,
+}) async {
+  final ok = await showKDialog<bool>(
+    context: context,
+    builder: (context) => KDialog(
+      title: Text('Make ··${card.last4} a credit card?'),
+      content: Text(
+        'It moves out of $from to Credit cards. Payments whose message '
+        'names ··${card.last4} move with it.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Make it a credit card'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true) return false;
+  await getIt<IngestionService>().separateCard(card.id, AccountType.creditCard);
+  return true;
 }
 
 Future<void> _merge(

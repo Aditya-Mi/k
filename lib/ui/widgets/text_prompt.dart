@@ -17,6 +17,7 @@ Future<String?> promptText(
   String? help,
   String action = 'Save',
   bool numeric = false,
+  bool rupees = true,
   int maxLines = 1,
 }) => showKDialog<String>(
   context: context,
@@ -27,6 +28,7 @@ Future<String?> promptText(
     help: help,
     action: action,
     numeric: numeric,
+    rupees: rupees,
     maxLines: maxLines,
   ),
 );
@@ -39,6 +41,7 @@ class _TextPrompt extends StatefulWidget {
     required this.help,
     required this.action,
     required this.numeric,
+    required this.rupees,
     required this.maxLines,
   });
 
@@ -48,6 +51,9 @@ class _TextPrompt extends StatefulWidget {
   final String? help;
   final String action;
   final bool numeric;
+
+  /// A numeric field that is an amount (₹ prefix), not a count or digits.
+  final bool rupees;
   final int maxLines;
 
   @override
@@ -81,7 +87,7 @@ class _TextPromptState extends State<_TextPrompt> {
           : null,
       decoration: InputDecoration(
         hintText: widget.hint,
-        prefixText: widget.numeric ? '₹ ' : null,
+        prefixText: widget.numeric && widget.rupees ? '₹ ' : null,
         hintStyle: widget.numeric
             ? context.kt.amountInput.copyWith(color: context.k.text3)
             : null,

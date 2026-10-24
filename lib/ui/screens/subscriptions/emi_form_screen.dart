@@ -389,6 +389,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
         title: _card ? 'Months' : 'EMIs in all',
         initial: '$_count',
         numeric: true,
+        rupees: false,
       );
       n = int.tryParse(v ?? '');
     }
@@ -423,6 +424,7 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
       title: 'EMIs paid so far',
       initial: '$_paid',
       numeric: true,
+      rupees: false,
     );
     final n = int.tryParse(v ?? '');
     if (n != null && n >= 0) setState(() => _paid = n);

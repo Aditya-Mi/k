@@ -30,6 +30,8 @@ import '../../../data/subscriptions/subscription_service.dart';
 import '../subscriptions/emi_form_screen.dart';
 import '../subscriptions/subscription_detail_screen.dart';
 import '../subscriptions/track_subscription_sheet.dart';
+import '../../../data/ingest/ingestion_service.dart';
+import '../transactions/add_payment_screen.dart';
 import 'split_sheet.dart';
 
 class TxnDetailState {
@@ -89,7 +91,8 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
   Future<int> renamePayee(String merchantId, String name) =>
       _ledger.renameMerchant(merchantId, name);
   Future<void> unlinkTransfer() => _transfers.unlink(txnId);
-  Future<void> markCardBill() => _transfers.markCardBill(txnId, force: true);
+  Future<void> markCardBill({String? cardId, bool notInK = false}) => _transfers
+      .markCardBill(txnId, force: true, cardId: cardId, notInK: notInK);
   Future<void> markTransfer({String? partnerId, String? addOnAccountId}) =>
       _transfers.markManual(
         txnId,
@@ -100,6 +103,8 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
       _transfers.candidatesFor(txnId);
   Future<List<AccountView>> accounts() => _ledger.watchAccounts().first;
   Future<void> setNote(String? note) => _ledger.setNote(txnId, note);
+  Future<void> moveTo(String accountId) =>
+      _ledger.moveTransaction(txnId, accountId);
   Future<void> remove({required bool notATransaction}) =>
       _ledger.removeTransaction(txnId, notATransaction: notATransaction);
 
@@ -170,9 +175,10 @@ class _Loaded extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Watermark: house rosette in this amount's ink, 40%, top-right.
+          // Watermark: house rosette in this amount's ink, 40%, top-right
+          // behind the hero amount, below the app bar's actions.
           Positioned(
-            top: MediaQuery.paddingOf(context).top + 24,
+            top: MediaQuery.paddingOf(context).top + kToolbarHeight,
             right: -24,
             child: Opacity(
               opacity: 0.4,
@@ -190,6 +196,14 @@ class _Loaded extends StatelessWidget {
                     icon: const Icon(Symbols.arrow_back),
                     onPressed: () => Navigator.pop(context),
                   ),
+                  actions: [
+                    IconButton(
+                      tooltip: 'Edit',
+                      icon: const Icon(Symbols.edit),
+                      onPressed: () => _edit(context, txn),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
                 ),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -260,6 +274,7 @@ class _Loaded extends StatelessWidget {
                         ].join(' · '),
                         style: t.body.copyWith(color: c.text2),
                       ),
+                      _BankSaid(txn: txn),
                       const SizedBox(height: 24),
                       if (txn.isSplit)
                         _SplitBlock(
@@ -278,6 +293,10 @@ class _Loaded extends StatelessWidget {
                       if (txn.account != null)
                         FieldRow(
                           label: 'Account',
+                          // A transfer's sides are moved by relinking.
+                          onTap: txn.isTransfer
+                              ? null
+                              : () => _pickAccount(context, cubit, txn),
                           value: Text(
                             txn.account!.long,
                             style: t.body,
@@ -286,7 +305,7 @@ class _Loaded extends StatelessWidget {
                         ),
                       FieldRow(
                         label: txn.isDebit ? 'Paid by' : 'Came by',
-                        value: Text(_typeLabel(txn.txnType), style: t.body),
+                        value: Text(txnTypeLabel(txn.txnType), style: t.body),
                       ),
                       if (txn.balanceMinor != null)
                         FieldRow(
@@ -414,7 +433,7 @@ class _Loaded extends StatelessWidget {
                                   size: 20,
                                 ),
                                 label: const Text('Card bill payment'),
-                                onPressed: cubit.markCardBill,
+                                onPressed: () => _markCardBill(context, cubit),
                               ),
                           ],
                           OutlinedButton.icon(
@@ -473,17 +492,53 @@ class _Loaded extends StatelessWidget {
     );
   }
 
-  String _typeLabel(TxnType type) => switch (type) {
-    TxnType.upi => 'UPI',
-    TxnType.card => 'Card',
-    TxnType.neft => 'NEFT',
-    TxnType.imps => 'IMPS',
-    TxnType.rtgs => 'RTGS',
-    TxnType.atm => 'ATM',
-    TxnType.autopay => 'AutoPay',
-    TxnType.netBanking => 'Net banking',
-    TxnType.other => 'Other',
-  };
+  /// Every field, in the Add payment form.
+  Future<void> _edit(BuildContext context, TxnView txn) async {
+    final said = await getIt<IngestionService>().bankSaid(txn.id);
+    if (!context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => AddPaymentScreen(
+          editing: txn,
+          bankSaid: said == null ? null : '${bankSaidLine(said)}.',
+        ),
+      ),
+    );
+  }
+
+  /// Logged on the wrong account: move it to another of the owner's.
+  Future<void> _pickAccount(
+    BuildContext context,
+    TxnDetailCubit cubit,
+    TxnView txn,
+  ) async {
+    final accounts = await cubit.accounts();
+    if (!context.mounted) return;
+    final picked = await showKSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text('Move to account', style: context.kt.title),
+            ),
+            for (final a in accounts)
+              ListTile(
+                title: Text(a.long),
+                trailing: a.id == txn.account?.id
+                    ? const Icon(Symbols.check)
+                    : null,
+                onTap: () => Navigator.pop(context, a.id),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && picked != txn.account?.id) await cubit.moveTo(picked);
+  }
 
   Future<void> _pickCategory(
     BuildContext context,
@@ -594,6 +649,44 @@ class _Loaded extends StatelessWidget {
 
   /// Other side of the transfer: a same-amount row on another account, or
   /// "not in k" when that account is not tracked.
+  /// Which card the bill paid. One card: no question. Several: pick, so
+  /// its available limit moves and the bill isn't counted as spent.
+  Future<void> _markCardBill(BuildContext context, TxnDetailCubit cubit) async {
+    final cards = [
+      for (final a in await cubit.accounts())
+        if (a.isCreditCard) a,
+    ];
+    if (!context.mounted) return;
+    if (cards.length < 2) return cubit.markCardBill();
+    final picked = await showKSheet<(String?,)>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text('Which card\'s bill?', style: context.kt.title),
+            ),
+            for (final a in cards)
+              ListTile(
+                leading: const Icon(Symbols.credit_card),
+                title: Text(a.long),
+                onTap: () => Navigator.pop(context, (a.id,)),
+              ),
+            ListTile(
+              leading: const Icon(Symbols.help),
+              title: const Text('A card not in k'),
+              onTap: () => Navigator.pop(context, (null,)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null) return;
+    await cubit.markCardBill(cardId: picked.$1, notInK: picked.$1 == null);
+  }
+
   Future<void> _markTransfer(
     BuildContext context,
     TxnDetailCubit cubit,
@@ -1111,6 +1204,55 @@ class _SplitBlock extends StatelessWidget {
           ),
           for (final p in txn.splits) part(p.category, p.amountMinor, null),
         ],
+      ),
+    );
+  }
+}
+
+String bankSaidLine(({int amountMinor, DateTime occurredAt}) said) =>
+    'Bank said ${inr(said.amountMinor, paise: true)} on '
+    '${dayMonth(said.occurredAt)}, ${hhmm(said.occurredAt)}';
+
+/// "Bank said ₹X on 3 Oct, 10:04" when the owner changed the amount or
+/// time the message gave.
+class _BankSaid extends StatefulWidget {
+  const _BankSaid({required this.txn});
+
+  final TxnView txn;
+
+  @override
+  State<_BankSaid> createState() => _BankSaidState();
+}
+
+class _BankSaidState extends State<_BankSaid> {
+  ({int amountMinor, DateTime occurredAt})? _said;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(_BankSaid old) {
+    super.didUpdateWidget(old);
+    if (old.txn != widget.txn) _load();
+  }
+
+  Future<void> _load() async {
+    final said = await getIt<IngestionService>().bankSaid(widget.txn.id);
+    if (mounted) setState(() => _said = said);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final said = _said;
+    if (said == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        '${bankSaidLine(said)} · edited',
+        style: context.kt.meta.copyWith(color: context.k.text3),
       ),
     );
   }
