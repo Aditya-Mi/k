@@ -11,6 +11,7 @@ import '../categories/category_edit_screen.dart';
 import '../../../data/db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../../../data/db/enums.dart';
 import '../../../data/repositories/ledger_models.dart';
+import '../../../data/ingest/offset_linker.dart';
 import '../../../data/ingest/transfer_linker.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
@@ -47,8 +48,13 @@ class TxnDetailState {
 }
 
 class TxnDetailCubit extends Cubit<TxnDetailState> {
-  TxnDetailCubit(this._ledger, this._transfers, this.txnId)
-    : super(const TxnDetailState()) {
+  TxnDetailCubit(
+    this._ledger,
+    this._transfers,
+    this.txnId, [
+    OffsetLinker? offsets,
+  ]) : _offsets = offsets ?? getIt<OffsetLinker>(),
+       super(const TxnDetailState()) {
     _subs
       ..add(
         _ledger
@@ -78,6 +84,7 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
 
   final LedgerRepository _ledger;
   final TransferLinker _transfers;
+  final OffsetLinker _offsets;
   final String txnId;
   final _subs = <StreamSubscription<Object?>>[];
 
@@ -101,6 +108,12 @@ class TxnDetailCubit extends Cubit<TxnDetailState> {
       );
   Future<List<Transaction>> transferCandidates() =>
       _transfers.candidatesFor(txnId);
+  Future<List<TxnView>> offsetCandidates(TxnView txn) =>
+      _ledger.offsetCandidates(txn);
+  Future<void> cancelOutWith(String otherId) => _offsets.link(txnId, otherId);
+  Future<void> unlinkOffset() => _offsets.unlink(txnId);
+  Stream<List<TxnView>> offsetGroup(String offsetId) =>
+      _ledger.watchOffsetGroup(offsetId, txnId);
   Future<List<AccountView>> accounts() => _ledger.watchAccounts().first;
   Future<void> setNote(String? note) => _ledger.setNote(txnId, note);
   Future<void> moveTo(String accountId) =>
@@ -264,6 +277,12 @@ class _Loaded extends StatelessWidget {
                             'not counted as spent'
                           else if (txn.isAtmWithdrawal)
                             'to cash in hand, not counted as spent'
+                          else if (txn.cancelsOut)
+                            'cancels out, not counted'
+                          else if (txn.hasOffset)
+                            '${inr(txn.countedMinor)} counted'
+                          else if (txn.isNeutral)
+                            'not counted'
                           else if (txn.isCash)
                             'paid in cash'
                           else if (txn.isRefund)
@@ -345,6 +364,11 @@ class _Loaded extends StatelessWidget {
                             textAlign: TextAlign.right,
                           ),
                         ),
+                      if (txn.hasOffset)
+                        _OffsetField(
+                          txn: txn,
+                          group: cubit.offsetGroup(txn.offsetId!),
+                        ),
                       if (txn.emi != null)
                         _EmiField(link: txn.emi!)
                       else if (txn.isDebit &&
@@ -402,40 +426,57 @@ class _Loaded extends StatelessWidget {
                               onPressed: () => getIt<SubscriptionService>()
                                   .unlinkCharge(txn.id),
                             ),
-                          if (txn.isTransfer)
+                          if (txn.hasOffset)
                             OutlinedButton.icon(
-                              icon: Icon(
-                                txn.isCardBill
-                                    ? Symbols.undo
-                                    : Symbols.link_off,
-                                size: 20,
-                              ),
-                              label: Text(
-                                txn.isCardBill
-                                    ? 'Not a card bill'
-                                    : 'Not a self transfer',
-                              ),
-                              onPressed: cubit.unlinkTransfer,
+                              icon: const Icon(Symbols.link_off, size: 20),
+                              label: const Text("Doesn't cancel out"),
+                              onPressed: cubit.unlinkOffset,
                             )
-                          else if (!txn.isCash) ...[
+                          else if (!txn.isTransfer &&
+                              !txn.isAtmWithdrawal &&
+                              txn.emi == null)
                             OutlinedButton.icon(
-                              icon: const KIcon(KIcons.transfer, size: 20),
-                              label: const Text('Mark as self transfer'),
-                              onPressed: () =>
-                                  _markTransfer(context, cubit, txn),
+                              icon: const Icon(Symbols.link, size: 20),
+                              label: const Text('Cancels out with…'),
+                              onPressed: () => _cancelOut(context, cubit, txn),
                             ),
-                            if (txn.isDebit &&
-                                txn.account?.type != AccountType.creditCard &&
-                                txn.emi == null)
+                          // Cancelling out and self transfer don't mix.
+                          if (!txn.hasOffset)
+                            if (txn.isTransfer)
                               OutlinedButton.icon(
-                                icon: const Icon(
-                                  Symbols.credit_score,
+                                icon: Icon(
+                                  txn.isCardBill
+                                      ? Symbols.undo
+                                      : Symbols.link_off,
                                   size: 20,
                                 ),
-                                label: const Text('Card bill payment'),
-                                onPressed: () => _markCardBill(context, cubit),
+                                label: Text(
+                                  txn.isCardBill
+                                      ? 'Not a card bill'
+                                      : 'Not a self transfer',
+                                ),
+                                onPressed: cubit.unlinkTransfer,
+                              )
+                            else if (!txn.isCash) ...[
+                              OutlinedButton.icon(
+                                icon: const KIcon(KIcons.transfer, size: 20),
+                                label: const Text('Mark as self transfer'),
+                                onPressed: () =>
+                                    _markTransfer(context, cubit, txn),
                               ),
-                          ],
+                              if (txn.isDebit &&
+                                  txn.account?.type != AccountType.creditCard &&
+                                  txn.emi == null)
+                                OutlinedButton.icon(
+                                  icon: const Icon(
+                                    Symbols.credit_score,
+                                    size: 20,
+                                  ),
+                                  label: const Text('Card bill payment'),
+                                  onPressed: () =>
+                                      _markCardBill(context, cubit),
+                                ),
+                            ],
                           OutlinedButton.icon(
                             icon: const Icon(Symbols.block, size: 20),
                             label: const Text('Not a transaction'),
@@ -687,6 +728,71 @@ class _Loaded extends StatelessWidget {
     await cubit.markCardBill(cardId: picked.$1, notInK: picked.$1 == null);
   }
 
+  Future<void> _cancelOut(
+    BuildContext context,
+    TxnDetailCubit cubit,
+    TxnView txn,
+  ) async {
+    final candidates = await cubit.offsetCandidates(txn);
+    if (!context.mounted) return;
+    final t = context.kt;
+    final picked = await showKSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+          ),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                child: Text('What cancels it out?', style: t.title),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  candidates.isEmpty
+                      ? 'No money ${txn.isDebit ? 'in' : 'out'} within '
+                            '${LedgerRepository.offsetSpan.inDays} days.'
+                      : 'Money the other way, within '
+                            '${LedgerRepository.offsetSpan.inDays} days.',
+                  style: t.meta,
+                ),
+              ),
+              for (final o in candidates)
+                ListTile(
+                  leading: NoteChip(
+                    amountMinor: o.amountMinor,
+                    style: o.isDebit
+                        ? NoteChipStyle.filled
+                        : NoteChipStyle.outlined,
+                  ),
+                  title: Text(o.payee),
+                  subtitle: Text(
+                    [
+                      ?o.account?.short,
+                      dayMonth(o.occurredAt),
+                      if (o.amountMinor == txn.amountMinor) 'same amount',
+                      if (o.hasOffset) 'linked',
+                    ].join(' · '),
+                  ),
+                  trailing: Text(
+                    inrRow(o.amountMinor, plus: !o.isDebit),
+                    style: t.amountRow,
+                  ),
+                  onTap: () => Navigator.pop(context, o.id),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked != null) await cubit.cancelOutWith(picked);
+  }
+
   Future<void> _markTransfer(
     BuildContext context,
     TxnDetailCubit cubit,
@@ -835,7 +941,7 @@ class _Loaded extends StatelessWidget {
   }
 }
 
-enum _Quick { category, notATransaction, selfTransfer, open }
+enum _Quick { category, notATransaction, selfTransfer, cancelOut, open }
 
 /// Long-press on a Transactions row (design 01d): the fixes you make most,
 /// without opening the payment. Reuses the detail screen's own flows.
@@ -853,7 +959,9 @@ Future<void> showTxnQuickActions(BuildContext context, TxnView txn) async {
     if (detail == null || !context.mounted) return;
     final helpers = _Loaded(detail: detail, categories: s.categories);
     final row = detail.txn;
-    final canTransfer = !row.isTransfer && !row.isCash;
+    final canTransfer = !row.isTransfer && !row.isCash && !row.hasOffset;
+    final canCancelOut =
+        !row.isTransfer && !row.isAtmWithdrawal && row.emi == null;
     final action = await showKSheet<_Quick>(
       context: context,
       builder: (context) {
@@ -904,6 +1012,12 @@ Future<void> showTxnQuickActions(BuildContext context, TxnView txn) async {
                   const KIcon(KIcons.transfer),
                   'Mark as self transfer',
                 ),
+              if (canCancelOut)
+                tile(
+                  _Quick.cancelOut,
+                  Icon(row.hasOffset ? Symbols.link_off : Symbols.link),
+                  row.hasOffset ? "Doesn't cancel out" : 'Cancels out with…',
+                ),
               tile(
                 _Quick.open,
                 const Icon(Symbols.open_in_full),
@@ -927,6 +1041,12 @@ Future<void> showTxnQuickActions(BuildContext context, TxnView txn) async {
         );
       case _Quick.selfTransfer:
         await helpers._markTransfer(context, cubit, row);
+      case _Quick.cancelOut:
+        if (row.hasOffset) {
+          await cubit.unlinkOffset();
+        } else {
+          await helpers._cancelOut(context, cubit, row);
+        }
       case _Quick.open:
         await Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -944,6 +1064,81 @@ Future<void> showTxnQuickActions(BuildContext context, TxnView txn) async {
   } finally {
     await cubit.close();
   }
+}
+
+/// "Cancels out · 3 payments · ₹2,250" → the payments it nets against.
+class _OffsetField extends StatelessWidget {
+  const _OffsetField({required this.txn, required this.group});
+
+  final TxnView txn;
+  final Stream<List<TxnView>> group;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.kt;
+    final c = context.k;
+    return StreamBuilder<List<TxnView>>(
+      stream: group,
+      builder: (context, snap) {
+        final others = snap.data ?? const <TxnView>[];
+        final who = others.length == 1
+            ? others.first.payee
+            : '${txn.offsetOthers} payments';
+        return FieldRow(
+          label: 'Cancels out',
+          onTap: others.isEmpty ? null : () => _show(context, others),
+          value: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  '$who · ${inr(txn.offsetCancelledMinor)}',
+                  style: t.body,
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Icon(Symbols.chevron_right, color: c.text2),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _show(BuildContext context, List<TxnView> others) => showKSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (sheet) => SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(sheet).height * 0.75,
+        ),
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text('Cancels out with', style: sheet.kt.title),
+            ),
+            for (final o in others)
+              TxnRow(
+                txn: o,
+                onCard: true,
+                onTap: () {
+                  Navigator.pop(sheet);
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => TxnDetailScreen(txnId: o.id),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 /// "EMI · 12 × ₹3,330 ›" — opens the EMI.

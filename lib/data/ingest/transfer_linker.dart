@@ -65,6 +65,7 @@ class TransferLinker {
     if (t == null ||
         t.deletedAt != null ||
         t.transferId != null ||
+        t.offsetId != null ||
         t.accountId == null ||
         t.accountId == cashAccountId ||
         (!force && t.autoTransferOff) ||
@@ -232,6 +233,7 @@ class TransferLinker {
                 (t) =>
                     t.deletedAt.isNull() &
                     t.transferId.isNull() &
+                    t.offsetId.isNull() &
                     t.autoTransferOff.equals(false) &
                     t.accountId.isNotNull() &
                     t.accountId.equals(cashAccountId).not(),
@@ -269,6 +271,7 @@ class TransferLinker {
               (o) =>
                   o.deletedAt.isNull() &
                   o.transferId.isNull() &
+                  o.offsetId.isNull() &
                   o.id.equals(t.id).not() &
                   o.amountMinor.equals(t.amountMinor) &
                   o.currency.equals(t.currency) &
@@ -357,6 +360,7 @@ class TransferLinker {
               merchantKey: merchant?.normalizedKey,
               payee: side.payeeRaw,
               txnType: side.txnType,
+              credit: side.direction == Direction.credit,
             );
           }
           await (_db.update(
@@ -483,6 +487,7 @@ class TransferLinker {
   bool _eligible(Transaction t) =>
       t.deletedAt == null &&
       t.transferId == null &&
+      t.offsetId == null &&
       !t.autoTransferOff &&
       t.accountId != null &&
       // Cash moves through ATM withdrawals, never self transfers.

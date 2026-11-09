@@ -12,7 +12,7 @@ const atmCategoryId = 'cat_cash';
 /// then keywords on word boundaries, longest keyword winning
 /// ("jiomart" beats "jio"). Priority breaks ties before length.
 class CategoryResolver {
-  CategoryResolver(List<CategoryRule> rules)
+  CategoryResolver(List<CategoryRule> rules, {this._spendIds = const {}})
     : _merchant = {
         // Ascending priority: a higher-priority rule overwrites a lower one.
         for (final r
@@ -43,23 +43,40 @@ class CategoryResolver {
     final rules = await (db.select(
       db.categoryRules,
     )..where((r) => r.deletedAt.isNull())).get();
+    final spend = {
+      for (final c in await (db.select(
+        db.categories,
+      )..where((c) => c.kind.equalsValue(CategoryKind.spend))).get())
+        c.id,
+    };
     return CategoryResolver([
       for (final r in rules)
         if (!hidden.contains(r.categoryId)) r,
-    ]);
+    ], spendIds: spend);
   }
 
   final Map<String, String> _merchant;
+
+  /// Categories that count as spending. A "use for all" rule filing a payee
+  /// into one is about paying them; money from that payee is often a
+  /// person paying back or lending, not a refund, so it isn't applied to
+  /// credits (keyword rules name brands, so they still are).
+  final Set<String> _spendIds;
   final List<(String, String, int)> _keywords;
 
   static final _nonAlnum = RegExp(r'[^a-z0-9]+');
 
-  String resolve({String? merchantKey, String? payee, TxnType? txnType}) {
+  String resolve({
+    String? merchantKey,
+    String? payee,
+    TxnType? txnType,
+    bool credit = false,
+  }) {
     // Cash out of an ATM is its own category whatever the "payee" reads.
     if (txnType == TxnType.atm) return atmCategoryId;
     if (merchantKey != null) {
       final hit = _merchant[merchantKey];
-      if (hit != null) return hit;
+      if (hit != null && !(credit && _spendIds.contains(hit))) return hit;
     }
     if (payee == null || payee.isEmpty) return uncategorizedId;
 

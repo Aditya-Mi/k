@@ -1,3 +1,5 @@
+import '../enums.dart';
+
 // Banks and sender rules are seeded from txn_parser's builtInBanks so the
 // parser stays the single source of truth for bank definitions.
 
@@ -5,6 +7,15 @@
 /// Not from the parser — no message ever names it.
 const cashBankId = 'CASH';
 const cashAccountId = 'acc_cash';
+
+/// How k's own categories count; every other one counts as spending.
+const seedCategoryKinds = {
+  'cat_investments': CategoryKind.neutral,
+  'cat_transfers': CategoryKind.neutral,
+  'cat_card_bill': CategoryKind.neutral,
+  'cat_cash': CategoryKind.neutral,
+  'cat_income': CategoryKind.income,
+};
 
 /// id, name, Material icon, ARGB color.
 const seedCategories = [

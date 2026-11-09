@@ -8,6 +8,7 @@ import '../db/seed/seed_data.dart';
 import '../ingest/category_resolver.dart';
 import '../ingest/raw_notes.dart';
 import 'ledger_models.dart';
+import 'offsets.dart';
 
 /// Read models and edits for transactions, accounts and upcoming charges.
 class LedgerRepository {
@@ -97,6 +98,102 @@ class LedgerRepository {
           .watch()
           .map((rows) => rows.map(_toView).toList());
 
+  /// What "Cancels out with…" offers: money the other way within
+  /// [offsetSpan], not a self transfer, EMI or already in [txn]'s group.
+  /// Same amount first, then nearest in time.
+  Future<List<TxnView>> offsetCandidates(TxnView txn) async {
+    final t = _db.transactions;
+    final rows =
+        await (_txnJoin()..where(
+              t.deletedAt.isNull() &
+                  t.id.equals(txn.id).not() &
+                  t.transferId.isNull() &
+                  t.emiId.isNull() &
+                  t.direction.equalsValue(
+                    txn.isDebit ? Direction.credit : Direction.debit,
+                  ) &
+                  t.occurredAt.isBetweenValues(
+                    txn.occurredAt.subtract(offsetSpan),
+                    txn.occurredAt.add(offsetSpan),
+                  ) &
+                  (txn.offsetId == null
+                      ? const Constant(true)
+                      : t.offsetId.isNull() |
+                            t.offsetId.equals(txn.offsetId!).not()),
+            ))
+            .get();
+    int gap(TxnView o) =>
+        o.occurredAt.difference(txn.occurredAt).inMinutes.abs();
+    // Already in another group: picking it joins that group.
+    TxnView view(TypedResult r) {
+      final v = _toView(r), group = r.readTable(t).offsetId;
+      return group == null
+          ? v
+          : v.withOffset((offsetId: group, cancelledMinor: 0, others: 0));
+    }
+
+    return rows.map(view).where((o) => !o.isAtmWithdrawal).toList()
+      ..sort((a, b) {
+        final sa = a.amountMinor == txn.amountMinor ? 0 : 1;
+        final sb = b.amountMinor == txn.amountMinor ? 0 : 1;
+        return sa != sb ? sa - sb : gap(a).compareTo(gap(b));
+      });
+  }
+
+  static const offsetSpan = Duration(days: 45);
+
+  /// Money in, then most of it out within days, that may cancel out
+  /// ([suggestPassThroughs]) over the last [back]: (credit, debit) pairs.
+  Stream<List<(TxnView, TxnView)>> watchPassThroughs({
+    Duration back = const Duration(days: 60),
+  }) {
+    final t = _db.transactions;
+    final q = _txnJoin()
+      ..where(
+        t.deletedAt.isNull() &
+            t.transferId.isNull() &
+            t.offsetId.isNull() &
+            t.emiId.isNull() &
+            t.autoOffsetOff.equals(false) &
+            t.occurredAt.isBiggerOrEqualValue(DateTime.now().subtract(back)),
+      );
+    return q.watch().map((rows) {
+      final views = {
+        for (final v in rows.map(_toView))
+          if (!v.isAtmWithdrawal &&
+              v.category?.kind != CategoryKind.neutral &&
+              !(v.isDebit == false && v.category?.kind == CategoryKind.income))
+            v.id: v,
+      };
+      return [
+        for (final (c, d) in suggestPassThroughs([
+          for (final v in views.values)
+            (
+              id: v.id,
+              direction: v.direction,
+              amountMinor: v.amountMinor,
+              occurredAt: v.occurredAt,
+            ),
+        ]))
+          (views[c]!, views[d]!),
+      ].reversed.toList();
+    });
+  }
+
+  /// The other payments [txnId] cancels out with, oldest first.
+  Stream<List<TxnView>> watchOffsetGroup(String offsetId, String txnId) {
+    final t = _db.transactions;
+    return (_txnJoin()
+          ..where(
+            t.deletedAt.isNull() &
+                t.offsetId.equals(offsetId) &
+                t.id.equals(txnId).not(),
+          )
+          ..orderBy([OrderingTerm.asc(t.occurredAt)]))
+        .watch()
+        .map((rows) => rows.map(_toView).toList());
+  }
+
   Stream<TxnDetailView?> watchDetail(String id) {
     final query = _txnJoin()..where(_db.transactions.id.equals(id));
     return query
@@ -105,8 +202,13 @@ class LedgerRepository {
         .switchMap(
           (view) => view == null
               ? Stream<TxnView?>.value(null)
-              : _watchSplits({view.id})
-                    .map((m) => view.withSplits(m[view.id] ?? const [])),
+              : Rx.combineLatest2(
+                  _watchSplits({view.id}),
+                  _watchOffsets(),
+                  (m, Map<String, OffsetShare> o) => view
+                      .withSplits(m[view.id] ?? const [])
+                      .withOffset(o[view.id]),
+                ),
         )
         .switchMap((view) {
           if (view == null) return Stream.value(null);
@@ -151,14 +253,43 @@ class LedgerRepository {
   }
 
   Stream<List<TxnView>> _withSplits(Stream<List<TxnView>> views) =>
-      Rx.combineLatest2(
+      Rx.combineLatest3(
         views,
         _watchSplits(),
-        (List<TxnView> list, Map<String, List<SplitPart>> parts) => [
+        _watchOffsets(),
+        (
+          List<TxnView> list,
+          Map<String, List<SplitPart>> parts,
+          Map<String, OffsetShare> offsets,
+        ) => [
           for (final v in list)
-            parts[v.id] == null ? v : v.withSplits(parts[v.id]!),
+            (parts[v.id] == null ? v : v.withSplits(parts[v.id]!)).withOffset(
+              offsets[v.id],
+            ),
         ],
       );
+
+  /// How much of each payment in an offset group cancels out. Groups are
+  /// read whole, so a payment's share is right even when the others fall
+  /// outside the month being looked at.
+  Stream<Map<String, OffsetShare>> _watchOffsets() {
+    final t = _db.transactions;
+    final q = _db.selectOnly(t)
+      ..addColumns([t.id, t.offsetId, t.direction, t.amountMinor, t.occurredAt])
+      ..where(t.offsetId.isNotNull() & t.deletedAt.isNull());
+    return q.watch().map(
+      (rows) => allocateOffsets([
+        for (final r in rows)
+          (
+            id: r.read(t.id)!,
+            offsetId: r.read(t.offsetId)!,
+            direction: t.direction.converter.fromSql(r.read(t.direction)!),
+            amountMinor: r.read(t.amountMinor)!,
+            occurredAt: r.read(t.occurredAt)!,
+          ),
+      ]),
+    );
+  }
 
   /// Files parts of a payment under other categories; the rest stays in its
   /// own. An empty [parts] removes the split.
@@ -471,17 +602,20 @@ class LedgerRepository {
         );
   }
 
-  /// Owner-made category, last in every list.
+  /// Owner-made category, last in every list. Inside [parentId] it takes
+  /// the parent's kind.
   Future<Category> addCategory(
     String name,
     String icon, {
     String? parentId,
+    CategoryKind kind = CategoryKind.spend,
   }) async {
     final max = await _db
         .customSelect(
           'SELECT COALESCE(MAX(sort_order), 0) AS m FROM categories',
         )
         .getSingle();
+    final parentKind = parentId == null ? null : await _kindOf(parentId);
     return _db
         .into(_db.categories)
         .insertReturning(
@@ -491,25 +625,50 @@ class LedgerRepository {
             color: 0,
             sortOrder: Value(max.read<int>('m') + 1),
             parentId: Value(parentId),
+            kind: Value(parentKind ?? kind),
           ),
         );
   }
 
   /// [parentId] given (a value or null) moves it inside another category
-  /// or back to the top.
+  /// or back to the top. Inside one, it takes the parent's kind; a new
+  /// [kind] on a main category passes down to its sub-categories.
   Future<void> updateCategory(
     String id, {
     String? name,
     String? icon,
     Value<String?> parentId = const Value.absent(),
-  }) => (_db.update(_db.categories)..where((c) => c.id.equals(id))).write(
-    CategoriesCompanion(
-      name: name == null ? const Value.absent() : Value(name.trim()),
-      icon: icon == null ? const Value.absent() : Value(icon),
-      parentId: parentId,
-      updatedAt: Value(DateTime.now()),
-    ),
-  );
+    CategoryKind? kind,
+  }) => _db.transaction(() async {
+    final parent = parentId.present
+        ? parentId.value
+        : (await (_db.select(
+            _db.categories,
+          )..where((c) => c.id.equals(id))).getSingleOrNull())?.parentId;
+    final parentKind = parent == null ? null : await _kindOf(parent);
+    final newKind = parentKind ?? kind;
+    final now = DateTime.now();
+    await (_db.update(_db.categories)..where((c) => c.id.equals(id))).write(
+      CategoriesCompanion(
+        name: name == null ? const Value.absent() : Value(name.trim()),
+        icon: icon == null ? const Value.absent() : Value(icon),
+        parentId: parentId,
+        kind: newKind == null ? const Value.absent() : Value(newKind),
+        updatedAt: Value(now),
+      ),
+    );
+    if (parent == null && newKind != null) {
+      await (_db.update(
+        _db.categories,
+      )..where((c) => c.parentId.equals(id))).write(
+        CategoriesCompanion(kind: Value(newKind), updatedAt: Value(now)),
+      );
+    }
+  });
+
+  Future<CategoryKind?> _kindOf(String categoryId) async => (await (_db.select(
+    _db.categories,
+  )..where((c) => c.id.equals(categoryId))).getSingleOrNull())?.kind;
 
   Future<void> setCategoryHidden(String id, bool hidden) async {
     await (_db.update(_db.categories)..where((c) => c.id.equals(id))).write(
@@ -614,12 +773,19 @@ class LedgerRepository {
             updatedAt: Value(DateTime.now()),
           ),
         );
+    // Money from this payee isn't a refund just because paying them is
+    // spending (a friend paying back, a loan returned): a spending
+    // category re-files only payments to them.
+    final spending = await _kindOf(categoryId) == CategoryKind.spend;
     await (_db.update(_db.transactions)..where(
           (t) =>
               t.merchantId.equals(merchantId) &
               t.userEdited.equals(false) &
               t.transferId.isNull() &
-              t.deletedAt.isNull(),
+              t.deletedAt.isNull() &
+              (spending
+                  ? t.direction.equalsValue(Direction.debit)
+                  : const Constant(true)),
         ))
         .write(
           TransactionsCompanion(

@@ -23,6 +23,7 @@ import '../../../di.dart';
 import '../settings/connect_inbox_screen.dart';
 import '../settings/settings_screen.dart';
 import '../txn_detail/txn_detail_screen.dart';
+import 'pass_through.dart';
 import 'transactions_cubit.dart';
 
 class TransactionsScreen extends StatefulWidget {
@@ -245,6 +246,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     ),
                   ),
                 ),
+              const SliverToBoxAdapter(child: PassThroughBanner()),
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _SectionHead(

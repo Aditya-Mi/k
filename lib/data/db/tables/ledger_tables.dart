@@ -60,6 +60,7 @@ class RawMessages extends Table with SyncColumns {
 @TableIndex(name: 'txn_dedup', columns: {#accountId, #amountMinor, #occurredAt})
 @TableIndex(name: 'txn_occurred', columns: {#occurredAt})
 @TableIndex(name: 'txn_transfer', columns: {#transferId})
+@TableIndex(name: 'txn_offset', columns: {#offsetId})
 class Transactions extends Table with SyncColumns {
   TextColumn get accountId => text().nullable().references(Accounts, #id)();
 
@@ -95,6 +96,15 @@ class Transactions extends Table with SyncColumns {
 
   /// An EMI's purchase or one of its instalments (Emis.id).
   TextColumn get emiId => text().nullable()();
+
+  /// Money that cancels out: payments sharing this id net against each
+  /// other (mom's ₹10k passed on, friends paying back their share, a failed
+  /// UPI payment reversed). Only what's left over counts.
+  TextColumn get offsetId => text().nullable()();
+
+  /// Owner said "doesn't cancel out": automatic reversal matching skips it.
+  BoolColumn get autoOffsetOff =>
+      boolean().withDefault(const Constant(false))();
 }
 
 /// A part of a payment filed under another category ("₹300 of this

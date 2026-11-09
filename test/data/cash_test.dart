@@ -38,6 +38,7 @@ Transaction _row(
   occurredAt: at,
   userEdited: false,
   autoTransferOff: false,
+  autoOffsetOff: false,
   origin: TxnOrigin.user,
 );
 

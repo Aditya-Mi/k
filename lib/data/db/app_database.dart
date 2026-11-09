@@ -3,6 +3,7 @@ import 'package:txn_parser/txn_parser.dart';
 
 import '../../core/ids.dart';
 import 'enums.dart';
+import 'seed/seed_data.dart';
 import 'seed/seeder.dart';
 import 'tables/emi_tables.dart';
 import 'tables/ledger_tables.dart';
@@ -37,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   /// Alerts that name no account used to create a "no last4" account even when
   /// the bank had exactly one savings/current account; move those rows over.
@@ -163,6 +164,22 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  /// v11: k's own categories get their kind; sub-categories take their
+  /// parent's.
+  Future<void> _categoryKinds() async {
+    for (final MapEntry(key: id, value: kind) in seedCategoryKinds.entries) {
+      await customStatement('UPDATE categories SET kind = ? WHERE id = ?', [
+        kind.name,
+        id,
+      ]);
+    }
+    await customStatement(
+      'UPDATE categories SET kind = (SELECT p.kind FROM categories p '
+      'WHERE p.id = categories.parent_id) WHERE parent_id IS NOT NULL '
+      'AND EXISTS (SELECT 1 FROM categories p WHERE p.id = categories.parent_id)',
+    );
+  }
+
   Future<void> _foldDebitCards() async {
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final pairs = await customSelect('''
@@ -217,8 +234,9 @@ class AppDatabase extends _$AppDatabase {
         await _foldDebitCards();
       }
       if (from < 5) await _atmCategory();
-      // v6: the Cash account (seeded; seedAll is idempotent).
-      if (from < 6) await Seeder(this).seedAll();
+      // v6: the Cash account comes from the seeder, which beforeOpen runs
+      // after every upgrade (running it here would write columns later
+      // versions add).
       if (from < 7) {
         await m.addColumn(merchants, merchants.mergedIntoId);
         await mergeSameNameMerchants();
@@ -232,6 +250,13 @@ class AppDatabase extends _$AppDatabase {
       if (from < 10) {
         await m.addColumn(categories, categories.parentId);
         await m.createTable(transactionSplits);
+      }
+      if (from < 11) {
+        await m.addColumn(categories, categories.kind);
+        await m.addColumn(transactions, transactions.offsetId);
+        await m.addColumn(transactions, transactions.autoOffsetOff);
+        await m.create(txnOffset);
+        await _categoryKinds();
       }
     },
     beforeOpen: (details) async {

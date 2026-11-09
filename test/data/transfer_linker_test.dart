@@ -446,6 +446,10 @@ void main() {
       ..execute('DROP TABLE emis')
       ..execute('ALTER TABLE categories DROP COLUMN parent_id')
       ..execute('DROP TABLE transaction_splits')
+      ..execute('ALTER TABLE categories DROP COLUMN kind')
+      ..execute('DROP INDEX txn_offset')
+      ..execute('ALTER TABLE transactions DROP COLUMN offset_id')
+      ..execute('ALTER TABLE transactions DROP COLUMN auto_offset_off')
       ..execute('PRAGMA user_version = 1')
       ..close();
 

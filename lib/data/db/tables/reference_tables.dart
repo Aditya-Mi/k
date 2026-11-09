@@ -41,6 +41,11 @@ class Categories extends Table with SyncColumns {
   /// A sub-category sits inside this one (one level deep): its payments
   /// also count toward the parent in Summary and filters.
   TextColumn get parentId => text().nullable()();
+
+  /// How its payments count (spent / came in / neither). A sub-category
+  /// always carries its parent's kind.
+  TextColumn get kind =>
+      textEnum<CategoryKind>().withDefault(Constant(CategoryKind.spend.name))();
 }
 
 class Merchants extends Table with SyncColumns {

@@ -18,7 +18,7 @@ void main() {
 
   setUpAll(() => verifier = SchemaVerifier(GeneratedHelper()));
 
-  const current = 10;
+  const current = 11;
 
   /// Rows an owner would have: a bank, an account, a payee, a payment.
   /// Columns used exist (and are required) in every version.

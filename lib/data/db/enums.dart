@@ -19,6 +19,11 @@ enum TxnOrigin { message, user }
 
 enum RawMessageStatus { pending, parsed, needsReview, nonTransaction, ignored }
 
+/// How a category's payments count in totals. `spend`: debits are spent and
+/// money back (a credit filed here) lowers spent; `income`: credits came in;
+/// `neutral`: neither (investments, deposits, loans).
+enum CategoryKind { spend, income, neutral }
+
 enum RuleMatchType { merchant, keyword }
 
 enum RuleOrigin { system, user }

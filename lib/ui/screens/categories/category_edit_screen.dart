@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../data/db/app_database.dart' show Category;
+import '../../../data/db/enums.dart';
 import '../../../data/repositories/ledger_models.dart';
 import '../../../data/repositories/ledger_repository.dart';
 import '../../../di.dart';
@@ -10,6 +11,20 @@ import '../../theme/k_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/k_sheet.dart';
 import '../backup/backup_parts.dart';
+
+/// "spending" / "income" / "neither".
+String kindName(CategoryKind k) => switch (k) {
+  CategoryKind.spend => 'spending',
+  CategoryKind.income => 'income',
+  CategoryKind.neutral => 'neither',
+};
+
+/// Categories list meta (design 06i-c): spending is the default, unsaid.
+String? kindLabel(CategoryKind k) => switch (k) {
+  CategoryKind.spend => null,
+  CategoryKind.income => 'income',
+  CategoryKind.neutral => 'not counted',
+};
 
 /// Opens New category (design 06j); the new category, or null if backed out.
 Future<Category?> createCategory(BuildContext context) => Navigator.of(
@@ -130,9 +145,12 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
   bool _busy = false;
   String? _error;
   late String? _parentId = widget.category?.parentId;
+  late CategoryKind _kind = widget.category?.kind ?? CategoryKind.spend;
   List<Category> _all = const [];
 
   bool get _editing => widget.category != null;
+
+  Category? get _parent => _all.where((x) => x.id == _parentId).firstOrNull;
 
   @override
   void initState() {
@@ -160,6 +178,15 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
     return !structuralCategoryIds.contains(id) &&
         !_all.any((c) => c.parentId == id);
   }
+
+  /// k's own categories keep how they count.
+  bool get _canSetKind => !structuralCategoryIds.contains(widget.category?.id);
+
+  static String kindLine(CategoryKind k) => switch (k) {
+    CategoryKind.spend => 'Money back here lowers what you spent.',
+    CategoryKind.income => 'Counts as money in.',
+    CategoryKind.neutral => 'Left out of spent and in, like investments.',
+  };
 
   Future<void> _pickParent() async {
     final c = context.k;
@@ -232,10 +259,16 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
         name: name,
         icon: _icon,
         parentId: _canNest ? Value(_parentId) : const Value.absent(),
+        kind: _canSetKind ? _kind : null,
       );
       if (mounted) Navigator.pop(context, widget.category);
     } else {
-      final c = await _ledger.addCategory(name, _icon, parentId: _parentId);
+      final c = await _ledger.addCategory(
+        name,
+        _icon,
+        parentId: _parentId,
+        kind: _kind,
+      );
       if (mounted) Navigator.pop(context, c);
     }
   }
@@ -292,6 +325,43 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
                         'in Summary.',
               style: t.meta.copyWith(color: c.text3, height: 1.35),
             ),
+          ],
+          if (_canSetKind) ...[
+            const SizedBox(height: 20),
+            const FieldLabel('Counts as'),
+            if (_parent case final p?)
+              Text(
+                'Counts like ${p.name}: ${kindName(p.kind)}',
+                style: t.meta.copyWith(color: c.text3, height: 1.35),
+              )
+            else ...[
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<CategoryKind>(
+                  segments: const [
+                    ButtonSegment(
+                      value: CategoryKind.spend,
+                      label: Text('Spending'),
+                    ),
+                    ButtonSegment(
+                      value: CategoryKind.income,
+                      label: Text('Income'),
+                    ),
+                    ButtonSegment(
+                      value: CategoryKind.neutral,
+                      label: Text('Neither'),
+                    ),
+                  ],
+                  selected: {_kind},
+                  onSelectionChanged: (v) => setState(() => _kind = v.single),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                kindLine(_kind),
+                style: t.meta.copyWith(color: c.text3, height: 1.35),
+              ),
+            ],
           ],
           const SizedBox(height: 20),
           const FieldLabel('Icon'),

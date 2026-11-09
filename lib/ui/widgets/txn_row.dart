@@ -54,13 +54,17 @@ class TxnRow extends StatelessWidget {
             when,
           ].join(' · ')
         : [
-            if (txn.isRefund)
+            if (txn.cancelsOut)
+              'Cancels out'
+            else if (txn.isRefund)
               'Refund'
             else
               [
                 txn.category?.name ?? 'Uncategorized',
                 if (txn.isSplit) '+${txn.splits.length}',
               ].join(' '),
+            if (txn.hasOffset && !txn.cancelsOut)
+              '${inr(txn.countedMinor)} counted',
             if (txn.emi != null)
               txn.emi!.isPurchase ? 'EMI ×${txn.emi!.count}' : 'EMI',
             if (txn.account != null && !onCard) txn.account!.short,
@@ -97,6 +101,14 @@ class TxnRow extends StatelessWidget {
                   ? 'Card bill, not counted as spent'
                   : 'Own accounts, not counted as spent',
               child: KIcon(KIcons.transfer, size: 16, color: context.k.text2),
+            ),
+          ),
+        if (txn.cancelsOut)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Tooltip(
+              message: 'Cancels out, not counted',
+              child: Icon(Symbols.link, size: 16, color: context.k.text2),
             ),
           ),
         if (txn.isCash && txn.isDebit)

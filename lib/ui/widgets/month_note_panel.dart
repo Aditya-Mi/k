@@ -165,7 +165,7 @@ class MonthNotePanel extends StatelessWidget {
                             ? 'No spends yet'
                             : '${s.spends} ${s.spends == 1 ? 'spend' : 'spends'}'
                                   '  ·  ${Bands.ranges[dominant]} spends make up '
-                                  '${(s.bandTotals[dominant] * 100 / s.spentMinor).round()}% of it',
+                                  '${(s.bandTotals[dominant] * 100 / s.bandTotals.fold(0, (a, b) => a + b)).round()}% of it',
                         style: t.meta,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

@@ -62,5 +62,6 @@ flutter build apk --debug
 - Unknown-sender learning (SMS from a bank k lacks → Review → name the bank once), AutoPay/skip learning, review undo, sync-problem banners, overdrawn balances: code done, awaiting device test.
 - Credit cards + EMIs (schema v9): card bill payments are transfers, owed = limit − available, card refunds lower spent, card/loan EMIs (`lib/data/emis/`), 5-tab nav (Recurring, Accounts), grouped Settings. Code done, emulator-checked.
 - Sub-categories (one level) + split payments (schema v10): code done, emulator-checked.
+- Category kinds (spend/income/neither) + cancels-out groups and auto UPI-reversal linking (schema v11): code done, emulator-checked.
 - Releases: GitHub Actions `release.yml` (manual) builds, tags, publishes and updates the update gist; the app updates itself from it. Versions semver; build number counts releases (1, 2, 3…).
 - Later ideas: encrypted multi-device sync (schema already sync-ready), other currencies.

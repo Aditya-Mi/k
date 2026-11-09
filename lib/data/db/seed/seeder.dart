@@ -54,6 +54,7 @@ class Seeder {
           color: color,
           isSystem: const Value(true),
           sortOrder: Value(i),
+          kind: Value(seedCategoryKinds[id] ?? CategoryKind.spend),
         ),
     ], mode: ignore);
 

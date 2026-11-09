@@ -109,6 +109,9 @@ class TxnView extends Equatable {
     this.subscriptionId,
     this.emi,
     this.splits = const [],
+    this.offsetId,
+    this.offsetCancelledMinor = 0,
+    this.offsetOthers = 0,
   });
 
   final String id;
@@ -146,9 +149,44 @@ class TxnView extends Equatable {
   /// Parts filed under other categories; the rest stays in [category].
   final List<SplitPart> splits;
 
+  /// Cancels out with other payments (money passed on, paid back, a failed
+  /// payment reversed): they share this id.
+  final String? offsetId;
+
+  /// How much of this payment nets against the others in its group.
+  final int offsetCancelledMinor;
+
+  /// How many payments it cancels out with.
+  final int offsetOthers;
+
   bool get isSplit => splits.isNotEmpty;
 
-  TxnView withSplits(List<SplitPart> parts) => TxnView(
+  bool get hasOffset => offsetId != null;
+
+  /// What still counts after cancelling out.
+  int get countedMinor => amountMinor - offsetCancelledMinor;
+
+  /// Cancels out in full: counts nowhere.
+  bool get cancelsOut => hasOffset && countedMinor <= 0;
+
+  TxnView withSplits(List<SplitPart> parts) => _copy(splits: parts);
+
+  TxnView withOffset(
+    ({String offsetId, int cancelledMinor, int others})? share,
+  ) => share == null
+      ? this
+      : _copy(
+          offsetId: share.offsetId,
+          offsetCancelledMinor: share.cancelledMinor,
+          offsetOthers: share.others,
+        );
+
+  TxnView _copy({
+    List<SplitPart>? splits,
+    String? offsetId,
+    int? offsetCancelledMinor,
+    int? offsetOthers,
+  }) => TxnView(
     id: id,
     amountMinor: amountMinor,
     currency: currency,
@@ -169,7 +207,10 @@ class TxnView extends Equatable {
     partnerAccount: partnerAccount,
     subscriptionId: subscriptionId,
     emi: emi,
-    splits: parts,
+    splits: splits ?? this.splits,
+    offsetId: offsetId ?? this.offsetId,
+    offsetCancelledMinor: offsetCancelledMinor ?? this.offsetCancelledMinor,
+    offsetOthers: offsetOthers ?? this.offsetOthers,
   );
 
   /// What's left in [category] after the split parts (never below 0).
@@ -191,9 +232,22 @@ class TxnView extends Equatable {
   /// A self transfer to or from a credit card: paying its bill.
   bool get isCardBill => isTransfer && category?.id == 'cat_card_bill';
 
-  /// Money back on a credit card that isn't a bill payment: lowers spent.
-  bool get isRefund =>
-      !isDebit && !isTransfer && account?.type == AccountType.creditCard;
+  /// Money back that lowers spent instead of coming in: a credit filed
+  /// under a spending category (a refund lands in the month it arrives), or
+  /// any money back on a credit card that isn't filed as income or neither.
+  bool get isRefund {
+    if (isDebit || isTransfer) return false;
+    final kind = category?.kind;
+    if (kind == CategoryKind.neutral || kind == CategoryKind.income) {
+      return false;
+    }
+    if (account?.type == AccountType.creditCard) return true;
+    return kind == CategoryKind.spend && category!.id != uncategorizedId;
+  }
+
+  /// Filed under a category that counts as neither spent nor came in
+  /// (investments, deposits, loans).
+  bool get isNeutral => !isSplit && category?.kind == CategoryKind.neutral;
 
   /// Left out of totals because of an EMI: a spread purchase (its
   /// instalments count instead), or a card instalment of a purchase that
@@ -217,19 +271,41 @@ class TxnView extends Equatable {
 
   /// Counts toward spent / came in. Self transfers and ATM withdrawals
   /// don't (cash counts when it's spent); see also [_emiExcluded].
-  bool get countsInTotals => !isTransfer && !isAtmWithdrawal && !_emiExcluded;
+  /// Nor do payments filed as neither, or ones that cancel out in full.
+  bool get countsInTotals =>
+      !isTransfer &&
+      !isAtmWithdrawal &&
+      !_emiExcluded &&
+      !isNeutral &&
+      !cancelsOut;
 
-  /// Signed contribution to spent: debits add, card refunds subtract.
+  /// [pieces] as they count: what cancels out comes off the rest first,
+  /// then off split parts in order; parts filed as neither drop out.
+  List<(Category?, int)> get countedPieces {
+    var cut = offsetCancelledMinor;
+    final out = <(Category?, int)>[];
+    for (final (cat, amount) in pieces) {
+      final take = cut < amount ? cut : amount;
+      cut -= take;
+      final left = amount - take;
+      if (left > 0 && cat?.kind != CategoryKind.neutral) out.add((cat, left));
+    }
+    return out;
+  }
+
+  int get _counted => countedPieces.fold(0, (s, p) => s + p.$2);
+
+  /// Signed contribution to spent: debits add, refunds subtract.
   int get spentMinor => !countsInTotals
       ? 0
       : isDebit
-      ? amountMinor
+      ? _counted
       : isRefund
-      ? -amountMinor
+      ? -_counted
       : 0;
 
   /// Contribution to came in (refunds lower spent instead).
-  int get inMinor => countsInTotals && !isDebit && !isRefund ? amountMinor : 0;
+  int get inMinor => countsInTotals && !isDebit && !isRefund ? _counted : 0;
   bool get addedByUser => origin == TxnOrigin.user;
 
   /// "Axis ··1111 → Kotak ··5555"; an untracked side reads "own account".
@@ -256,6 +332,7 @@ class TxnView extends Equatable {
     merchantId,
     origin,
     transferPartnerId, partnerAccount, subscriptionId, emi, splits,
+    offsetId, offsetCancelledMinor, offsetOthers,
   ];
 }
 

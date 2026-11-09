@@ -91,6 +91,7 @@ class CategoriesScreen extends StatelessWidget {
                             ? 'No payments yet'
                             : 'Added by you')
                       : count(e.$2),
+                ?kindLabel(e.$1.kind),
               ].join(' · '),
               onTap: () => open(e.$1),
               trailing: const SettingsChevron(),

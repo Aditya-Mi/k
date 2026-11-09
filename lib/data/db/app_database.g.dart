@@ -1012,6 +1012,16 @@ class $CategoriesTable extends Categories
     requiredDuringInsert: false,
   );
   @override
+  late final GeneratedColumnWithTypeConverter<CategoryKind, String> kind =
+      GeneratedColumn<String>(
+        'kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(CategoryKind.spend.name),
+      ).withConverter<CategoryKind>($CategoriesTable.$converterkind);
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     createdAt,
@@ -1024,6 +1034,7 @@ class $CategoriesTable extends Categories
     sortOrder,
     hidden,
     parentId,
+    kind,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1159,6 +1170,12 @@ class $CategoriesTable extends Categories
         DriftSqlType.string,
         data['${effectivePrefix}parent_id'],
       ),
+      kind: $CategoriesTable.$converterkind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}kind'],
+        )!,
+      ),
     );
   }
 
@@ -1166,6 +1183,9 @@ class $CategoriesTable extends Categories
   $CategoriesTable createAlias(String alias) {
     return $CategoriesTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<CategoryKind, String, String> $converterkind =
+      const EnumNameConverter<CategoryKind>(CategoryKind.values);
 }
 
 class Category extends DataClass implements Insertable<Category> {
@@ -1191,6 +1211,10 @@ class Category extends DataClass implements Insertable<Category> {
   /// A sub-category sits inside this one (one level deep): its payments
   /// also count toward the parent in Summary and filters.
   final String? parentId;
+
+  /// How its payments count (spent / came in / neither). A sub-category
+  /// always carries its parent's kind.
+  final CategoryKind kind;
   const Category({
     required this.id,
     required this.createdAt,
@@ -1203,6 +1227,7 @@ class Category extends DataClass implements Insertable<Category> {
     required this.sortOrder,
     required this.hidden,
     this.parentId,
+    required this.kind,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1221,6 +1246,11 @@ class Category extends DataClass implements Insertable<Category> {
     map['hidden'] = Variable<bool>(hidden);
     if (!nullToAbsent || parentId != null) {
       map['parent_id'] = Variable<String>(parentId);
+    }
+    {
+      map['kind'] = Variable<String>(
+        $CategoriesTable.$converterkind.toSql(kind),
+      );
     }
     return map;
   }
@@ -1242,6 +1272,7 @@ class Category extends DataClass implements Insertable<Category> {
       parentId: parentId == null && nullToAbsent
           ? const Value.absent()
           : Value(parentId),
+      kind: Value(kind),
     );
   }
 
@@ -1262,6 +1293,9 @@ class Category extends DataClass implements Insertable<Category> {
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       hidden: serializer.fromJson<bool>(json['hidden']),
       parentId: serializer.fromJson<String?>(json['parentId']),
+      kind: $CategoriesTable.$converterkind.fromJson(
+        serializer.fromJson<String>(json['kind']),
+      ),
     );
   }
   @override
@@ -1279,6 +1313,9 @@ class Category extends DataClass implements Insertable<Category> {
       'sortOrder': serializer.toJson<int>(sortOrder),
       'hidden': serializer.toJson<bool>(hidden),
       'parentId': serializer.toJson<String?>(parentId),
+      'kind': serializer.toJson<String>(
+        $CategoriesTable.$converterkind.toJson(kind),
+      ),
     };
   }
 
@@ -1294,6 +1331,7 @@ class Category extends DataClass implements Insertable<Category> {
     int? sortOrder,
     bool? hidden,
     Value<String?> parentId = const Value.absent(),
+    CategoryKind? kind,
   }) => Category(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -1306,6 +1344,7 @@ class Category extends DataClass implements Insertable<Category> {
     sortOrder: sortOrder ?? this.sortOrder,
     hidden: hidden ?? this.hidden,
     parentId: parentId.present ? parentId.value : this.parentId,
+    kind: kind ?? this.kind,
   );
   Category copyWithCompanion(CategoriesCompanion data) {
     return Category(
@@ -1320,6 +1359,7 @@ class Category extends DataClass implements Insertable<Category> {
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       hidden: data.hidden.present ? data.hidden.value : this.hidden,
       parentId: data.parentId.present ? data.parentId.value : this.parentId,
+      kind: data.kind.present ? data.kind.value : this.kind,
     );
   }
 
@@ -1336,7 +1376,8 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('isSystem: $isSystem, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('hidden: $hidden, ')
-          ..write('parentId: $parentId')
+          ..write('parentId: $parentId, ')
+          ..write('kind: $kind')
           ..write(')'))
         .toString();
   }
@@ -1354,6 +1395,7 @@ class Category extends DataClass implements Insertable<Category> {
     sortOrder,
     hidden,
     parentId,
+    kind,
   );
   @override
   bool operator ==(Object other) =>
@@ -1369,7 +1411,8 @@ class Category extends DataClass implements Insertable<Category> {
           other.isSystem == this.isSystem &&
           other.sortOrder == this.sortOrder &&
           other.hidden == this.hidden &&
-          other.parentId == this.parentId);
+          other.parentId == this.parentId &&
+          other.kind == this.kind);
 }
 
 class CategoriesCompanion extends UpdateCompanion<Category> {
@@ -1384,6 +1427,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<int> sortOrder;
   final Value<bool> hidden;
   final Value<String?> parentId;
+  final Value<CategoryKind> kind;
   final Value<int> rowid;
   const CategoriesCompanion({
     this.id = const Value.absent(),
@@ -1397,6 +1441,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.sortOrder = const Value.absent(),
     this.hidden = const Value.absent(),
     this.parentId = const Value.absent(),
+    this.kind = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CategoriesCompanion.insert({
@@ -1411,6 +1456,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.sortOrder = const Value.absent(),
     this.hidden = const Value.absent(),
     this.parentId = const Value.absent(),
+    this.kind = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name),
        icon = Value(icon),
@@ -1427,6 +1473,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Expression<int>? sortOrder,
     Expression<bool>? hidden,
     Expression<String>? parentId,
+    Expression<String>? kind,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1441,6 +1488,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (hidden != null) 'hidden': hidden,
       if (parentId != null) 'parent_id': parentId,
+      if (kind != null) 'kind': kind,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1457,6 +1505,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Value<int>? sortOrder,
     Value<bool>? hidden,
     Value<String?>? parentId,
+    Value<CategoryKind>? kind,
     Value<int>? rowid,
   }) {
     return CategoriesCompanion(
@@ -1471,6 +1520,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       sortOrder: sortOrder ?? this.sortOrder,
       hidden: hidden ?? this.hidden,
       parentId: parentId ?? this.parentId,
+      kind: kind ?? this.kind,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1511,6 +1561,11 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (parentId.present) {
       map['parent_id'] = Variable<String>(parentId.value);
     }
+    if (kind.present) {
+      map['kind'] = Variable<String>(
+        $CategoriesTable.$converterkind.toSql(kind.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1531,6 +1586,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('sortOrder: $sortOrder, ')
           ..write('hidden: $hidden, ')
           ..write('parentId: $parentId, ')
+          ..write('kind: $kind, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7609,6 +7665,32 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _offsetIdMeta = const VerificationMeta(
+    'offsetId',
+  );
+  @override
+  late final GeneratedColumn<String> offsetId = GeneratedColumn<String>(
+    'offset_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _autoOffsetOffMeta = const VerificationMeta(
+    'autoOffsetOff',
+  );
+  @override
+  late final GeneratedColumn<bool> autoOffsetOff = GeneratedColumn<bool>(
+    'auto_offset_off',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("auto_offset_off" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -7633,6 +7715,8 @@ class $TransactionsTable extends Transactions
     autoTransferOff,
     origin,
     emiId,
+    offsetId,
+    autoOffsetOff,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7773,6 +7857,21 @@ class $TransactionsTable extends Transactions
         emiId.isAcceptableOrUnknown(data['emi_id']!, _emiIdMeta),
       );
     }
+    if (data.containsKey('offset_id')) {
+      context.handle(
+        _offsetIdMeta,
+        offsetId.isAcceptableOrUnknown(data['offset_id']!, _offsetIdMeta),
+      );
+    }
+    if (data.containsKey('auto_offset_off')) {
+      context.handle(
+        _autoOffsetOffMeta,
+        autoOffsetOff.isAcceptableOrUnknown(
+          data['auto_offset_off']!,
+          _autoOffsetOffMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -7876,6 +7975,14 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}emi_id'],
       ),
+      offsetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}offset_id'],
+      ),
+      autoOffsetOff: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}auto_offset_off'],
+      )!,
     );
   }
 
@@ -7930,6 +8037,14 @@ class Transaction extends DataClass implements Insertable<Transaction> {
 
   /// An EMI's purchase or one of its instalments (Emis.id).
   final String? emiId;
+
+  /// Money that cancels out: payments sharing this id net against each
+  /// other (mom's ₹10k passed on, friends paying back their share, a failed
+  /// UPI payment reversed). Only what's left over counts.
+  final String? offsetId;
+
+  /// Owner said "doesn't cancel out": automatic reversal matching skips it.
+  final bool autoOffsetOff;
   const Transaction({
     required this.id,
     required this.createdAt,
@@ -7953,6 +8068,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.autoTransferOff,
     required this.origin,
     this.emiId,
+    this.offsetId,
+    required this.autoOffsetOff,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8013,6 +8130,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     if (!nullToAbsent || emiId != null) {
       map['emi_id'] = Variable<String>(emiId);
     }
+    if (!nullToAbsent || offsetId != null) {
+      map['offset_id'] = Variable<String>(offsetId);
+    }
+    map['auto_offset_off'] = Variable<bool>(autoOffsetOff);
     return map;
   }
 
@@ -8062,6 +8183,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       emiId: emiId == null && nullToAbsent
           ? const Value.absent()
           : Value(emiId),
+      offsetId: offsetId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(offsetId),
+      autoOffsetOff: Value(autoOffsetOff),
     );
   }
 
@@ -8099,6 +8224,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
         serializer.fromJson<String>(json['origin']),
       ),
       emiId: serializer.fromJson<String?>(json['emiId']),
+      offsetId: serializer.fromJson<String?>(json['offsetId']),
+      autoOffsetOff: serializer.fromJson<bool>(json['autoOffsetOff']),
     );
   }
   @override
@@ -8133,6 +8260,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
         $TransactionsTable.$converterorigin.toJson(origin),
       ),
       'emiId': serializer.toJson<String?>(emiId),
+      'offsetId': serializer.toJson<String?>(offsetId),
+      'autoOffsetOff': serializer.toJson<bool>(autoOffsetOff),
     };
   }
 
@@ -8159,6 +8288,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     bool? autoTransferOff,
     TxnOrigin? origin,
     Value<String?> emiId = const Value.absent(),
+    Value<String?> offsetId = const Value.absent(),
+    bool? autoOffsetOff,
   }) => Transaction(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -8184,6 +8315,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     autoTransferOff: autoTransferOff ?? this.autoTransferOff,
     origin: origin ?? this.origin,
     emiId: emiId.present ? emiId.value : this.emiId,
+    offsetId: offsetId.present ? offsetId.value : this.offsetId,
+    autoOffsetOff: autoOffsetOff ?? this.autoOffsetOff,
   );
   Transaction copyWithCompanion(TransactionsCompanion data) {
     return Transaction(
@@ -8227,6 +8360,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           : this.autoTransferOff,
       origin: data.origin.present ? data.origin.value : this.origin,
       emiId: data.emiId.present ? data.emiId.value : this.emiId,
+      offsetId: data.offsetId.present ? data.offsetId.value : this.offsetId,
+      autoOffsetOff: data.autoOffsetOff.present
+          ? data.autoOffsetOff.value
+          : this.autoOffsetOff,
     );
   }
 
@@ -8254,7 +8391,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('transferId: $transferId, ')
           ..write('autoTransferOff: $autoTransferOff, ')
           ..write('origin: $origin, ')
-          ..write('emiId: $emiId')
+          ..write('emiId: $emiId, ')
+          ..write('offsetId: $offsetId, ')
+          ..write('autoOffsetOff: $autoOffsetOff')
           ..write(')'))
         .toString();
   }
@@ -8283,6 +8422,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     autoTransferOff,
     origin,
     emiId,
+    offsetId,
+    autoOffsetOff,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -8309,7 +8450,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.transferId == this.transferId &&
           other.autoTransferOff == this.autoTransferOff &&
           other.origin == this.origin &&
-          other.emiId == this.emiId);
+          other.emiId == this.emiId &&
+          other.offsetId == this.offsetId &&
+          other.autoOffsetOff == this.autoOffsetOff);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
@@ -8335,6 +8478,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<bool> autoTransferOff;
   final Value<TxnOrigin> origin;
   final Value<String?> emiId;
+  final Value<String?> offsetId;
+  final Value<bool> autoOffsetOff;
   final Value<int> rowid;
   const TransactionsCompanion({
     this.id = const Value.absent(),
@@ -8359,6 +8504,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.autoTransferOff = const Value.absent(),
     this.origin = const Value.absent(),
     this.emiId = const Value.absent(),
+    this.offsetId = const Value.absent(),
+    this.autoOffsetOff = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TransactionsCompanion.insert({
@@ -8384,6 +8531,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.autoTransferOff = const Value.absent(),
     this.origin = const Value.absent(),
     this.emiId = const Value.absent(),
+    this.offsetId = const Value.absent(),
+    this.autoOffsetOff = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : amountMinor = Value(amountMinor),
        direction = Value(direction),
@@ -8412,6 +8561,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<bool>? autoTransferOff,
     Expression<String>? origin,
     Expression<String>? emiId,
+    Expression<String>? offsetId,
+    Expression<bool>? autoOffsetOff,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -8437,6 +8588,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (autoTransferOff != null) 'auto_transfer_off': autoTransferOff,
       if (origin != null) 'origin': origin,
       if (emiId != null) 'emi_id': emiId,
+      if (offsetId != null) 'offset_id': offsetId,
+      if (autoOffsetOff != null) 'auto_offset_off': autoOffsetOff,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -8464,6 +8617,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<bool>? autoTransferOff,
     Value<TxnOrigin>? origin,
     Value<String?>? emiId,
+    Value<String?>? offsetId,
+    Value<bool>? autoOffsetOff,
     Value<int>? rowid,
   }) {
     return TransactionsCompanion(
@@ -8489,6 +8644,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       autoTransferOff: autoTransferOff ?? this.autoTransferOff,
       origin: origin ?? this.origin,
       emiId: emiId ?? this.emiId,
+      offsetId: offsetId ?? this.offsetId,
+      autoOffsetOff: autoOffsetOff ?? this.autoOffsetOff,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -8568,6 +8725,12 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (emiId.present) {
       map['emi_id'] = Variable<String>(emiId.value);
     }
+    if (offsetId.present) {
+      map['offset_id'] = Variable<String>(offsetId.value);
+    }
+    if (autoOffsetOff.present) {
+      map['auto_offset_off'] = Variable<bool>(autoOffsetOff.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -8599,6 +8762,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('autoTransferOff: $autoTransferOff, ')
           ..write('origin: $origin, ')
           ..write('emiId: $emiId, ')
+          ..write('offsetId: $offsetId, ')
+          ..write('autoOffsetOff: $autoOffsetOff, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -11620,6 +11785,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'txn_transfer',
     'CREATE INDEX txn_transfer ON transactions (transfer_id)',
   );
+  late final Index txnOffset = Index(
+    'txn_offset',
+    'CREATE INDEX txn_offset ON transactions (offset_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -11647,6 +11816,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     txnDedup,
     txnOccurred,
     txnTransfer,
+    txnOffset,
   ];
 }
 
@@ -12622,6 +12792,7 @@ typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
   Value<int> sortOrder,
   Value<bool> hidden,
   Value<String?> parentId,
+  Value<CategoryKind> kind,
   Value<int> rowid,
 });
 typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
@@ -12636,6 +12807,7 @@ typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
   Value<int> sortOrder,
   Value<bool> hidden,
   Value<String?> parentId,
+  Value<CategoryKind> kind,
   Value<int> rowid,
 });
 
@@ -12801,6 +12973,12 @@ class $$CategoriesTableFilterComposer
     column: $table.parentId,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<CategoryKind, CategoryKind, String> get kind =>
+      $composableBuilder(
+        column: $table.kind,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   Expression<bool> categoryRulesRefs(
     Expression<bool> Function($$CategoryRulesTableFilterComposer f) f,
@@ -12991,6 +13169,11 @@ class $$CategoriesTableOrderingComposer
     column: $table.parentId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CategoriesTableAnnotationComposer
@@ -13034,6 +13217,9 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<String> get parentId =>
       $composableBuilder(column: $table.parentId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<CategoryKind, String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
 
   Expression<T> categoryRulesRefs<T extends Object>(
     Expression<T> Function($$CategoryRulesTableAnnotationComposer a) f,
@@ -13207,6 +13393,7 @@ class $$CategoriesTableTableManager
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> hidden = const Value.absent(),
                 Value<String?> parentId = const Value.absent(),
+                Value<CategoryKind> kind = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CategoriesCompanion(
                 id: id,
@@ -13220,6 +13407,7 @@ class $$CategoriesTableTableManager
                 sortOrder: sortOrder,
                 hidden: hidden,
                 parentId: parentId,
+                kind: kind,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -13235,6 +13423,7 @@ class $$CategoriesTableTableManager
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> hidden = const Value.absent(),
                 Value<String?> parentId = const Value.absent(),
+                Value<CategoryKind> kind = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CategoriesCompanion.insert(
                 id: id,
@@ -13248,6 +13437,7 @@ class $$CategoriesTableTableManager
                 sortOrder: sortOrder,
                 hidden: hidden,
                 parentId: parentId,
+                kind: kind,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -18111,6 +18301,8 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<bool> autoTransferOff,
       Value<TxnOrigin> origin,
       Value<String?> emiId,
+      Value<String?> offsetId,
+      Value<bool> autoOffsetOff,
       Value<int> rowid,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
@@ -18137,6 +18329,8 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<bool> autoTransferOff,
       Value<TxnOrigin> origin,
       Value<String?> emiId,
+      Value<String?> offsetId,
+      Value<bool> autoOffsetOff,
       Value<int> rowid,
     });
 
@@ -18376,6 +18570,16 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<String> get emiId => $composableBuilder(
     column: $table.emiId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get offsetId => $composableBuilder(
+    column: $table.offsetId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get autoOffsetOff => $composableBuilder(
+    column: $table.autoOffsetOff,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18646,6 +18850,16 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get offsetId => $composableBuilder(
+    column: $table.offsetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get autoOffsetOff => $composableBuilder(
+    column: $table.autoOffsetOff,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$AccountsTableOrderingComposer get accountId {
     final $$AccountsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -18813,6 +19027,14 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<String> get emiId =>
       $composableBuilder(column: $table.emiId, builder: (column) => column);
+
+  GeneratedColumn<String> get offsetId =>
+      $composableBuilder(column: $table.offsetId, builder: (column) => column);
+
+  GeneratedColumn<bool> get autoOffsetOff => $composableBuilder(
+    column: $table.autoOffsetOff,
+    builder: (column) => column,
+  );
 
   $$AccountsTableAnnotationComposer get accountId {
     final $$AccountsTableAnnotationComposer composer = $composerBuilder(
@@ -19042,6 +19264,8 @@ class $$TransactionsTableTableManager
                 Value<bool> autoTransferOff = const Value.absent(),
                 Value<TxnOrigin> origin = const Value.absent(),
                 Value<String?> emiId = const Value.absent(),
+                Value<String?> offsetId = const Value.absent(),
+                Value<bool> autoOffsetOff = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
                 id: id,
@@ -19066,6 +19290,8 @@ class $$TransactionsTableTableManager
                 autoTransferOff: autoTransferOff,
                 origin: origin,
                 emiId: emiId,
+                offsetId: offsetId,
+                autoOffsetOff: autoOffsetOff,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -19092,6 +19318,8 @@ class $$TransactionsTableTableManager
                 Value<bool> autoTransferOff = const Value.absent(),
                 Value<TxnOrigin> origin = const Value.absent(),
                 Value<String?> emiId = const Value.absent(),
+                Value<String?> offsetId = const Value.absent(),
+                Value<bool> autoOffsetOff = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 id: id,
@@ -19116,6 +19344,8 @@ class $$TransactionsTableTableManager
                 autoTransferOff: autoTransferOff,
                 origin: origin,
                 emiId: emiId,
+                offsetId: offsetId,
+                autoOffsetOff: autoOffsetOff,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

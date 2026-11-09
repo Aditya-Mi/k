@@ -1,11 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:k/data/db/app_database.dart' show Category;
+import 'package:k/data/db/enums.dart';
 import 'package:k/data/repositories/ledger_models.dart';
 import 'package:k/data/summary/month_report.dart';
 import 'package:k/ui/theme/bands.dart';
 import 'package:txn_parser/txn_parser.dart';
 
-Category cat(String id, {String? parent}) => Category(
+Category cat(
+  String id, {
+  String? parent,
+  CategoryKind kind = CategoryKind.spend,
+}) => Category(
   id: id,
   createdAt: DateTime(2026),
   updatedAt: DateTime(2026),
@@ -16,6 +21,7 @@ Category cat(String id, {String? parent}) => Category(
   sortOrder: 0,
   hidden: false,
   parentId: parent,
+  kind: kind,
 );
 
 var _n = 0;

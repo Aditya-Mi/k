@@ -12,6 +12,7 @@ import 'data/emis/emi_service.dart';
 import 'data/email/google_auth.dart';
 import 'data/ingest/ingestion_service.dart';
 import 'data/ingest/sms_sync.dart';
+import 'data/ingest/offset_linker.dart';
 import 'data/ingest/transfer_linker.dart';
 import 'data/repositories/bank_repository.dart';
 import 'data/repositories/ledger_repository.dart';
@@ -64,6 +65,7 @@ Future<void> configureDependencies() async {
     ..registerSingleton<EmiService>(emis)
     ..registerSingleton<IngestionService>(ingestion)
     ..registerSingleton<TransferLinker>(TransferLinker(db))
+    ..registerSingleton<OffsetLinker>(OffsetLinker(db))
     ..registerSingleton<SmsBridge>(bridge)
     ..registerLazySingleton<UpdateBridge>(UpdateBridge.new)
     // Set by the release workflow (--dart-define); empty in local builds.

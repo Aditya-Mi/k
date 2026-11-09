@@ -8,6 +8,7 @@ import '../db/app_database.dart' hide ParserTemplate, SenderRule;
 import '../db/enums.dart';
 import '../repositories/bank_repository.dart' show isWalletBank;
 import 'category_resolver.dart';
+import 'offset_linker.dart';
 import 'transfer_linker.dart';
 import 'raw_notes.dart';
 import 'unknown_sender.dart';
@@ -75,10 +76,12 @@ enum IngestOutcome {
 class IngestionService {
   IngestionService(this._db)
     : _transfers = TransferLinker(_db),
+      _offsets = OffsetLinker(_db),
       blocked = BlockedSenders(_db);
 
   final AppDatabase _db;
   final TransferLinker _transfers;
+  final OffsetLinker _offsets;
   final BlockedSenders blocked;
   ParserEngine? _engine;
   CategoryResolver? _categories;
@@ -439,6 +442,7 @@ class IngestionService {
                   categories.resolve(
                     merchantKey: merchant?.normalizedKey,
                     payee: name,
+                    credit: direction == Direction.credit,
                   ),
             ),
             userEdited: Value(categoryId != null),
@@ -617,6 +621,7 @@ class IngestionService {
                     merchantKey: merchant?.normalizedKey,
                     payee: fields.payee,
                     txnType: fields.txnType,
+                    credit: fields.direction == Direction.credit,
                   ),
             ),
             userEdited: Value(categoryId != null),
@@ -630,11 +635,12 @@ class IngestionService {
             rawMessageId: raw.id,
           ),
         );
-    if (!await _transfers.autoLink(txn.id)) {
-      await _transfers.markCardBill(
-        txn.id,
-        text: raw.channel == Channel.sms ? text : '',
-      );
+    if (!await _transfers.autoLink(txn.id) &&
+        !await _transfers.markCardBill(
+          txn.id,
+          text: raw.channel == Channel.sms ? text : '',
+        )) {
+      await _offsets.autoReversal(txn.id, text: text);
     }
     return IngestOutcome.transaction;
   }

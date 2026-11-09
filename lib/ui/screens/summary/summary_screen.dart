@@ -165,12 +165,20 @@ class _SummaryScreenState extends State<SummaryScreen> {
                             : 'Nothing spent in ${DateFormat('MMMM').format(r.month)}.',
                         style: t.body.copyWith(color: c.text2),
                       ),
+                      if (_NotCounted.has(r)) ...[
+                        const SizedBox(height: 28),
+                        _NotCounted(report: r),
+                      ],
                     ] else ...[
                       const SizedBox(height: 28),
                       _Section(
                         title: 'Where it went',
                         child: _Categories(report: r),
                       ),
+                      if (_NotCounted.has(r)) ...[
+                        const SizedBox(height: 28),
+                        _NotCounted(report: r),
+                      ],
                       const SizedBox(height: 28),
                       _Section(
                         title: 'Day by day',
@@ -686,6 +694,63 @@ class _Calendar extends StatelessWidget {
 
 /// Categories, biggest first, with neutral bars (inks never mark a
 /// category). One with sub-categories opens to show them (design 05d).
+/// Money out that isn't spending (design 05e): neither categories
+/// (investments, ATM withdrawals…) and what cancelled out. Quieter than
+/// "Where it went": text-2 amounts, hairline bars.
+class _NotCounted extends StatelessWidget {
+  const _NotCounted({required this.report});
+
+  final MonthReport report;
+
+  static bool has(MonthReport r) =>
+      r.notCounted.isNotEmpty || r.cancelledMinor > 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.k;
+    final t = context.kt;
+    final rows = [
+      for (final n in report.notCounted)
+        (categoryIcon(n.category?.icon), n.category?.name ?? '', n.spentMinor),
+      if (report.cancelledMinor > 0)
+        (Symbols.link, 'Cancelled out', report.cancelledMinor),
+    ];
+    final max = rows.fold(0, (m, r) => r.$3 > m ? r.$3 : m);
+    return _Section(
+      title: 'Not counted',
+      meta: 'Moved or passed on, not spent.',
+      child: Column(
+        children: [
+          for (final (i, (icon, name, minor)) in rows.indexed) ...[
+            if (i > 0) const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(icon, size: 20, color: c.text3),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(name, style: t.body.copyWith(color: c.text2)),
+                ),
+                Text(inr(minor), style: t.amountRow.copyWith(color: c.text2)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 30),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: max == 0 ? 0 : (minor / max).clamp(0.02, 1.0),
+                  child: Container(height: 1, color: c.outline),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _Categories extends StatefulWidget {
   const _Categories({required this.report});
 
@@ -704,6 +769,9 @@ class _CategoriesState extends State<_Categories> {
     final t = context.kt;
     final report = widget.report;
     final max = report.categories.first.spentMinor;
+    // Shares of what's listed: a refund larger than its category's spend
+    // drops that category, so this can be more than spent.
+    final listed = report.categories.fold(0, (a, s) => a + s.spentMinor);
 
     Widget bar(int minor, {required double height, required Color color}) =>
         Align(
@@ -762,7 +830,7 @@ class _CategoriesState extends State<_Categories> {
                       const SizedBox(width: 6),
                     ],
                     Text(
-                      '${(s.spentMinor * 100 / report.spentMinor).round()}%',
+                      '${(s.spentMinor * 100 / listed).round()}%',
                       style: t.meta.copyWith(color: c.text3),
                     ),
                     const SizedBox(width: 10),
@@ -884,7 +952,9 @@ class _SpendSizes extends StatelessWidget {
     final bigIndex = Bands.count - 1;
     final bigCount = r.bandCounts[bigIndex];
     final smallCount = r.spends - bigCount;
-    final smallTotal = r.spentMinor - r.bandTotals[bigIndex];
+    // Bands add up debits; refunds lower spent but not the bands.
+    final smallTotal =
+        r.bandTotals.fold(0, (a, b) => a + b) - r.bandTotals[bigIndex];
     final caption = bigCount == 0 || smallCount == 0
         ? null
         : '$smallCount small ${smallCount == 1 ? 'spend' : 'spends'} add up '

@@ -1,3 +1,5 @@
+import '../db/enums.dart';
+
 import 'package:equatable/equatable.dart';
 
 import '../db/app_database.dart' show Category;
@@ -66,9 +68,18 @@ class MonthReport extends Equatable {
     required this.spentMinor,
     required this.inMinor,
     required this.spends,
+    this.notCounted = const [],
+    this.cancelledMinor = 0,
   });
 
   final DateTime month;
+
+  /// Money out filed as neither (investments, ATM withdrawals, deposits),
+  /// by category (sub-categories under their parent), biggest first.
+  final List<CategorySpend> notCounted;
+
+  /// Money out this month that cancelled out against money in.
+  final int cancelledMinor;
 
   /// Six months ending with [month], oldest first.
   final List<MonthSpend> trend;
@@ -118,7 +129,7 @@ class MonthReport extends Equatable {
   @override
   List<Object?> get props => [
     month, trend, dayTotals, categories, payees, payeeCount, bandTotals, //
-    bandCounts, spentMinor, inMinor, spends,
+    bandCounts, spentMinor, inMinor, spends, notCounted, cancelledMinor,
   ];
 
   /// [txns] covers the six trend months (any order). [categories] (all of
@@ -144,7 +155,18 @@ class MonthReport extends Equatable {
     final bandCounts = List.filled(Bands.count, 0);
     var spent = 0, came = 0, spends = 0;
 
+    final neither = <String, (Category, int, int)>{};
+    var cancelled = 0;
     for (final t in txns) {
+      if (t.isDebit && !t.isTransfer && _inMonth(t.occurredAt, start, end)) {
+        cancelled += t.offsetCancelledMinor;
+        for (final (cat, piece) in t.pieces) {
+          if (cat == null || cat.kind != CategoryKind.neutral) continue;
+          final top = categories[cat.parentId] ?? cat;
+          final n = neither[top.id];
+          neither[top.id] = (top, (n?.$2 ?? 0) + piece, (n?.$3 ?? 0) + 1);
+        }
+      }
       if (!t.countsInTotals) continue;
       final at = t.occurredAt;
       final key = DateTime(at.year, at.month);
@@ -172,9 +194,10 @@ class MonthReport extends Equatable {
         bandCounts[band]++;
       }
 
-      // A split payment counts each part in its own category.
+      // A split payment counts each part in its own category (minus what
+      // cancels out; parts filed as neither drop out).
       final sign = a.sign;
-      for (final (cat, piece) in t.pieces) {
+      for (final (cat, piece) in t.countedPieces) {
         final c = cats[cat?.id];
         cats[cat?.id] = (cat, (c?.$2 ?? 0) + sign * piece, (c?.$3 ?? 0) + one);
       }
@@ -235,6 +258,13 @@ class MonthReport extends Equatable {
       spentMinor: spent,
       inMinor: came,
       spends: spends,
+      notCounted: [
+        for (final n in neither.values) CategorySpend(n.$1, n.$2, n.$3),
+      ]..sort((a, b) => b.spentMinor.compareTo(a.spentMinor)),
+      cancelledMinor: cancelled,
     );
   }
+
+  static bool _inMonth(DateTime at, DateTime start, DateTime end) =>
+      !at.isBefore(start) && at.isBefore(end);
 }

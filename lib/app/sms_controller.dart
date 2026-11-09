@@ -1,3 +1,6 @@
+import '../di.dart';
+import '../data/ingest/offset_linker.dart';
+
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
@@ -58,6 +61,7 @@ class SmsController with WidgetsBindingObserver {
     unawaited(
       _guard(_transfers.autoLinkAll)
           .then((_) => _guard(_transfers.markCardBillsAll))
+          .then((_) => _guard(getIt<OffsetLinker>().autoReversalsAll))
           .then((_) => _guard(_ingestion.reprocessReview))
           .then((_) => refresh()),
     );
