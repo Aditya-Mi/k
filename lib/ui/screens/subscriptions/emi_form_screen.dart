@@ -478,7 +478,20 @@ class _EmiFormScreenState extends State<EmiFormScreen> {
     if (d != null) setState(() => _reminder = d < 0 ? null : d);
   }
 
+  /// A second tap while the first is still saving does nothing.
+  bool _inFlight = false;
+
   Future<void> _save() async {
+    if (_inFlight) return;
+    _inFlight = true;
+    try {
+      await _saveNow();
+    } finally {
+      _inFlight = false;
+    }
+  }
+
+  Future<void> _saveNow() async {
     setState(() => _saving = true);
     final e = widget.emi;
     final p = widget.purchase;

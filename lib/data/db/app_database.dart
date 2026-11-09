@@ -211,6 +211,18 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  /// A backup made by an older schema restores through raw inserts, which
+  /// skip [migration]'s data steps: run them for what that schema lacked,
+  /// then seed what later builds add.
+  Future<void> backfillRestored(int fromSchema) async {
+    if (fromSchema < 3) await _foldDigitlessAccounts();
+    if (fromSchema < 4) await _foldDebitCards();
+    if (fromSchema < 5) await _atmCategory();
+    if (fromSchema < 7) await mergeSameNameMerchants();
+    if (fromSchema < 11) await _categoryKinds();
+    await Seeder(this).seedAll();
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {

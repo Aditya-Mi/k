@@ -40,12 +40,11 @@ class _TrackSheetState extends State<_TrackSheet> {
   /// Next charge after this payment that is still ahead.
   DateTime get _next {
     if (_pickedNext != null) return _pickedNext!;
-    var d = nextCharge(widget.txn.occurredAt, _frequency);
-    final today = DateTime.now();
-    while (d.isBefore(DateTime(today.year, today.month, today.day))) {
-      d = nextCharge(d, _frequency);
-    }
-    return d;
+    return nextChargeAfter(
+      widget.txn.occurredAt,
+      _frequency,
+      today: DateTime.now(),
+    );
   }
 
   @override
@@ -166,7 +165,20 @@ class _TrackSheetState extends State<_TrackSheet> {
     if (day != null) setState(() => _pickedNext = day);
   }
 
+  /// A second tap while the first is still saving does nothing.
+  bool _inFlight = false;
+
   Future<void> _save() async {
+    if (_inFlight) return;
+    _inFlight = true;
+    try {
+      await _saveNow();
+    } finally {
+      _inFlight = false;
+    }
+  }
+
+  Future<void> _saveNow() async {
     setState(() => _saving = true);
     final service = getIt<SubscriptionService>();
     final id = await service.trackFromTransaction(

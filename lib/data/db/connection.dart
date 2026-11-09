@@ -8,6 +8,12 @@ import 'package:sqlite3/sqlite3.dart';
 
 const _dbFileName = 'k.db';
 
+/// Whether k's database file is already on this phone.
+Future<bool> encryptedDatabaseExists() async {
+  final dir = await getApplicationSupportDirectory();
+  return File(p.join(dir.path, _dbFileName)).exists();
+}
+
 /// Opens the SQLite3MultipleCiphers-encrypted database with [key].
 QueryExecutor openEncryptedDatabase(String key) {
   return LazyDatabase(() async {

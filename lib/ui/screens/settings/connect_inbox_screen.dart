@@ -388,7 +388,20 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
     );
   }
 
+  /// A second tap while the first is still saving does nothing.
+  bool _inFlight = false;
+
   Future<void> _connect() async {
+    if (_inFlight) return;
+    _inFlight = true;
+    try {
+      await _connectNow();
+    } finally {
+      _inFlight = false;
+    }
+  }
+
+  Future<void> _connectNow() async {
     final email = _email.text.trim();
     final password = _password.text.trim();
     if (!email.contains('@') || password.isEmpty) {

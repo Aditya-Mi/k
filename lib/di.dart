@@ -28,7 +28,10 @@ final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
   const secure = FlutterSecureStorage();
-  final keyManager = DbKeyManager(secure);
+  final keyManager = DbKeyManager(
+    secure,
+    databaseExists: encryptedDatabaseExists,
+  );
   final key = await keyManager.getOrCreateKey();
   final db = AppDatabase(openEncryptedDatabase(key));
   final settings = SettingsRepository(db);

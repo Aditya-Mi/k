@@ -103,6 +103,7 @@ class TransferLinker {
                 (o) =>
                     o.deletedAt.isNull() &
                     o.transferId.isNull() &
+                    o.offsetId.isNull() &
                     o.autoTransferOff.equals(false) &
                     o.accountId.equals(card.id) &
                     o.direction.equalsValue(Direction.credit) &
@@ -300,8 +301,13 @@ class TransferLinker {
     String? addOnAccountId,
   }) => _db.transaction(() async {
     final t = await _byId(txnId);
-    if (t == null) return;
+    // Already a transfer (a second tap): linking again would orphan the
+    // first other side and, for an added one, count it twice.
+    if (t == null || t.transferId != null) return;
     var partner = partnerId == null ? null : await _byId(partnerId);
+    if (partner != null && (partner.id == t.id || partner.transferId != null)) {
+      return;
+    }
     if (partner == null && addOnAccountId != null) {
       partner = await _db
           .into(_db.transactions)
@@ -466,6 +472,7 @@ class TransferLinker {
               (o) =>
                   o.deletedAt.isNull() &
                   o.transferId.isNull() &
+                  o.offsetId.isNull() &
                   o.autoTransferOff.equals(false) &
                   o.accountId.isNotNull() &
                   o.accountId.equals(cashAccountId).not() &

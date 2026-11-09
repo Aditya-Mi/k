@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'app/app.dart';
 import 'app/app_lock.dart';
 import 'app/notifications.dart';
+import 'app/startup_error.dart';
+import 'core/security/db_key_manager.dart';
 import 'data/backup/backup_service.dart';
 import 'data/db/app_database.dart';
 import 'data/email/email_sync.dart';
@@ -15,7 +17,17 @@ import 'platform/sms_bridge.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await configureDependencies();
+  try {
+    await configureDependencies();
+    // The DB opens lazily: a wrong key fails on this first read.
+    await getIt<SettingsRepository>().get(SettingsRepository.themeMode);
+  } catch (e, s) {
+    // Never a blank screen, and never a fresh empty database over the
+    // owner's data: say what happened and stop.
+    debugPrint('k: could not open the database: $e\n$s');
+    runApp(StartupErrorApp(lostKey: e is DbKeyLostError));
+    return;
+  }
   try {
     await getIt<KNotifications>().init();
   } catch (e, s) {

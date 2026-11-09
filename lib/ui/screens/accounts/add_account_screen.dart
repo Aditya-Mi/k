@@ -286,7 +286,20 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
     }
   }
 
+  /// A second tap while the first is still saving does nothing.
+  bool _inFlight = false;
+
   Future<void> _save() async {
+    if (_inFlight) return;
+    _inFlight = true;
+    try {
+      await _saveNow();
+    } finally {
+      _inFlight = false;
+    }
+  }
+
+  Future<void> _saveNow() async {
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     final nav = Navigator.of(context);

@@ -488,9 +488,7 @@ AccountBalance? computeBalance(Account account, List<Transaction> txns) {
   Transaction? reported;
   for (final t in txns) {
     if (t.balanceMinor == null) continue;
-    if (reported == null || t.occurredAt.isAfter(reported.occurredAt)) {
-      reported = t;
-    }
+    if (reported == null || _laterReport(t, reported)) reported = t;
   }
   int base;
   DateTime anchor;
@@ -524,6 +522,16 @@ AccountBalance? computeBalance(Account account, List<Transaction> txns) {
     anchorAt: anchor,
     estimatedFrom: moved,
   );
+}
+
+/// Bank times are to the minute: of two alerts in the same minute, the one
+/// that arrived later (then the later id, UUIDv7) carries the newer balance.
+bool _laterReport(Transaction a, Transaction b) {
+  final c = a.occurredAt.compareTo(b.occurredAt);
+  if (c != 0) return c > 0;
+  final d = a.createdAt.compareTo(b.createdAt);
+  if (d != 0) return d > 0;
+  return a.id.compareTo(b.id) > 0;
 }
 
 /// Cash in hand: the owner's figure (or 0 before one) plus ATM withdrawals

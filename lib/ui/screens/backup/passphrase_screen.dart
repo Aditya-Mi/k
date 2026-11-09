@@ -39,7 +39,20 @@ class _PassphraseScreenState extends State<PassphraseScreen> {
   static bool strongEnough(String p) =>
       p.length >= 12 || p.trim().split(RegExp(r'\s+')).length >= 4;
 
+  /// A second tap while the first is still saving does nothing.
+  bool _inFlight = false;
+
   Future<void> _save() async {
+    if (_inFlight) return;
+    _inFlight = true;
+    try {
+      await _saveNow();
+    } finally {
+      _inFlight = false;
+    }
+  }
+
+  Future<void> _saveNow() async {
     final p = _first.text;
     if (!strongEnough(p)) {
       setState(() => _error = 'Use at least 4 words or 12 characters');

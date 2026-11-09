@@ -50,14 +50,9 @@ DateTime nextCharge(
   DateTime at,
   SubscriptionFrequency f, {
   int customDays = 30,
+  int? months,
 }) {
-  final months = switch (f) {
-    SubscriptionFrequency.monthly => 1,
-    SubscriptionFrequency.quarterly => 3,
-    SubscriptionFrequency.halfYearly => 6,
-    SubscriptionFrequency.yearly => 12,
-    SubscriptionFrequency.custom => 0,
-  };
+  months ??= _months(f);
   if (months == 0) return at.add(Duration(days: customDays));
   final lastDay = DateTime(at.year, at.month + months + 1, 0).day;
   return DateTime(
@@ -67,6 +62,38 @@ DateTime nextCharge(
     at.hour,
     at.minute,
   );
+}
+
+int _months(SubscriptionFrequency f) => switch (f) {
+  SubscriptionFrequency.monthly => 1,
+  SubscriptionFrequency.quarterly => 3,
+  SubscriptionFrequency.halfYearly => 6,
+  SubscriptionFrequency.yearly => 12,
+  SubscriptionFrequency.custom => 0,
+};
+
+/// The first charge on or after [today] in the cycle of a charge at [at].
+DateTime nextChargeAfter(
+  DateTime at,
+  SubscriptionFrequency f, {
+  required DateTime today,
+  int customDays = 30,
+}) {
+  final day = DateTime(today.year, today.month, today.day);
+  // Step from [at] each time, not from the last result: a 31st clamped to
+  // Feb 28 must come back to the 31st.
+  var d = at;
+  for (var n = 1; ; n++) {
+    d = switch (f) {
+      SubscriptionFrequency.custom => at.add(Duration(days: customDays * n)),
+      _ => nextCharge(
+        at,
+        SubscriptionFrequency.monthly,
+        months: n * _months(f),
+      ),
+    };
+    if (!d.isBefore(day)) return d;
+  }
 }
 
 /// Monthly cost of a plan, for the "a month" total.

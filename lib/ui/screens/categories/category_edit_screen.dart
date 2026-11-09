@@ -233,7 +233,20 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
     super.dispose();
   }
 
+  /// A second tap while the first is still saving does nothing.
+  bool _inFlight = false;
+
   Future<void> _save() async {
+    if (_inFlight) return;
+    _inFlight = true;
+    try {
+      await _saveNow();
+    } finally {
+      _inFlight = false;
+    }
+  }
+
+  Future<void> _saveNow() async {
     final name = _name.text.trim();
     if (name.isEmpty) {
       setState(() => _error = 'Give it a name');

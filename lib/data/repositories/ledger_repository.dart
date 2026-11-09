@@ -506,6 +506,19 @@ class LedgerRepository {
   /// messages naming it are logged on the target.
   Future<void> mergeAccount(String sourceId, String targetId) =>
       _db.transaction(() async {
+        // Merge into what the target shows as; never into itself (that
+        // would hide both).
+        var target = targetId;
+        for (var hops = 0; hops < 10; hops++) {
+          final row = await (_db.select(
+            _db.accounts,
+          )..where((a) => a.id.equals(target))).getSingleOrNull();
+          final next = row?.mergedIntoId;
+          if (next == null) break;
+          target = next;
+        }
+        if (target == sourceId) return;
+        targetId = target;
         final now = DateTime.now();
         await (_db.update(
           _db.transactions,
@@ -514,6 +527,11 @@ class LedgerRepository {
             accountId: Value(targetId),
             updatedAt: Value(now),
           ),
+        );
+        await (_db.update(
+          _db.emis,
+        )..where((e) => e.accountId.equals(sourceId))).write(
+          EmisCompanion(accountId: Value(targetId), updatedAt: Value(now)),
         );
         // Anything already folded into the source follows it.
         await (_db.update(_db.accounts)..where(

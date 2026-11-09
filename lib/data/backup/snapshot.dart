@@ -76,6 +76,7 @@ class Snapshot {
           );
         }
       }
+      if (schema < _db.schemaVersion) await _db.backfillRestored(schema);
     });
     // Raw statements bypass drift's change tracking: wake every stream.
     _db.notifyUpdates({for (final t in _db.allTables) TableUpdate.onTable(t)});

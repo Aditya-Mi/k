@@ -133,15 +133,7 @@ class IngestionService {
   Future<IngestOutcome> ingest(IncomingMessage m) async {
     final engine = await _parser();
 
-    final result = engine.parse(
-      RawInput(
-        channel: m.channel,
-        sender: m.sender,
-        body: m.body,
-        subject: m.subject,
-        receivedAt: m.receivedAt,
-      ),
-    );
+    final result = _safeParse(engine, _input(m));
     if (result.status == ParseStatus.notBank) return _ingestUnknown(m);
 
     return _db.transaction(() async {
@@ -238,7 +230,8 @@ class IngestionService {
 
   /// Parses a stored message with the current formats (review prefill,
   /// re-checks after learning).
-  Future<ParseResult> parseRaw(RawMessage raw) async => (await _parser()).parse(
+  Future<ParseResult> parseRaw(RawMessage raw) async => _safeParse(
+    await _parser(),
     RawInput(
       channel: raw.channel,
       sender: raw.sender,
@@ -247,6 +240,19 @@ class IngestionService {
       receivedAt: raw.receivedAt,
     ),
   );
+
+  /// A message the parser chokes on (e.g. an amount too big for an int)
+  /// waits in Review: it must not stop the queue or inbox catch-up behind it.
+  static ParseResult _safeParse(ParserEngine engine, RawInput input) {
+    try {
+      return engine.parse(input);
+    } catch (e) {
+      return ParseResult(
+        status: ParseStatus.needsReview,
+        note: 'could not read: $e',
+      );
+    }
+  }
 
   /// Logs a review-queue message from fields the owner confirmed: a payment,
   /// or an AutoPay alert ([TemplateKind.mandate]) that becomes an upcoming
@@ -259,6 +265,11 @@ class IngestionService {
     String? categoryId,
     String? templateId,
   }) => _db.transaction(() async {
+    // Saved twice (double tap, or a re-check logged it meanwhile): once.
+    final now = await (_db.select(
+      _db.rawMessages,
+    )..where((r) => r.id.equals(raw.id))).getSingleOrNull();
+    if (now == null || now.status == RawMessageStatus.parsed) return;
     await _log(
       raw,
       raw.bankId!,
@@ -328,6 +339,10 @@ class IngestionService {
         continue;
       }
       await _db.transaction(() async {
+        final now = await (_db.select(
+          _db.rawMessages,
+        )..where((r) => r.id.equals(raw.id))).getSingleOrNull();
+        if (now?.status != RawMessageStatus.needsReview) return;
         await _log(
           raw,
           result.bankCode!,
@@ -692,6 +707,8 @@ class IngestionService {
     for (final MapEntry(key: id, value: seen) in channels.entries) {
       if (seen.contains(channel)) continue;
       final c = byId[id]!;
+      // Both copies name a reference and they differ: two payments.
+      if (_refsDiffer(c.refNo, f.ref)) continue;
       if (best == null ||
           c.occurredAt.difference(at).abs() <
               best.occurredAt.difference(at).abs()) {
@@ -734,6 +751,7 @@ class IngestionService {
       if (seen[txn.id]!.contains(channel)) continue;
       final message = r.readTable(raw);
       final was = (await parseRaw(message)).fields;
+      if (_refsDiffer(was.ref, f.ref)) continue;
       final wasAt = was.occurredAt ?? message.receivedAt;
       if (was.amountMinor == f.amountMinor &&
           was.direction == f.direction &&
@@ -819,6 +837,27 @@ class IngestionService {
     final name = payee?.trim() ?? '';
     final payeeChanged = payee != null;
     final merchant = payeeChanged ? await _merchantFor(name) : null;
+    // Split parts are carved out of a debit: a credit, or an amount they
+    // no longer fit in, would count more than the payment. Drop them.
+    final splits =
+        await (_db.select(_db.transactionSplits)..where(
+              (s) => s.transactionId.equals(txnId) & s.deletedAt.isNull(),
+            ))
+            .get();
+    final splitTotal = splits.fold(0, (sum, s) => sum + s.amountMinor);
+    if (splits.isNotEmpty &&
+        (direction != Direction.debit || splitTotal > amountMinor)) {
+      final now = DateTime.now();
+      await (_db.update(
+            _db.transactionSplits,
+          )..where((s) => s.transactionId.equals(txnId) & s.deletedAt.isNull()))
+          .write(
+            TransactionSplitsCompanion(
+              deletedAt: Value(now),
+              updatedAt: Value(now),
+            ),
+          );
+    }
     final text = note.trim();
     await (_db.update(
       _db.transactions,
@@ -869,6 +908,16 @@ class IngestionService {
           .compareTo(b.occurredAt.difference(at).abs()),
     );
     return rows.first;
+  }
+
+  /// Two references that can't be the same payment's (one may be a longer
+  /// form of the other, e.g. with a prefix).
+  static bool _refsDiffer(String? a, String? b) {
+    String clean(String? r) =>
+        (r ?? '').replaceAll(RegExp('[^A-Za-z0-9]'), '').toUpperCase();
+    final x = clean(a), y = clean(b);
+    if (x.isEmpty || y.isEmpty) return false;
+    return !x.contains(y) && !y.contains(x);
   }
 
   Future<bool> _isDuplicate(IncomingMessage m) async {

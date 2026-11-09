@@ -362,7 +362,20 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
     if (v != null) setState(() => _note = v.trim());
   }
 
+  /// A second tap while the first is still saving does nothing.
+  bool _inFlight = false;
+
   Future<void> _save() async {
+    if (_inFlight) return;
+    _inFlight = true;
+    try {
+      await _saveNow();
+    } finally {
+      _inFlight = false;
+    }
+  }
+
+  Future<void> _saveNow() async {
     setState(() => _saving = true);
     final old = _old;
     if (old != null) {
